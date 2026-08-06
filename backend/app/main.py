@@ -18,7 +18,7 @@ def embed(texts):
     return [d["embedding"] for d in r.json()["data"]]
 
 
-raw = open("doc.txt", encoding="utf-8").read()
+raw = open("backend/app/doc.txt", encoding="utf-8").read()
 parts = re.split(r"=+\n时间戳: (\d{2}:\d{2}:\d{2}).*?\n=+\n", raw)
 
 chunks = []

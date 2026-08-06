@@ -1,4 +1,8 @@
 
+# Start
+docker compose stop
+docker-compose up -d
+
 # 存储
 ## Milvus 向量库存储 + MongoDB 原始文本存储
 MongoDB
