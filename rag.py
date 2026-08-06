@@ -1,17 +1,15 @@
+import re
 import requests
-from pymilvus import MilvusClient
+from pymilvus import DataType, MilvusClient
 
 EMBED_URL = "http://127.0.0.1:11434/v1/embeddings"
 EMBED_MODEL = "nomic-embed-text"
+QUERY = "00:00:50 这里讲了什么？"
 
-DOCS = [
-    "Milvus 是一个开源的向量数据库，专为大规模相似度搜索设计。",
-    "RAG 先检索相关文档，再交给大模型生成答案。",
-    "Embedding 模型把文本映射成向量，语义相近的文本距离更近。",
-    "HNSW 和 IVF_FLAT 是常见的向量索引类型。",
-]
-
-QUERY = "什么是向量数据库？"
+# mock 元数据
+COURSE_ID = "CSC447"
+QUARTER = "2026-Spring"
+LECTURER = "Eric J. Fredericks"
 
 
 def embed(texts):
@@ -20,15 +18,63 @@ def embed(texts):
     return [d["embedding"] for d in r.json()["data"]]
 
 
-vectors = embed(DOCS)
+raw = open("doc.txt", encoding="utf-8").read()
+parts = re.split(r"=+\n时间戳: (\d{2}:\d{2}:\d{2}).*?\n=+\n", raw)
+
+chunks = []
+# parts: [前缀, ts1, body1, ts2, body2, ...]
+for i in range(1, len(parts), 2):
+    ts, body = parts[i], parts[i + 1].strip()
+    body = re.sub(r"\n=+\n视频处理统计[\s\S]*$", "", body).strip()
+    if body:
+        chunks.append({"timestamp": ts, "text": body})
+
+print(f"按时间戳切成 {len(chunks)} 段")
+
+vectors = embed([c["text"] for c in chunks])
 
 client = MilvusClient("milvus_demo.db")
-client.drop_collection("docs") if client.has_collection("docs") else None
-client.create_collection("docs", dimension=len(vectors[0]))
-client.insert("docs", [{"id": i, "vector": v, "text": t} for i, (v, t) in enumerate(zip(vectors, DOCS))])
+if client.has_collection("docs"):
+    client.drop_collection("docs")
 
-hits = client.search("docs", data=embed([QUERY]), limit=3, output_fields=["text"])
+schema = MilvusClient.create_schema(auto_id=False)
+schema.add_field("id", DataType.INT64, is_primary=True)
+schema.add_field("vector", DataType.FLOAT_VECTOR, dim=len(vectors[0]))
+schema.add_field("text", DataType.VARCHAR, max_length=65535)
+schema.add_field("timestamp", DataType.VARCHAR, max_length=16)
+schema.add_field("course_id", DataType.VARCHAR, max_length=32)
+schema.add_field("quarter", DataType.VARCHAR, max_length=32)
+schema.add_field("lecturer", DataType.VARCHAR, max_length=64)
+
+index_params = client.prepare_index_params()
+index_params.add_index("vector", metric_type="COSINE")
+client.create_collection("docs", schema=schema, index_params=index_params)
+
+rows = [
+    {
+        "id": i,
+        "vector": vectors[i],
+        "text": c["text"],
+        "timestamp": c["timestamp"],
+        "course_id": COURSE_ID,
+        "quarter": QUARTER,
+        "lecturer": LECTURER,
+    }
+    for i, c in enumerate(chunks)
+]
+client.insert("docs", rows)
+
+hits = client.search(
+    "docs",
+    data=embed([QUERY]),
+    limit=3,
+    output_fields=["text", "timestamp", "course_id", "quarter", "lecturer"],
+)
 
 print(QUERY)
 for h in hits[0]:
-    print(round(h["distance"], 4), h["entity"]["text"])
+    e = h["entity"]
+    print(
+        f"{h['distance']:.4f}  [{e['timestamp']}] {e['course_id']} {e['quarter']} / {e['lecturer']}"
+    )
+    print(f"       {e['text'][:80]}\n")
