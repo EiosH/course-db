@@ -2,8 +2,8 @@ import re
 import requests
 from pymilvus import DataType, MilvusClient
 
-EMBED_URL = "http://127.0.0.1:11434/v1/embeddings"
-EMBED_MODEL = "nomic-embed-text"
+EMBED_URL = "http://127.0.0.1:8080/v1/embeddings"
+EMBED_MODEL = "BAAI/bge-m3"
 QUERY = "00:00:50 这里讲了什么？"
 
 # mock 元数据
@@ -78,3 +78,7 @@ for h in hits[0]:
         f"{h['distance']:.4f}  [{e['timestamp']}] {e['course_id']} {e['quarter']} / {e['lecturer']}"
     )
     print(f"       {e['text'][:80]}\n")
+
+
+# 双路召回   一路做语义向量 search；另一路直接用queryAPI，按时间窗口捞锚点附近的 chunk；结果合并去重
+# 将每个截屏内容按 400 token chunk，原始文字保存 MongoDB, 向量库保存 ids
