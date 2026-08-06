@@ -4,7 +4,7 @@ from pymilvus import DataType, MilvusClient
 
 EMBED_URL = "http://127.0.0.1:8080/v1/embeddings"
 EMBED_MODEL = "BAAI/bge-m3"
-QUERY = "00:00:50 这里讲了什么？"
+QUERY = "How do programming languages deal with concurrent execution？"
 
 # mock 元数据
 COURSE_ID = "CSC447"
@@ -33,7 +33,12 @@ print(f"按时间戳切成 {len(chunks)} 段")
 
 vectors = embed([c["text"] for c in chunks])
 
-client = MilvusClient("milvus_demo.db")
+from pymilvus import MilvusClient
+
+client = MilvusClient(
+    uri="http://localhost:19530"
+)
+
 if client.has_collection("docs"):
     client.drop_collection("docs")
 
