@@ -1,6 +1,10 @@
+# 启动
+docker compose up -d
+cd backend && pip install -r requirements.txt
+cd app && python main.py
 
 # 存储
-## Milvus 向量库存储 + MongoDB 原始文本存储
+## Qdrant 向量库存储 + MongoDB 原始文本存储
 MongoDB
 | id        | lecture_id  | chunk_index | type |
 | --------- | ------- | ----------- | ---- |
@@ -8,7 +12,7 @@ MongoDB
 | chunk_002 | lec_001 | 1           | screen_shot  |
 | chunk_003 | lec_001 | 2           | screen_shot  |
 
-Milvus
+Qdrant
 | id        | lecture_id  | chunk_index | vector    | type |
 | --------- | ------- | ----------- | --------- | ---- |
 | chunk_001 | lec_001 | 0           | embedding | screen_shot |
@@ -31,7 +35,22 @@ Milvus
 Docker Compose
 ├── nginx
 ├── fastapi
-├── milvus
+├── qdrant
 ├── mongodb
 ├── tei
 └── redis（可选）
+
+
+<!-- screen_shot 识别方案 -->
+<!-- 1. 检测黑屏，直接跳过识别
+2. phash 检测 -->
+
+<!-- 检索方案 -->
+1. rewrite
+<!-- {
+  "rewritten_query": "如何重置账户密码",
+  "hard_constraints": [
+    {"field":"tenant_id", "operator":"eq", "value": 88},
+    {"field":"doc_type", "operator":"eq", "value": "help_document"}
+  ]
+} -->

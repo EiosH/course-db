@@ -1,0 +1,4 @@
+1. What does this mean now?
+2. CSC447 How do programming languages deal with concurrent execution？
+3. What is Fold Left exactly?
+4. I don't understand the answer of Question 9
