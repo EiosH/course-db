@@ -96,7 +96,7 @@ def load_screenshots(path="doc.txt"):
     return chunks
 
 
-def load_transcript(path="transcript.txt"):
+def load_transcript(path="transcript.vtt"):
     try:
         raw = open(path, encoding="utf-8").read().strip()
     except FileNotFoundError:
