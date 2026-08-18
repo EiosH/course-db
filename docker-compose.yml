@@ -8,17 +8,3 @@ services:
       - "6333:6333"
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/data/qdrant:/qdrant/storage
-
-  tei:
-    container_name: text-embeddings-inference
-    image: ghcr.io/huggingface/text-embeddings-inference:latest
-    ports:
-      - "8080:80"
-    command: --model-id BAAI/bge-m3
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]

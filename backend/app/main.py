@@ -17,11 +17,10 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-EMBED_URL = "http://127.0.0.1:8080/v1/embeddings"
-EMBED_MODEL = "BAAI/bge-m3"
-BM25_MODEL = "Qdrant/bm25"
-OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
+OLLAMA_URL = "http://127.0.0.1:11434"
 OLLAMA_MODEL = "qwen2.5:14b"
+EMBED_MODEL = "bge-m3"
+BM25_MODEL = "Qdrant/bm25"
 
 # mock 预过滤
 COURSE_ID = "CSC447"
@@ -48,14 +47,18 @@ CUE_RE = re.compile(
 
 
 def embed(texts):
-    r = requests.post(EMBED_URL, json={"model": EMBED_MODEL, "input": texts})
+    r = requests.post(
+        f"{OLLAMA_URL}/api/embed",
+        json={"model": EMBED_MODEL, "input": texts},
+        timeout=120,
+    )
     r.raise_for_status()
-    return [d["embedding"] for d in r.json()["data"]]
+    return r.json()["embeddings"]
 
 
 def rewrite(query: str) -> str:
     r = requests.post(
-        OLLAMA_URL,
+        f"{OLLAMA_URL}/api/chat",
         json={
             "model": OLLAMA_MODEL,
             "messages": [

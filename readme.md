@@ -37,7 +37,7 @@ Docker Compose
 ├── fastapi
 ├── qdrant
 ├── mongodb
-├── tei
+├── ollama
 └── redis（可选）
 
 
