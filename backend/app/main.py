@@ -46,14 +46,24 @@ CUE_RE = re.compile(
 )
 
 
-def embed(texts):
+def _embed_one(text):
     r = requests.post(
-        f"{OLLAMA_URL}/api/embed",
-        json={"model": EMBED_MODEL, "input": texts},
+        f"{OLLAMA_URL}/api/embeddings",
+        json={"model": EMBED_MODEL, "prompt": text},
         timeout=120,
     )
     r.raise_for_status()
-    return r.json()["embeddings"]
+    return r.json()["embedding"]
+
+
+def embed(texts):
+    out = []
+    total = len(texts)
+    for i, t in enumerate(texts, 1):
+        out.append(_embed_one(t))
+        if i == 1 or i == total or i % 100 == 0:
+            print(f"embed {i}/{total}")
+    return out
 
 
 def rewrite(query: str) -> str:
