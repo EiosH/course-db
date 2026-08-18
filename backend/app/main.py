@@ -1,3 +1,4 @@
+import argparse
 import re
 import requests
 from qdrant_client import QdrantClient
@@ -196,52 +197,70 @@ def build_prompt(question, grouped_hits):
     return "\n\n".join(parts)
 
 
-chunks = load_screenshots() + load_transcript()
-print(
-    f"screen_shot {sum(c['type']=='screen_shot' for c in chunks)} 段, "
-    f"transcript {sum(c['type']=='transcript' for c in chunks)} 段"
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--ingest",
+    action="store_true",
+    help="chunk + embed + upsert; default skips ingest and searches existing data",
 )
+args = parser.parse_args()
 
-vectors = embed([c["text"] for c in chunks])
+client = QdrantClient(url="http://localhost:6333", check_compatibility=False)
 
-client = QdrantClient(url="http://localhost:6333")
+if args.ingest:
+    chunks = load_screenshots() + load_transcript()
+    print(
+        f"screen_shot {sum(c['type']=='screen_shot' for c in chunks)} 段, "
+        f"transcript {sum(c['type']=='transcript' for c in chunks)} 段"
+    )
 
-if client.collection_exists("docs"):
-    client.delete_collection("docs")
+    vectors = embed([c["text"] for c in chunks])
 
-client.create_collection(
-    "docs",
-    vectors_config={
-        "dense": VectorParams(size=len(vectors[0]), distance=Distance.COSINE),
-    },
-    sparse_vectors_config={
-        "bm25": SparseVectorParams(modifier=Modifier.IDF),
-    },
-)
-for field in ("course_id", "quarter", "lecturer", "type"):
-    client.create_payload_index("docs", field, field_schema=PayloadSchemaType.KEYWORD)
+    if client.collection_exists("docs"):
+        client.delete_collection("docs")
 
-client.upsert(
-    "docs",
-    points=[
-        PointStruct(
-            id=i,
-            vector={
-                "dense": vectors[i],
-                "bm25": Document(text=c["text"], model=BM25_MODEL),
-            },
-            payload={
-                "text": c["text"],
-                "timestamp": c["timestamp"],
-                "type": c["type"],
-                "course_id": COURSE_ID,
-                "quarter": QUARTER,
-                "lecturer": LECTURER,
-            },
+    client.create_collection(
+        "docs",
+        vectors_config={
+            "dense": VectorParams(size=len(vectors[0]), distance=Distance.COSINE),
+        },
+        sparse_vectors_config={
+            "bm25": SparseVectorParams(modifier=Modifier.IDF),
+        },
+    )
+    for field in ("course_id", "quarter", "lecturer", "type"):
+        client.create_payload_index(
+            "docs", field, field_schema=PayloadSchemaType.KEYWORD
         )
-        for i, c in enumerate(chunks)
-    ],
-)
+
+    UPSERT_BATCH = 64
+    total = len(chunks)
+    for start in range(0, total, UPSERT_BATCH):
+        batch = chunks[start : start + UPSERT_BATCH]
+        client.upsert(
+            "docs",
+            points=[
+                PointStruct(
+                    id=start + j,
+                    vector={
+                        "dense": vectors[start + j],
+                        "bm25": Document(text=c["text"], model=BM25_MODEL),
+                    },
+                    payload={
+                        "text": c["text"],
+                        "timestamp": c["timestamp"],
+                        "type": c["type"],
+                        "course_id": COURSE_ID,
+                        "quarter": QUARTER,
+                        "lecturer": LECTURER,
+                    },
+                )
+                for j, c in enumerate(batch)
+            ],
+        )
+        print(f"upsert {min(start + UPSERT_BATCH, total)}/{total}")
+else:
+    print("skip ingest, search existing collection")
 
 out = []
 for i, query in enumerate(load_queries(), 1):
