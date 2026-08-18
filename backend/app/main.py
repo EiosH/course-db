@@ -1,4 +1,5 @@
 import argparse
+import json
 import re
 import requests
 from qdrant_client import QdrantClient
@@ -27,16 +28,29 @@ BM25_MODEL = "Qdrant/bm25"
 COURSE_ID = "CSC447"
 QUARTER = "2026-Spring"
 LECTURER = "Eric J. Fredericks"
-TIMESTAMP = "01:22:09"
-MOCK_MUST = [
+TIMESTAMP = "01:22:09"  # mock 当前播放位置，仅时间类问题启用
+BASE_MUST = [
     FieldCondition(key="course_id", match=MatchValue(value=COURSE_ID)),
     FieldCondition(key="quarter", match=MatchValue(value=QUARTER)),
     FieldCondition(key="lecturer", match=MatchValue(value=LECTURER)),
-    FieldCondition(key="timestamp", match=MatchValue(value=TIMESTAMP)),
 ]
 
-REWRITE_SYSTEM = """You are a search query rewrite assistant. Rewrite the user's question into a query that is better for retrieving lecture notes, screenshot OCR text, and lecture transcripts.
-Resolve pronouns, expand abbreviations, and keep key terms. Output only the rewritten query, with no explanation."""
+REWRITE_SYSTEM = f"""You are a search query rewrite assistant for lecture retrieval.
+
+Current playback timestamp (mock): {TIMESTAMP}
+
+Output JSON only:
+{{
+  "rewritten_query": "...",
+  "hard_constraints": []
+}}
+
+Rules:
+- rewritten_query: better for retrieving lecture notes, screenshot OCR, and transcripts
+- hard_constraints: pre-filters for retrieval
+- ONLY add {{"field":"timestamp","operator":"eq","value":"{TIMESTAMP}"}} when the user explicitly asks about what is being discussed RIGHT NOW at the current moment in the lecture (e.g. "现在在讲什么", "what are we covering now")
+- Do NOT add timestamp for general knowledge questions, definitions, or past/future topics
+- If no timestamp constraint is needed, hard_constraints must be []"""
 
 # transcript：合并相邻字幕，约 400 token；静音超过 15s 切新块
 TRANSCRIPT_MAX_CHARS = 1600
@@ -68,7 +82,7 @@ def embed(texts):
     return out
 
 
-def rewrite(query: str) -> str:
+def rewrite(query: str) -> dict:
     r = requests.post(
         f"{OLLAMA_URL}/api/chat",
         json={
@@ -78,11 +92,20 @@ def rewrite(query: str) -> str:
                 {"role": "user", "content": query},
             ],
             "stream": False,
+            "format": "json",
         },
         timeout=120,
     )
     r.raise_for_status()
-    return r.json()["message"]["content"].strip()
+    raw = r.json()["message"]["content"].strip()
+    if raw.startswith("```"):
+        raw = re.sub(r"^```(?:json)?\s*", "", raw)
+        raw = re.sub(r"\s*```$", "", raw)
+    data = json.loads(raw)
+    return {
+        "rewritten_query": data["rewritten_query"],
+        "hard_constraints": data.get("hard_constraints", []),
+    }
 
 
 def load_queries(path="query.txt"):
@@ -155,14 +178,26 @@ def load_transcript(path="transcript.vtt"):
     return chunks
 
 
-def type_filter(doc_type: str) -> Filter:
+def constraints_to_must(constraints):
+    must = []
+    for c in constraints:
+        if c.get("field") == "timestamp" and c.get("operator", "eq") == "eq":
+            must.append(
+                FieldCondition(key="timestamp", match=MatchValue(value=c["value"]))
+            )
+    return must
+
+
+def build_filter(doc_type: str, constraints) -> Filter:
     return Filter(
-        must=MOCK_MUST + [FieldCondition(key="type", match=MatchValue(value=doc_type))]
+        must=BASE_MUST
+        + [FieldCondition(key="type", match=MatchValue(value=doc_type))]
+        + constraints_to_must(constraints)
     )
 
 
-def search(client, q, doc_type, limit=3):
-    flt = type_filter(doc_type)
+def search(client, q, doc_type, constraints, limit=3):
+    flt = build_filter(doc_type, constraints)
     return client.query_points(
         collection_name="docs",
         prefetch=[
@@ -197,6 +232,20 @@ def build_prompt(question, grouped_hits):
     return "\n\n".join(parts)
 
 
+def answer(prompt: str) -> str:
+    r = requests.post(
+        f"{OLLAMA_URL}/api/chat",
+        json={
+            "model": OLLAMA_MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": False,
+        },
+        timeout=120,
+    )
+    r.raise_for_status()
+    return r.json()["message"]["content"].strip()
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--ingest",
@@ -228,7 +277,7 @@ if args.ingest:
             "bm25": SparseVectorParams(modifier=Modifier.IDF),
         },
     )
-    for field in ("course_id", "quarter", "lecturer", "type"):
+    for field in ("course_id", "quarter", "lecturer", "type", "timestamp"):
         client.create_payload_index(
             "docs", field, field_schema=PayloadSchemaType.KEYWORD
         )
@@ -264,27 +313,27 @@ else:
 
 out = []
 for i, query in enumerate(load_queries(), 1):
-    q = rewrite(query)
+    rewritten = rewrite(query)
+    q = rewritten["rewritten_query"]
+    constraints = rewritten["hard_constraints"]
     print(f"\nquery:    {query}")
-    print(f"rewrite:  {q}")
+    print("rewrite:")
+    print(json.dumps(rewritten, ensure_ascii=False, indent=2))
 
     grouped = {
-        "screen_shot": search(client, q, "screen_shot"),
-        "transcript": search(client, q, "transcript"),
+        "screen_shot": search(client, q, "screen_shot", constraints),
+        "transcript": search(client, q, "transcript", constraints),
     }
     prompt = build_prompt(query, grouped)
+    answer_text = answer(prompt)
     print(prompt)
-
-    answers = []
-    for doc_type, hits in grouped.items():
-        for h in hits:
-            p = h.payload
-            answers.append(f"[{p['type']}] ({p['timestamp']})\n{p['text']}")
+    print(f"\nanswer:\n{answer_text}")
 
     out.append(
-        f"{i}. 原问题: {query}\nrewrite: {q}\n\n"
+        f"{i}. 原问题: {query}\n"
+        f"rewrite:\n{json.dumps(rewritten, ensure_ascii=False, indent=2)}\n\n"
         f"prompt:\n{prompt}\n\n"
-        f"答案:\n" + ("\n\n".join(answers) if answers else "(无结果)")
+        f"答案:\n{answer_text}"
     )
 
 open("answer.txt", "w", encoding="utf-8").write("\n\n==========\n\n".join(out) + "\n")
