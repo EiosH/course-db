@@ -46,23 +46,24 @@ CUE_RE = re.compile(
 )
 
 
-def _embed_one(text):
-    r = requests.post(
-        f"{OLLAMA_URL}/api/embeddings",
-        json={"model": EMBED_MODEL, "prompt": text},
-        timeout=120,
-    )
-    r.raise_for_status()
-    return r.json()["embedding"]
+EMBED_BATCH = 32
 
 
 def embed(texts):
     out = []
     total = len(texts)
-    for i, t in enumerate(texts, 1):
-        out.append(_embed_one(t))
-        if i == 1 or i == total or i % 100 == 0:
-            print(f"embed {i}/{total}")
+    for i in range(0, total, EMBED_BATCH):
+        batch = texts[i : i + EMBED_BATCH]
+        r = requests.post(
+            f"{OLLAMA_URL}/api/embed",
+            json={"model": EMBED_MODEL, "input": batch},
+            timeout=300,
+        )
+        if not r.ok:
+            raise RuntimeError(f"Ollama embed {r.status_code}: {r.text}")
+        out.extend(r.json()["embeddings"])
+        done = min(i + EMBED_BATCH, total)
+        print(f"embed {done}/{total}")
     return out
 
 
