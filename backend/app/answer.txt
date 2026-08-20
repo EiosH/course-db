@@ -1,0 +1,484 @@
+1. 原问题: What does this mean now?
+rewrite:
+{
+  "rewritten_query": "define current topic or concept being discussed",
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "eq",
+      "value": "01:22:09"
+    }
+  ]
+}
+
+prompt:
+Answer the student's question using the lecture materials below.
+
+Question: What does this mean now?
+
+Lecture materials:
+
+[screen_shot] (01:22:09)
+Type: slide, code
+
+Content:
+Title: Collections: Fold Left vs. Fold Right
+
+Question: How does Scala implement foldLeft and foldRight?
+
+Left:
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+Right:
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+Bullet Points:
+- var
+- while
+- This is glorified iteration, implemented directly in Scala.
+
+答案:
+Based on the lecture materials provided, the implementation of `foldLeft` and `foldRight` methods in Scala appears to be straightforward but involves some underlying operations that can make them less efficient than they seem at first glance.
+
+For `foldLeft`, it starts with an accumulator (`acc`) initialized to a starting value `z`. It then iterates through each element of the collection from start to finish, updating the accumulator by applying a binary function `(B, A) => B` between the current state of the accumulator and the head of the remaining elements. This process continues until all elements have been processed.
+
+For `foldRight`, the method takes an additional step compared to `foldLeft`. It first reverses the entire list before starting its iteration (`these = reverse`). Then, similar to `foldLeft`, it iterates through each element from end to start, using a binary function `(A, B) => B` to update an accumulator initialized with value `z`.
+
+The lecture materials highlight that both methods use imperative constructs like mutable variables (`var`) and loops (`while`), which are used to iterate over the collection elements directly. However, they point out this as "glorified iteration," meaning these functional operations (`foldLeft`, `foldRight`) are fundamentally implemented using traditional loop-based techniques behind the scenes.
+
+Therefore, when the question asks "What does this mean now?" in the context of these slides and bullet points, it refers to understanding that while Scala provides elegant functional abstractions like `foldLeft` and `foldRight`, under the hood, they rely on less sophisticated imperative programming constructs. This implies that although these methods are part of functional programming paradigms, their implementation involves a degree of imperativity for efficiency or simplicity in the language's design.
+
+==========
+
+2. 原问题: CSC447 How do programming languages deal with concurrent execution？
+rewrite:
+{
+  "rewritten_query": "How do programming languages handle concurrency in CSC447?",
+  "hard_constraints": []
+}
+
+prompt:
+Answer the student's question using the lecture materials below.
+
+Question: CSC447 How do programming languages deal with concurrent execution？
+
+Lecture materials:
+
+[screen_shot] (00:40:41)
+Type: slide
+
+Content:
+Top: reed.cs.depaul.edu – To exit full screen, press Esc
+Left:
+  CSC 447 - Concepts of Programming Languages
+  Map, Filter, and Fold Examples
+  Instructor: Eric J. Fredericks
+Bottom: 1
+
+[screen_shot] (00:00:48)
+Type: webpage
+
+Content:
+Top: Concepts of Programming Languages - Spring 2026
+
+Left:
+Announcements
+- New Announcement
+  Wednesday Office Hours EARLY this week!
+  Posted Monday, April 20, 2026 at 9:58 PM
+  Hello students. I will need to move my usual Wednesday office hours on Zoom for this week only up to Wednesday, April 22, from 5:45pm - 6:30pm. The Zoom link is https://depaul.zoom.us/my/eric.fredericks. Tuesday office hours before class are unaffected, and...
+    Read More
+- CORRECTED: Wednesday Office Hours Moved to Friday Evening
+  Posted Tuesday, April 7, 2026 at 1:03 PM
+  CORRECTION on the date: Wednesday office hours moved to Friday, April 10 from 6:00 - 6:45pm. Hello students, I will need to move my usual Wednesday office hours on Zoom for this week only to Friday, April 10, from 6:00 - 6:45pm. The Zoom link is https://depaul.zoom.us/my/eric.fredericks. Tuesday office...
+    Read More
+- Welcome to CSC447!
+  Welcome to CSC 447 - Concepts of Programming Languages. Our first class will be on Tuesday, March 31. We will meet live each Tuesday at 5:45pm in CDM 228. Students in Section 901 must attend class in person. Students in Section 941 will attend the live class in person, or remotely by joining the Zoom...
+    Read More
+
+Right:
+Updates
+- 33 New Assignment Submissions
+
+CDM COL Recordings
+- CSC-447-901
+  Online Lectures
+  - 04/14/26 17:45
+  - 04/07/26 17:45
+  - 03/31/26 17:45
+
+Direct Link
+
+CDM Proctored Exams
+
+[screen_shot] (00:00:46)
+Type: webpage
+
+Content:
+Top: Concepts of Programming Languages - Spring 2026
+
+Left:
+Announcements
+- New Announcement
+  Wednesday Office Hours EARLY this week!
+  Posted Monday, April 20, 2026 at 9:58 PM
+  Hello students. I will need to move my usual Wednesday office hours on Zoom for this week only up to Wednesday, April 22, from 5:45pm - 6:30pm. The Zoom link is https://depaul.zoom.us/my/eric.fredericks. Tuesday office hours before class are unaffected, and...
+    Read More
+- CORRECTED: Wednesday Office Hours Moved to Friday Evening
+  Posted Tuesday, April 7, 2026 at 1:03 PM
+  CORRECTION on the date: Wednesday office hours moved to Friday, April 10 from 6:00 - 6:45pm. Hello students, I will need to move my usual Wednesday office hours on Zoom for this week only to Friday, April 10, from 6:00 - 6:45pm. The Zoom link is https://depaul.zoom.us/my/eric.fredericks. Tuesday office...
+    Read More
+- Welcome to CSC447!
+  Welcome to CSC 447 - Concepts of Programming Languages. Our first class will be on Tuesday, March 31. We will meet live each Tuesday at 5:45pm in CDM 228. Students in Section 901 must attend class in person. Students in Section 941 will attend the live class in person, or remotely by joining the Zoom...
+    Read More
+
+Right:
+Updates
+- 33 New Assignment Submissions
+
+CDM COL Recordings
+- CSC-447-901
+  Online Lectures
+  - 04/14/26 17:45
+  - 04/07/26 17:45
+  - 03/31/26 17:45
+
+Direct Link
+
+CDM Proctored Exams
+
+[transcript] (00:04:24.300 --> 00:06:22.699)
+At the end, we'll do some review work going back through the study guide. I've picked out specific questions to look at in the study guide. Some of the stuff we're covering tonight that's new is in the study guide, but we won't do that stuff tonight because you haven't had a chance to go think about it or study it. So next week we'll spend some time on that as well. So that's the plan in the next couple weeks. Any questions about that? Good. So let's get started with a quiz. The first three questions are very similar to one another. This is about that whole thing we talked about with statements and expressions. And remember we said that some languages have statements, and some languages have expressions, and some languages have both. In fact, most languages that have statements also have expressions. I can't think of any that don't have both of them except for one. So, these are three questions that are very similar. We have C, Java, and Scala. So do we think that C has statements and expressions both? Yes. That's a yes. You agree? All right. That is correct. How about Java? True. Also? Right. Cool. How about Scala? False. False. What do we have in Scala? Expressions and only expressions. Right. Great. I'm learning Rust right now, and Rust has both statements and expressions. So, just as you study languages, and then you go out in the world and learn new languages, you can apply these ideas to your learning. In fact, I'm working through the Rust programming language book, and I'm finding that I'm going a little, I'm slow because of my busy life, but when I tackle chapter,
+
+[transcript] (02:50:21.540 --> 02:52:20.860)
+and then the result is going to be whatever the value of the second expression was, whatever it evaluated to, and whatever is stored in the variable store. That's how we process this sequence of expressions. When you're doing the S parentheses C, is that like getting the value stored? This is like in Java, it would be like on a hash map you're calling get. like conceptually, right? Does that make sense? Yeah. In Scala, this is just the syntax for that. It's defined as an apply method, but it does what you would think a get would do in Java Azure. Okay. So, here's our summary. So we saw a lot of mathematical symbols and it can be overwhelming. But we know intuitively what we're doing because we're used to thinking about how programs execute and what their behavior is. We're used to dealing with variables. We're used to dealing with addition, multiplication, evaluating things, calling functions, sequencing expressions. We're used to that. Now we've just given you a formal mathematical language to describe it. Okay, so operational semantics define a language in terms of operations of an abstract machine. There are different kinds of semantic definitions, denotational semantics, axiomatic semantics. I am not up on all of these details. This is getting into the theory, this is getting into programming language research that I dreamed of doing and never did because I had a job and a mortgage and decided that I was just kind of keep doing that. to school all the time for the rest of it. So then we have judgments and reduction rules.
+
+[transcript] (02:16:09.279 --> 02:18:08.539)
+Again, the semantics is just meaning. We talked earlier about syntax and semantics. We're going to identify the difference between syntactic and semantic expressions in operational semantics. We'll identify judgments and reduction rules, apply reduction rules to execute programming. If all that sounds really abstract, hang on tight. So here's a small program. We're making this language up. So our language is going to have integer expressions, statements, assignment. Our statements are going to be assignment or statement lists or conditionals or loops. So we're used to thinking, you know, whenever you learn a new programming language, you want to learn about, like, well, what can I do? How do I control the flow of the program? Here's an example program in our made up programming language called factorial. This should look familiar to you. So we're just iteratively computing the factorial, right? So we've made this up in syntax while I do and then it ends with OD. A lot of times there are languages out there in the world that use like the reverse of the control word, the keyword. You see here that same idea with a headline. Operational semantics defines meaning of programs relative to an abstract machine. The abstract machine, so this is a reduction machine. machine operates on a program and reduces it to its semantic quote value. And we're gonna use this funny little character here. I had to look it up. It's called a psi. It's a Greek letter. When you see that this is the beginning of okay we're starting to get into math land. So all this is gonna do is be a symbol that
+
+答案:
+The lecture materials provided don't contain direct information about how programming languages handle concurrent execution, as the focus seems to be on operational semantics and the syntax and semantics of simple language constructs such as expressions, statements, assignments, conditionals, loops, etc. However, based on common knowledge in computer science, I can provide a general answer regarding how programming languages deal with concurrent execution.
+
+Programming languages address concurrent execution by providing mechanisms that allow multiple threads or processes to run simultaneously within the same program. The specific methods vary depending on the language but generally include:
+
+1. **Threads and Processes:** Languages like Java and C# have built-in support for creating threads, which are lightweight processes that can execute concurrently. Each thread has its own stack but shares memory with other threads in the process.
+
+2. **Synchronization Primitives:** To manage concurrent access to shared resources without causing data inconsistencies (like race conditions or deadlocks), programming languages provide synchronization primitives such as mutexes, semaphores, monitors, and condition variables.
+
+3. **Concurrency Constructs:** Some languages offer high-level concurrency constructs like futures/promises, async/await syntax for asynchronous operations, channels for message passing between concurrent processes, and actors model support (like in Erlang or Akka framework).
+
+4. **Parallel Collections:** For tasks that can be easily divided into sub-tasks to run concurrently, such as data processing on arrays or collections, languages may provide parallelized collection classes which automatically distribute work across threads.
+
+5. **Concurrency Libraries and Frameworks:** Beyond the core language features, many programming environments come with libraries (like Java's java.util.concurrent package) and frameworks that simplify common concurrency patterns.
+
+6. **Language Design Choices:** Some modern languages are designed from the ground up to support functional or reactive programming paradigms which inherently facilitate concurrent execution without explicit thread management.
+
+To understand how your specific course material covers this topic, you would need to refer to lectures specifically addressing concurrency in the context of operational semantics or other relevant class discussions and assignments. If not covered yet, it may be a future lecture topic or an advanced section of the syllabus.
+
+==========
+
+3. 原问题: What is Fold Left exactly?
+rewrite:
+{
+  "rewritten_query": "definition of fold left in programming",
+  "hard_constraints": []
+}
+
+prompt:
+Answer the student's question using the lecture materials below.
+
+Question: What is Fold Left exactly?
+
+Lecture materials:
+
+[screen_shot] (01:59:49)
+Type: slide, code
+
+Content:
+Title: Scala LazyList: Fold Definitions
+
+Question: How are LazyList's fold s defined?
+
+Left:
+Fold Left
+// foldLeft is defined in class
+// scala.collection.immutable.LazyList
+@tailrec
+override def foldLeft[B](z: B)(op: (B, A) => B): B =
+  if (isEmpty) z
+  else tail.foldLeft(op(z, head))(op)
+
+Right:
+Fold Right
+// foldRight is defined in trait
+// scala.collection.IterableOnceOps
+def foldRight[B](z: B)(op: (A, B) => B): B =
+  reversed.foldLeft(z)((b, a) => op(a, b))
+
+Bottom:
+Fold
+// fold is defined in trait
+// scala.collection.IterableOnceOps
+def fold[A1 >: A](z: A1)(op: (A1, A1) => A1): A1 =
+  foldLeft(z)(op) // dynamic dispatch to LazyList!
+
+[screen_shot] (02:58:19)
+Type: slide, code
+
+Content:
+Top: Scala LazyList: Fold Definitions
+Question: How are LazyList's fold s defined?
+
+Left: Fold Left
+Code:
+// foldLeft is defined in class
+// scala.collection.immutable.LazyList
+@tailrec
+override def foldLeft[B](z: B)(op: (B, A) => B): B =
+  if (isEmpty) z
+  else tail.foldLeft(op(z, head))(op)
+
+Right: Fold Right
+Code:
+// foldRight is defined in trait
+// scala.collection.IterableOnceOps
+def foldRight[B](z: B)(op: (A, B) => B): B =
+  reversed.foldLeft(z)((b, a) => op(a, b))
+
+protected def reversed: Iterable[A] = {
+  var xs: immutable.List[A] = immutable.Nil
+  val it = iterator
+  while (it.hasNext) xs = it.next() :: xs
+  xs
+}
+
+Bottom: Fold
+Code:
+// fold is defined in trait
+// scala.collection.IterableOnceOps
+def fold[A1 >: A](z: A1)(op: (A1, A1) => A1): A1 =
+  foldLeft(z)(op) // dynamic dispatch to LazyList!
+
+Notes:
+- var / while
+- Continual evaluation of tail while retaining each "cons cell" in memory
+
+[screen_shot] (02:58:31)
+Type: slide, code
+
+Content:
+Top: Scala LazyList: Fold Definitions
+Question: How are LazyList's fold s defined?
+
+Left: Fold Left
+Code:
+// foldLeft is defined in class
+// scala.collection.immutable.LazyList
+@tailrec
+override def foldLeft[B](z: B)(op: (B, A) => B): B =
+  if (isEmpty) z
+  else tail.foldLeft(op(z, head))(op)
+
+Right: Fold Right
+Code:
+// foldRight is defined in trait
+// scala.collection.IterableOnceOps
+def foldRight[B](z: B)(op: (A, B) => B): B =
+  reversed.foldLeft(z)((b, a) => op(a, b))
+
+protected def reversed: Iterable[A] = {
+  var xs: immutable.List[A] = immutable.Nil
+  val it = iterator
+  while (it.hasNext) xs = it.next() :: xs
+  xs
+}
+
+Bottom: Fold
+Code:
+// fold is defined in trait
+// scala.collection.IterableOnceOps
+def fold[A1 >: A](z: A1)(op: (A1, A1) => A1): A1 =
+  foldLeft(z)(op) // dynamic dispatch to LazyList!
+
+Notes:
+- var / while
+- Continual evaluation of tail while retaining each "cons cell" in memory
+
+[transcript] (01:17:54.939 --> 01:20:15.220)
+Hey, what happened? Oh, it could not find class main. Okay, fine. Let's rebuild the document. Maybe something. Let's say building. There, there it is. Okay, I don't know why it did that. This is exception in initialize. Oh, it's, yeah. Exception and initializer error is just because it's calling this main function that I'm defining by extending this app thing. So that's what that means. So yeah. So this is what we saw. So we're in foldLeft, and if we keep going, this is our list foldLeft. And foldLeft is going to be defined. Let's see here's a foldLeft. Let me show up. It is the same. Line 79. It must be, that's weird. It must be going into linear CCOPS. Okay, so this is me just being an experienced programmer looking at the output and figuring out what's doing. So the point of all this, there is a point to all this. Ultimately our fold left is gonna be defined, our fold is going to be defined in here. And actually, I'll check one last thing. Let's just go to fold. That's what I was looking for. In iterable once, it says fold, and it's got this junk here. Okay, so that's where I'm going to get my fold definition. And you'll see that somebody asked, Is fold calling fold left? Is fold calling left? It's actually going to be defined as calling fold left. So if you keep going, you keep looking around and asking these questions, you'll find inside the scala library the implementations. So fold left, there's a lot of junk here. We're going to talk about these pluses and these little arrow things that you see here.
+
+[transcript] (02:11:55.760 --> 02:14:16.799)
+In this case, when I find it, we're gonna match on this case where the key equals n. And we'll return i. So that's why i just get index.7. So we got sort of the behavior that we had when we were using tail recursion, able to abort the execution early by leveraging this technique. What happens when we do it with fold left though? So same idea, but now let's just apply the fold left definition. We do that, we'll see if we start off like this, findLeft3 with our indexed ints. If we call findLeft, we have this defined, this function defined, but then we execute this fold l. So it'll translate that to fold l, so fold l check not found and then this is the value of my indexed ins. When I call fold l I'm going to match on this case here so it will then replace with that whole thing and it will going and it will construct this huge expression to the point where it'll run out of memory. It'll never actually evaluate. So this is what happens with fold left using the Haskell style fold left. We never call check. The other one we were checking at each point. In fold R we were checking at each point. This time we never do. The program doesn't terminate. So that's bad, fold L, in this case. So here's a summary. We've learned about strictness and non-strictness, and I wanted to find a way to relate them to folds, because in the larger world of functional programming, non-strictness is key for folds. So we can leverage Scala's non-strict semantics for collections processing. Expressions can have a value if some of their sub expressions do not. Call by name is super useful.
+
+[transcript] (01:10:49.699 --> 01:13:02.900)
+So this idea does relate to that kind of conceptually. So we'll talk about that. And then we have more purely functional folds. So there's a language out there called Haskell, which I was learning about four years ago. I kind of stopped because I focused a little more on Scala. But Haskell has a different way of defining folds. And we're going to look at that. And then we're going to talk about delegating execution control to a fold without sacrificing efficiency or program termination. This was the big aha for me. And I'll talk you through kind of my whole thought process of how I got here. We'll take a very simple example. We have this list of integers. And I'm going to just do this 0 to 10,000 and call toList on it. And if I want to sum those, then this is my old school. like if I'm in Java, if I'm in C, I use mutability. That's what this var is. So I iterate through the integers, and I just keep adding to my accumulator. And so if you do this with that list, you get this value here. So we've been talking about folds, So if we have a list of events, we can call fold on it. We can use zero as our zero element, we can use this underscore, plus underscore, to do that addition. So we're passing this as a function, this is just shorthand for a function, that x, comma, y, and a two arrow and then x plus y. So we can do it functionally this way. So if we have a fold left, we can actually, instead of calling fold, we can call fold left. In this case, I just did 0 to 10. So sum l, I'm going to do this fold from the left and get 55.
+
+答案:
+Based on the provided lecture materials and context, Fold Left (often written as `foldLeft` in Scala) is a method used for accumulating values while iterating through an immutable data structure like a LazyList or a List from the start of the list to its end.
+
+In the specific implementation shown for Scala's `LazyList`, `foldLeft` takes two parameters:
+
+1. A seed value (`z`) which initializes the accumulation process.
+2. An operation (`op`) that defines how to combine an element of the LazyList with the accumulated result so far.
+
+The method is implemented recursively using tail recursion, marked by the `@tailrec` annotation, ensuring efficient execution without excessive stack usage. Here's a simplified version of its logic:
+- If the list is empty (`isEmpty`), it returns the seed value (`z`) because there are no elements to process.
+- Otherwise, it applies the operation (`op`) between the seed and the head of the LazyList, then recursively calls itself on the tail (rest) of the list with this new result as the new "seed" value.
+
+This recursive call continues until the entire list is processed. It's important because it allows for efficient processing by ensuring that only one stack frame is used during the entire operation, avoiding potential stack overflow issues when dealing with large lists.
+
+The `foldLeft` method in Scala collections leverages this tail-recursive approach to provide a powerful means of aggregating or transforming data in a functional style without side effects. This aligns well with Scala's emphasis on immutable data structures and functional programming principles.
+
+==========
+
+4. 原问题: I don't understand the answer of Question 9
+rewrite:
+{
+  "rewritten_query": "clarification on the answer to question 9 in lecture notes",
+  "hard_constraints": []
+}
+
+prompt:
+Answer the student's question using the lecture materials below.
+
+Question: I don't understand the answer of Question 9
+
+Lecture materials:
+
+[screen_shot] (00:38:47)
+Type: webpage
+
+Content:
+Top:
+Eric Fredericks (username: EFREDER1)
+
+Time Limit
+120 minutes
+
+Availability
+Available on Apr 14, 2026 9:00 PM until Apr 20, 2026 5:45 PM
+
+Attempts
+Allowed - 1, Completed - 0
+
+Instructions
+Note: All restrictions on the availability of this quiz have been bypassed for this preview.
+When the timer reaches zero, your answers will be automatically saved and submitted.
+
+Click "Start Quiz" to begin Attempt 1.
+
+Bottom:
+Start Quiz!
+
+[screen_shot] (02:39:37)
+Type: slide
+
+Content:
+Title: Assignments and Sequential Composition
+
+Left:
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. Ident
+6. | PrgSeq
+7. | '(' Expr ')'
+8. Ident ::= 'a' | 'b' | ... | 'z'
+9. PrgSeq ::= Prg | Prg ';' PrgSeq
+10. Prg ::= Ident ':=' Expr
+
+Example:
+1. a := 2+3;
+2. b := (a:=a+1)*4;
+3. a := b-5
+
+Right:
+Semantics:
+? How do we store/look up values of variables?
+
+Bottom right: Page number 11
+
+[screen_shot] (00:38:48)
+Type: webpage
+
+Content:
+Top:
+Eric Fredericks (username: EFREDER1)
+
+Time Limit
+120 minutes
+
+Availability
+Available on Apr 14, 2026 9:00 PM until Apr 20, 2026 5:45 PM
+
+Attempts
+Allowed - 1, Completed - 0
+
+Instructions
+Note: All restrictions on the availability of this quiz have been bypassed for this preview.
+When the timer reaches zero, your answers will be automatically saved and submitted.
+
+Click "Start Quiz" to begin Attempt 1.
+
+Bottom:
+Start Quiz!
+
+[transcript] (03:04:28.500 --> 03:06:20.719)
+And I could go through them. But I am being lazy because it's late. And... You don't have to worry about this. This is the factorial example. So there's the code. This is applying the rules to make that program execute. And then this is the reduction. Once I saw the word lemma, I was like, oh, I feel like I'm in advanced theory classes and I don't feel like doing lemmas. So you don't have to either. And I'm sure of that because last quarter I told them the same thing. And the point here is that we're going to focus on what's in the quiz and what's in the study guide and stuff. So don't freak out. If you get what's in the study guide, you're going to be good. Definitely do it. So we're left with 10 minutes, which isn't really enough time. We could do maybe one or two questions, but if you all wanna just call it a night, you can do that too. I'll definitely make time next week to review some of the study guide stuff, especially the formal cementing stuff. But please bring questions, because if you're working on it, hopefully you're working on it, I mean, you are gonna have a new homework and a new quiz, but if you're working on it and you've got questions, bring them to class so we can talk for them. Otherwise, what I'll do is I'll allocate a certain amount of time. I'll just go through certain questions and pick the ones that I think are more challenging. So all right. So what do I want to do? Want to go through anything, or you're all like, no, it's 8.51. Let me go home. I used to sit in your chairs, by the way. There's one professor I used to watch on Saturday morning,
+
+[transcript] (00:27:18.700 --> 00:29:32.139)
+Actually, I don't know if Scala defines the plus on a string as a function or method and it kind of doesn't matter. But when we do a plus on strings, what are we doing? We're, what's that? Concatenating. And when we concatenate two strings, what do we have to do in order to do that concatenation? Literally what happens in memory is if you have like foo and bar and you're concatenating, What's happening is the JVM is allocating, I think it's six slots. And it's literally copying. I can't remember if the JVM uses zero termination. I don't think it does. It's literally copying each of these. So in order to do that literal copying, it actually has to evaluate. It has to know what the strings are. So if you have some complex expression, like you're calling a function or a method, and you're getting back a string, you have to do that first and get the string back, and then do whatever's on the right side of the plus and do that part, and then that's going to be held in memory, and then this copying is going to happen to create the new string. So plus on strings is going to be strict. Does everybody agree? Because you have to actually evaluate each side of the what's on the side of the plus. How about tail on lists? Does that have to be strict? Trick question, I guess, maybe. I don't know. not really a trick question. So the answer is it has to be, because the way lists are defined. Everything is sort of constructed in memory, right. There is something we'll talk about today and in another lecture called a lazy list where that's not true, but in a regular tale it is. Okay so
+
+[transcript] (00:36:28.320 --> 00:38:55.619)
+And then over here, the other f of 3 is going to do f of 2 and f of 2. And then for each of the 2s, we're going to call f of 1. And so on, down to 0, right? We stop at 0. Yep. So 0. You see the pattern, I'm going to just sort of smush them on each other because I'm running out of room. You can count them up or you can actually just say well 2, 4, 6, 8, 10, 12, 13, 13, 13, 13, 13, 14, 13. There are eight ones, there are four twos, there are two threes, and there's one four. So this will be 16 plus 8 plus 4 plus 2 plus 1, so we get 28, 30, 31. I do this a lot when we do order of growth in data structures. I draw these things like this because sometimes these recursive functions can sort of explode in your head, and you're like, you know, you start, you do F of 5. You've got a whole other tree of 4 over here, right? And so it starts exploding. It's exponential. So in this case, it's going to be 31. Yeah. All right. And those are all of our questions. So I'm going to go ahead and submit this and make sure that we have . Can I go back? We can go back. We can go back. But it's too late. We will go back. Let me finish the quiz. I messed something up. Isn't that what you were going to call me out on? I just want to mention you that question 3 is a wrong answer. I did the wrong answer for question 3. Yeah. How did I do that? You didn't stop me. Did I just click the wrong thing? Yeah. That's probably what I did because we talked about this. That's the statements and expressions stuff, right? Question 3. What did I have? True. Oh, well, that's wrong. I know the answer.
+
+答案:
+From the provided lecture materials and transcripts, it doesn't seem like there is direct information on how to solve or understand the specific details of Question 9 from the quiz related to the factorial example or any other concrete question listed in the transcript. However, based on the context given:
+
+The instructor mentions not worrying about certain aspects that might be perceived as advanced theory (like lemmas) and emphasizes focusing on what's covered in the study guide for preparing for quizzes.
+
+For understanding Question 9, it would likely be helpful to revisit the material covered in class regarding assignments and sequential composition of programs. The syntax provided suggests that expressions involving arithmetic operations ('+', '-', '*') are defined along with how variables (Ident) can be assigned values through these expressions. Additionally, PrgSeq (program sequence) is mentioned which involves sequences of commands separated by semicolons.
+
+If you're having trouble understanding the solution to Question 9, it might help to:
+1. Revisit the lecture slides and videos focusing on assignments, variable usage, and how operations are sequenced.
+2. Understand the semantics of storing and looking up values for variables (mentioned in the "Semantics" part of the slide).
+3. Look into examples provided during lectures or study guides that deal with similar concepts.
+
+If you can provide more specific details about Question 9 (what it asks, what options were given), I might be able to give a clearer explanation based on the general principles mentioned above.

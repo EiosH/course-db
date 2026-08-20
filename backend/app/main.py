@@ -20,7 +20,7 @@ from qdrant_client.models import (
 )
 
 OLLAMA_URL = "http://127.0.0.1:11434"
-OLLAMA_MODEL = "qwen2.5:14b"
+OLLAMA_MODEL = "qwen3:32b"
 EMBED_MODEL = "bge-m3"
 BM25_MODEL = "Qdrant/bm25"
 
