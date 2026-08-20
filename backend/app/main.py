@@ -1,7 +1,12 @@
 import argparse
 import json
 import re
+import time
+from datetime import datetime
+
 import requests
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -23,6 +28,8 @@ OLLAMA_URL = "http://127.0.0.1:11434"
 OLLAMA_MODEL = "qwen3:32b"
 EMBED_MODEL = "bge-m3"
 BM25_MODEL = "Qdrant/bm25"
+OLLAMA_CHAT_TIMEOUT = 600  # qwen3:32b 生成较慢，120s 易超时
+OLLAMA_CHAT_RETRIES = 3
 
 # mock 预过滤
 COURSE_ID = "CSC447"
@@ -82,22 +89,44 @@ def embed(texts):
     return out
 
 
+def ollama_chat(messages, *, format=None, timeout=OLLAMA_CHAT_TIMEOUT):
+    """Call Ollama /api/chat with retries; think=False avoids qwen3 long thinking."""
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": messages,
+        "stream": False,
+        "think": False,
+    }
+    if format is not None:
+        payload["format"] = format
+
+    last_err = None
+    for attempt in range(1, OLLAMA_CHAT_RETRIES + 1):
+        try:
+            r = requests.post(
+                f"{OLLAMA_URL}/api/chat",
+                json=payload,
+                timeout=timeout,
+            )
+            r.raise_for_status()
+            return r.json()["message"]["content"].strip()
+        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError) as e:
+            last_err = e
+            if attempt < OLLAMA_CHAT_RETRIES:
+                wait = 5 * attempt
+                print(f"ollama chat timeout/error (attempt {attempt}/{OLLAMA_CHAT_RETRIES}), retry in {wait}s...")
+                time.sleep(wait)
+    raise last_err
+
+
 def rewrite(query: str) -> dict:
-    r = requests.post(
-        f"{OLLAMA_URL}/api/chat",
-        json={
-            "model": OLLAMA_MODEL,
-            "messages": [
-                {"role": "system", "content": REWRITE_SYSTEM},
-                {"role": "user", "content": query},
-            ],
-            "stream": False,
-            "format": "json",
-        },
-        timeout=120,
+    raw = ollama_chat(
+        [
+            {"role": "system", "content": REWRITE_SYSTEM},
+            {"role": "user", "content": query},
+        ],
+        format="json",
     )
-    r.raise_for_status()
-    raw = r.json()["message"]["content"].strip()
     if raw.startswith("```"):
         raw = re.sub(r"^```(?:json)?\s*", "", raw)
         raw = re.sub(r"\s*```$", "", raw)
@@ -233,17 +262,62 @@ def build_prompt(question, grouped_hits):
 
 
 def answer(prompt: str) -> str:
-    r = requests.post(
-        f"{OLLAMA_URL}/api/chat",
-        json={
-            "model": OLLAMA_MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-            "stream": False,
-        },
-        timeout=120,
-    )
-    r.raise_for_status()
-    return r.json()["message"]["content"].strip()
+    return ollama_chat([{"role": "user", "content": prompt}])
+
+
+def format_hits(hits) -> str:
+    if not hits:
+        return ""
+    blocks = []
+    for h in hits:
+        p = h.payload
+        score = f"{h.score:.4f}" if h.score is not None else ""
+        blocks.append(f"[{p['timestamp']}] score={score}\n{p['text']}")
+    return "\n\n---\n\n".join(blocks)
+
+
+def write_excel(rows, path: str):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "answers"
+    headers = [
+        "序号",
+        "原问题",
+        "rewritten_query",
+        "hard_constraints",
+        "course_id",
+        "quarter",
+        "lecturer",
+        "screen_shot检索",
+        "transcript检索",
+        "答案",
+    ]
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+    wrap = Alignment(vertical="top", wrap_text=True)
+    for row in rows:
+        ws.append(row)
+        for cell in ws[ws.max_row]:
+            cell.alignment = wrap
+
+    widths = {
+        "A": 6,
+        "B": 36,
+        "C": 40,
+        "D": 28,
+        "E": 12,
+        "F": 14,
+        "G": 20,
+        "H": 50,
+        "I": 50,
+        "J": 50,
+    }
+    for col, width in widths.items():
+        ws.column_dimensions[col].width = width
+    wb.save(path)
 
 
 parser = argparse.ArgumentParser()
@@ -311,7 +385,7 @@ if args.ingest:
 else:
     print("skip ingest, search existing collection")
 
-out = []
+out_rows = []
 for i, query in enumerate(load_queries(), 1):
     rewritten = rewrite(query)
     q = rewritten["rewritten_query"]
@@ -329,12 +403,22 @@ for i, query in enumerate(load_queries(), 1):
     print(prompt)
     print(f"\nanswer:\n{answer_text}")
 
-    out.append(
-        f"{i}. 原问题: {query}\n"
-        f"rewrite:\n{json.dumps(rewritten, ensure_ascii=False, indent=2)}\n\n"
-        f"prompt:\n{prompt}\n\n"
-        f"答案:\n{answer_text}"
+    out_rows.append(
+        [
+            i,
+            query,
+            q,
+            json.dumps(constraints, ensure_ascii=False),
+            COURSE_ID,
+            QUARTER,
+            LECTURER,
+            format_hits(grouped["screen_shot"]),
+            format_hits(grouped["transcript"]),
+            answer_text,
+        ]
     )
 
-open("answer.txt", "w", encoding="utf-8").write("\n\n==========\n\n".join(out) + "\n")
-print("wrote answer.txt")
+stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+out_path = f"answer_{stamp}.xlsx"
+write_excel(out_rows, out_path)
+print(f"wrote {out_path}")
