@@ -36,7 +36,7 @@ COURSE_ID = "CSC447"
 QUARTER = "2026-Spring"
 LECTURER = "Eric J. Fredericks"
 TIMESTAMP = "01:22:09"  # mock 当前播放位置，仅时间类问题启用
-TIME_WINDOW_SEC = 600  # 时间戳约束：±10 分钟窗口，覆盖 transcript 区间块
+TIME_WINDOW_SEC = 120  # 时间戳约束：±2 分钟，优先当前画面/台词
 BASE_MUST = [
     FieldCondition(key="course_id", match=MatchValue(value=COURSE_ID)),
     FieldCondition(key="quarter", match=MatchValue(value=QUARTER)),
@@ -46,7 +46,7 @@ BASE_MUST = [
 # 每路召回候选数 → rerank 后保留
 DENSE_LIMIT = 10
 BM25_LIMIT = 10
-TIME_WINDOW_LIMIT = 20  # 时间戳约束：filter-only 召回上限
+TIME_NEAR_TOP_K = 4  # 时间类问题：取距播放点最近的 K 条
 RERANK_TOP_K = 4
 RERANK_MIN_SCORE = 0.0  # Qwen3-Reranker: yes/no logit diff，>0 表示相关
 
@@ -65,7 +65,7 @@ Rules:
 - Focus on domain terms (e.g. foldLeft, concurrency, operational semantics). Do NOT include course codes, instructor names, or quarter — those are already filtered
 - hard_constraints: pre-filters for retrieval
 - ONLY add {{"field":"timestamp","operator":"range","value":"{TIMESTAMP}"}} when the user explicitly asks about what is being discussed RIGHT NOW at the current moment (e.g. "现在在讲什么", "what are we covering now", "what does this mean now")
-- When adding a timestamp constraint, rewritten_query must name concrete lecture content to retrieve (slide title, code snippet, concept on screen) — never vague phrases like "current topic" or "discussion context"
+- When adding a timestamp constraint, rewritten_query can be a short placeholder (e.g. "current slide and transcript"); retrieval will use the timestamp, not keywords
 - Do NOT add timestamp for general knowledge questions, definitions, or past/future topics
 - If no timestamp constraint is needed, hard_constraints must be []"""
 
@@ -76,6 +76,15 @@ Strict rules:
 2. If the materials are empty, irrelevant, or insufficient, reply exactly: I don't know based on the retrieved lecture materials.
 3. Answer directly and concisely. No role-play, persona, course-intro filler, or speculative asides.
 4. Prefer short factual answers grounded in the materials; quote key phrases when helpful."""
+
+NOW_ANSWER_SYSTEM = """You explain what the lecture is covering RIGHT NOW using ONLY the retrieved materials (current slide OCR and/or transcript near the playback timestamp).
+
+Strict rules:
+1. The materials ARE the current lecture content. Summarize/explain them to answer the student.
+2. Do NOT refuse with "I don't know" when materials are present — even if the question is vague ("what does this mean now").
+3. Use ONLY facts in the materials. Never invent outside knowledge.
+4. Answer directly and concisely; quote key phrases (slide title, code, spoken lines) when helpful.
+5. Only if materials are completely empty, reply exactly: I don't know based on the retrieved lecture materials."""
 
 # transcript：合并相邻字幕，约 400 token；静音超过 15s 切新块
 TRANSCRIPT_MAX_CHARS = 1600
@@ -311,32 +320,50 @@ def _scroll_time_filter(center: float, ts_value: str, doc_type: str | None, *, u
     return Filter(must=must)
 
 
-def search_time_window(client, constraints, doc_type: str | None = None, limit=TIME_WINDOW_LIMIT):
-    """Filter-only recall for chunks overlapping the playback timestamp."""
+def _scroll_all(client, scroll_filter: Filter, page_size: int = 256):
+    """Paginate Qdrant scroll so large time windows are not truncated."""
+    out = []
+    offset = None
+    while True:
+        points, offset = client.scroll(
+            collection_name="docs",
+            scroll_filter=scroll_filter,
+            limit=page_size,
+            offset=offset,
+            with_payload=True,
+        )
+        out.extend(points)
+        if offset is None or not points:
+            break
+    return out
+
+
+def search_time_window(client, constraints, doc_type: str | None = None, limit=TIME_NEAR_TOP_K):
+    """Filter-only recall: chunks nearest to the playback timestamp (no semantic search)."""
     ts_value = timestamp_constraint_value(constraints)
     if ts_value is None:
         return []
 
     center = ts_to_sec(ts_value)
-    points, _ = client.scroll(
-        collection_name="docs",
-        scroll_filter=_scroll_time_filter(center, ts_value, doc_type, use_range=True),
-        limit=256,
-        with_payload=True,
+    points = _scroll_all(
+        client,
+        _scroll_time_filter(center, ts_value, doc_type, use_range=True),
     )
     if not points:
         # 兼容旧索引：仅有 timestamp 精确字段、无 start_sec/end_sec
-        points, _ = client.scroll(
-            collection_name="docs",
-            scroll_filter=_scroll_time_filter(
-                center, ts_value, doc_type, use_range=False
-            ),
-            limit=256,
-            with_payload=True,
+        points = _scroll_all(
+            client,
+            _scroll_time_filter(center, ts_value, doc_type, use_range=False),
         )
 
     ranked = sorted(points, key=lambda p: time_distance(center, p.payload))
-    return ranked[:limit]
+    kept = []
+    for p in ranked[:limit]:
+        payload = dict(p.payload)
+        payload["time_distance"] = time_distance(center, payload)
+        kept.append(SimpleNamespace(id=p.id, payload=payload, score=None))
+    return kept
+
 
 
 def build_filter(doc_type: str, constraints) -> Filter:
@@ -430,10 +457,10 @@ def build_prompt(question, hits):
     return "\n\n".join(parts)
 
 
-def answer(prompt: str) -> str:
+def answer(prompt: str, *, system: str = ANSWER_SYSTEM) -> str:
     return ollama_chat(
         [
-            {"role": "system", "content": ANSWER_SYSTEM},
+            {"role": "system", "content": system},
             {"role": "user", "content": prompt},
         ]
     )
@@ -449,8 +476,12 @@ def format_hits(hits, channel: str = "") -> str:
         tag = f" channel={channel}" if channel else ""
         rerank = p.get("rerank_score")
         extra = f" rerank={rerank:.4f}" if rerank is not None else ""
+        td = p.get("time_distance")
+        if td is not None:
+            extra += f" dt={td:.1f}s"
         blocks.append(f"[{p['timestamp']}] score={score}{tag}{extra}\n{p['text']}")
     return "\n\n---\n\n".join(blocks)
+
 
 
 def write_excel(rows, path: str):
@@ -584,41 +615,50 @@ for i, query in enumerate(load_queries(), 1):
     print(json.dumps(rewritten, ensure_ascii=False, indent=2))
 
     ts_value = timestamp_constraint_value(constraints)
-    tw_ss = search_time_window(client, constraints, "screen_shot") if ts_value else []
-    tw_tr = search_time_window(client, constraints, "transcript") if ts_value else []
 
-    ss_dense = search_dense(client, q, "screen_shot", constraints)
-    ss_bm25 = search_bm25(client, q, "screen_shot", constraints)
-    tr_dense = search_dense(client, q, "transcript", constraints)
-    tr_bm25 = search_bm25(client, q, "transcript", constraints)
-
-    print(
-        f"recall time_window ss={len(tw_ss)} tr={len(tw_tr)} | "
-        f"screen_shot dense={len(ss_dense)} bm25={len(ss_bm25)} | "
-        f"transcript dense={len(tr_dense)} bm25={len(tr_bm25)}"
-    )
-
-    time_hits = merge_unique_hits(tw_ss, tw_tr)
-    if ts_value and not time_hits:
-        print(
-            "warning: timestamp filter matched 0 chunks — "
-            "re-run with --ingest to rebuild start_sec/end_sec indexes"
+    if ts_value:
+        # “现在在讲什么”：只按时间邻近取内容，不做语义检索 / rerank
+        tw_ss = search_time_window(
+            client, constraints, "screen_shot", limit=TIME_NEAR_TOP_K
         )
-    candidates = merge_unique_hits(time_hits, ss_dense, ss_bm25, tr_dense, tr_bm25)
-    if ts_value and time_hits:
-        # “现在在讲什么”类问题：以时间窗口命中为主，用原问题 rerank，不过滤低分
-        final_hits = rerank_and_filter(
-            query, time_hits, min_score=-999.0
+        tw_tr = search_time_window(
+            client, constraints, "transcript", limit=TIME_NEAR_TOP_K
+        )
+        center = ts_to_sec(ts_value)
+        final_hits = sorted(
+            merge_unique_hits(tw_ss, tw_tr),
+            key=lambda h: time_distance(center, h.payload),
+        )[:TIME_NEAR_TOP_K]
+        ss_dense = tw_ss
+        ss_bm25 = []
+        tr_dense = tw_tr
+        tr_bm25 = []
+        print(
+            f"time-only recall ss={len(tw_ss)} tr={len(tw_tr)} → kept {len(final_hits)}"
         )
         if not final_hits:
-            final_hits = time_hits[:RERANK_TOP_K]
+            print(
+                "warning: timestamp filter matched 0 chunks — "
+                "re-run with --ingest to rebuild start_sec/end_sec indexes"
+            )
+        prompt = build_prompt(query, final_hits)
+        answer_text = answer(prompt, system=NOW_ANSWER_SYSTEM)
     else:
+        ss_dense = search_dense(client, q, "screen_shot", constraints)
+        ss_bm25 = search_bm25(client, q, "screen_shot", constraints)
+        tr_dense = search_dense(client, q, "transcript", constraints)
+        tr_bm25 = search_bm25(client, q, "transcript", constraints)
+        print(
+            f"recall screen_shot dense={len(ss_dense)} bm25={len(ss_bm25)} | "
+            f"transcript dense={len(tr_dense)} bm25={len(tr_bm25)}"
+        )
+        candidates = merge_unique_hits(ss_dense, ss_bm25, tr_dense, tr_bm25)
         rerank_query = f"{query}\n{q}"
         final_hits = rerank_and_filter(rerank_query, candidates)
-    print(f"rerank kept {len(final_hits)}/{len(candidates)}")
+        print(f"rerank kept {len(final_hits)}/{len(candidates)}")
+        prompt = build_prompt(query, final_hits)
+        answer_text = answer(prompt)
 
-    prompt = build_prompt(query, final_hits)
-    answer_text = answer(prompt)
     print(prompt)
     print(f"\nanswer:\n{answer_text}")
 
@@ -631,11 +671,11 @@ for i, query in enumerate(load_queries(), 1):
             COURSE_ID,
             QUARTER,
             LECTURER,
-            format_hits(ss_dense, "semantic"),
+            format_hits(ss_dense, "semantic" if not ts_value else "time"),
             format_hits(ss_bm25, "keyword"),
-            format_hits(tr_dense, "semantic"),
+            format_hits(tr_dense, "semantic" if not ts_value else "time"),
             format_hits(tr_bm25, "keyword"),
-            format_hits(final_hits, "rerank"),
+            format_hits(final_hits, "time" if ts_value else "rerank"),
             answer_text,
         ]
     )
