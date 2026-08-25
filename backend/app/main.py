@@ -46,7 +46,7 @@ BASE_MUST = [
 # 每路召回候选数 → rerank 后保留
 DENSE_LIMIT = 10
 BM25_LIMIT = 10
-TIME_NEAR_TOP_K = 4  # 时间类问题：取距播放点最近的 K 条
+TIME_NEAR_TOP_K = 4  # 时间类问题：最终保留条数（screen_shot / transcript 各半）
 RERANK_TOP_K = 4
 RERANK_MIN_SCORE = 0.0  # Qwen3-Reranker: yes/no logit diff，>0 表示相关
 
@@ -422,6 +422,24 @@ def merge_unique_hits(*hit_lists):
     return merged
 
 
+def pick_by_type_quota(hits, top_k=RERANK_TOP_K):
+    """Keep both screen_shot and transcript when available (half/half, fill remainder)."""
+    if not hits or top_k <= 0:
+        return []
+    ss = [h for h in hits if h.payload.get("type") == "screen_shot"]
+    tr = [h for h in hits if h.payload.get("type") == "transcript"]
+    other = [h for h in hits if h.payload.get("type") not in ("screen_shot", "transcript")]
+    ss_n = min(len(ss), (top_k + 1) // 2)
+    tr_n = min(len(tr), top_k - ss_n)
+    # 一侧不足时把名额补给另一侧
+    if ss_n + tr_n < top_k:
+        ss_n = min(len(ss), top_k - tr_n)
+    if ss_n + tr_n < top_k:
+        tr_n = min(len(tr), top_k - ss_n)
+    picked = merge_unique_hits(ss[:ss_n], tr[:tr_n], other)
+    return picked[:top_k]
+
+
 def rerank_and_filter(query: str, hits, top_k=RERANK_TOP_K, min_score=RERANK_MIN_SCORE):
     if not hits:
         return []
@@ -431,16 +449,15 @@ def rerank_and_filter(query: str, hits, top_k=RERANK_TOP_K, min_score=RERANK_MIN
     if isinstance(scores, (int, float)):
         scores = [scores]
     ranked = sorted(zip(hits, scores), key=lambda x: x[1], reverse=True)
-    kept = []
+    scored = []
     for h, s in ranked:
         if s < min_score:
             continue
         payload = dict(h.payload)
         payload["rerank_score"] = float(s)
-        kept.append(SimpleNamespace(id=h.id, payload=payload, score=float(s)))
-        if len(kept) >= top_k:
-            break
-    return kept
+        scored.append(SimpleNamespace(id=h.id, payload=payload, score=float(s)))
+    # 按分数已排序；配额保证 transcript 不被 screen_shot 全部挤掉
+    return pick_by_type_quota(scored, top_k)
 
 
 def build_prompt(question, hits):
@@ -618,6 +635,7 @@ for i, query in enumerate(load_queries(), 1):
 
     if ts_value:
         # “现在在讲什么”：只按时间邻近取内容，不做语义检索 / rerank
+        # 每类各取 top_k，再按类型配额合并，避免截图挤掉 transcript
         tw_ss = search_time_window(
             client, constraints, "screen_shot", limit=TIME_NEAR_TOP_K
         )
@@ -625,16 +643,24 @@ for i, query in enumerate(load_queries(), 1):
             client, constraints, "transcript", limit=TIME_NEAR_TOP_K
         )
         center = ts_to_sec(ts_value)
-        final_hits = sorted(
+        # 各类内部已按时间距离排序；配额合并保证两边都进最终结果
+        final_hits = pick_by_type_quota(
             merge_unique_hits(tw_ss, tw_tr),
+            TIME_NEAR_TOP_K,
+        )
+        # 最终再按时间距离排一下，方便阅读
+        final_hits = sorted(
+            final_hits,
             key=lambda h: time_distance(center, h.payload),
-        )[:TIME_NEAR_TOP_K]
+        )
         ss_dense = tw_ss
         ss_bm25 = []
         tr_dense = tw_tr
         tr_bm25 = []
         print(
-            f"time-only recall ss={len(tw_ss)} tr={len(tw_tr)} → kept {len(final_hits)}"
+            f"time-only recall ss={len(tw_ss)} tr={len(tw_tr)} → kept {len(final_hits)} "
+            f"(ss={sum(1 for h in final_hits if h.payload.get('type')=='screen_shot')} "
+            f"tr={sum(1 for h in final_hits if h.payload.get('type')=='transcript')})"
         )
         if not final_hits:
             print(
