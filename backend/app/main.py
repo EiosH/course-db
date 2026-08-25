@@ -46,6 +46,7 @@ BASE_MUST = [
 # 每路召回候选数 → rerank 后保留
 DENSE_LIMIT = 10
 BM25_LIMIT = 10
+TIME_WINDOW_LIMIT = 20  # 时间戳约束：filter-only 召回上限
 RERANK_TOP_K = 4
 RERANK_MIN_SCORE = 0.0  # Qwen3-Reranker: yes/no logit diff，>0 表示相关
 
@@ -64,6 +65,7 @@ Rules:
 - Focus on domain terms (e.g. foldLeft, concurrency, operational semantics). Do NOT include course codes, instructor names, or quarter — those are already filtered
 - hard_constraints: pre-filters for retrieval
 - ONLY add {{"field":"timestamp","operator":"range","value":"{TIMESTAMP}"}} when the user explicitly asks about what is being discussed RIGHT NOW at the current moment (e.g. "现在在讲什么", "what are we covering now", "what does this mean now")
+- When adding a timestamp constraint, rewritten_query must name concrete lecture content to retrieve (slide title, code snippet, concept on screen) — never vague phrases like "current topic" or "discussion context"
 - Do NOT add timestamp for general knowledge questions, definitions, or past/future topics
 - If no timestamp constraint is needed, hard_constraints must be []"""
 
@@ -267,6 +269,74 @@ def timestamp_constraint_value(constraints):
         if c.get("field") == "timestamp":
             return c.get("value", TIMESTAMP)
     return None
+
+
+def time_distance(center: float, payload: dict) -> float:
+    start = payload.get("start_sec")
+    end = payload.get("end_sec")
+    if start is not None and end is not None:
+        if start <= center <= end:
+            return 0.0
+        return min(abs(start - center), abs(end - center))
+    ts = payload.get("timestamp", "")
+    if ts and "-->" not in ts:
+        try:
+            return abs(ts_to_sec(ts) - center)
+        except (ValueError, AttributeError):
+            pass
+    return float("inf")
+
+
+def _scroll_time_filter(center: float, ts_value: str, doc_type: str | None, *, use_range: bool):
+    must = list(BASE_MUST)
+    if doc_type:
+        must.append(FieldCondition(key="type", match=MatchValue(value=doc_type)))
+    if use_range:
+        must.extend(
+            [
+                FieldCondition(
+                    key="start_sec",
+                    range=Range(lte=center + TIME_WINDOW_SEC),
+                ),
+                FieldCondition(
+                    key="end_sec",
+                    range=Range(gte=center - TIME_WINDOW_SEC),
+                ),
+            ]
+        )
+    else:
+        must.append(
+            FieldCondition(key="timestamp", match=MatchValue(value=ts_value))
+        )
+    return Filter(must=must)
+
+
+def search_time_window(client, constraints, doc_type: str | None = None, limit=TIME_WINDOW_LIMIT):
+    """Filter-only recall for chunks overlapping the playback timestamp."""
+    ts_value = timestamp_constraint_value(constraints)
+    if ts_value is None:
+        return []
+
+    center = ts_to_sec(ts_value)
+    points, _ = client.scroll(
+        collection_name="docs",
+        scroll_filter=_scroll_time_filter(center, ts_value, doc_type, use_range=True),
+        limit=256,
+        with_payload=True,
+    )
+    if not points:
+        # 兼容旧索引：仅有 timestamp 精确字段、无 start_sec/end_sec
+        points, _ = client.scroll(
+            collection_name="docs",
+            scroll_filter=_scroll_time_filter(
+                center, ts_value, doc_type, use_range=False
+            ),
+            limit=256,
+            with_payload=True,
+        )
+
+    ranked = sorted(points, key=lambda p: time_distance(center, p.payload))
+    return ranked[:limit]
 
 
 def build_filter(doc_type: str, constraints) -> Filter:
@@ -513,20 +583,38 @@ for i, query in enumerate(load_queries(), 1):
     print("rewrite:")
     print(json.dumps(rewritten, ensure_ascii=False, indent=2))
 
+    ts_value = timestamp_constraint_value(constraints)
+    tw_ss = search_time_window(client, constraints, "screen_shot") if ts_value else []
+    tw_tr = search_time_window(client, constraints, "transcript") if ts_value else []
+
     ss_dense = search_dense(client, q, "screen_shot", constraints)
     ss_bm25 = search_bm25(client, q, "screen_shot", constraints)
     tr_dense = search_dense(client, q, "transcript", constraints)
     tr_bm25 = search_bm25(client, q, "transcript", constraints)
 
     print(
-        f"recall screen_shot dense={len(ss_dense)} bm25={len(ss_bm25)} | "
+        f"recall time_window ss={len(tw_ss)} tr={len(tw_tr)} | "
+        f"screen_shot dense={len(ss_dense)} bm25={len(ss_bm25)} | "
         f"transcript dense={len(tr_dense)} bm25={len(tr_bm25)}"
     )
 
-    candidates = merge_unique_hits(ss_dense, ss_bm25, tr_dense, tr_bm25)
-    # 用原问题 + rewritten query 一起做相关性判断，减少无关噪声进入答案
-    rerank_query = f"{query}\n{q}"
-    final_hits = rerank_and_filter(rerank_query, candidates)
+    time_hits = merge_unique_hits(tw_ss, tw_tr)
+    if ts_value and not time_hits:
+        print(
+            "warning: timestamp filter matched 0 chunks — "
+            "re-run with --ingest to rebuild start_sec/end_sec indexes"
+        )
+    candidates = merge_unique_hits(time_hits, ss_dense, ss_bm25, tr_dense, tr_bm25)
+    if ts_value and time_hits:
+        # “现在在讲什么”类问题：以时间窗口命中为主，用原问题 rerank，不过滤低分
+        final_hits = rerank_and_filter(
+            query, time_hits, min_score=-999.0
+        )
+        if not final_hits:
+            final_hits = time_hits[:RERANK_TOP_K]
+    else:
+        rerank_query = f"{query}\n{q}"
+        final_hits = rerank_and_filter(rerank_query, candidates)
     print(f"rerank kept {len(final_hits)}/{len(candidates)}")
 
     prompt = build_prompt(query, final_hits)
