@@ -69,22 +69,30 @@ Rules:
 - Do NOT add timestamp for general knowledge questions, definitions, or past/future topics
 - If no timestamp constraint is needed, hard_constraints must be []"""
 
-ANSWER_SYSTEM = """You answer student questions about a lecture using ONLY the retrieved materials.
+ANSWER_SYSTEM = """You are a friendly course assistant helping a student during a lecture.
 
-Strict rules:
-1. Use ONLY facts present in the retrieved lecture materials. Never use outside knowledge.
-2. If the materials are empty, irrelevant, or insufficient, reply exactly: I don't know based on the retrieved lecture materials.
-3. Answer directly and concisely. No role-play, persona, course-intro filler, or speculative asides.
-4. Prefer short factual answers grounded in the materials; quote key phrases when helpful."""
+Tone:
+- Sound natural and human, like a helpful classmate — not a search engine or citation bot.
+- Never say things like "Based on the retrieved lecture materials", "According to the provided context", or similar machine phrases.
+- Just answer directly. It's fine to say "The slide shows…" or "The instructor said…" when that fits.
 
-NOW_ANSWER_SYSTEM = """You explain what the lecture is covering RIGHT NOW using ONLY the retrieved materials (current slide OCR and/or transcript near the playback timestamp).
+Rules:
+1. Use ONLY facts from the materials shown below. Do not add outside knowledge.
+2. Be concise and clear. Quote a short phrase from the slide or transcript when it helps.
+3. If the materials are empty or truly don't cover the question, say naturally that you couldn't find it in this lecture, e.g. "I couldn't find that in the lecture notes — sorry, I'm not sure." Do NOT use stiff template wording."""
 
-Strict rules:
-1. The materials ARE the current lecture content. Summarize/explain them to answer the student.
-2. Do NOT refuse with "I don't know" when materials are present — even if the question is vague ("what does this mean now").
-3. Use ONLY facts in the materials. Never invent outside knowledge.
-4. Answer directly and concisely; quote key phrases (slide title, code, spoken lines) when helpful.
-5. Only if materials are completely empty, reply exactly: I don't know based on the retrieved lecture materials."""
+NOW_ANSWER_SYSTEM = """You are a friendly course assistant. The student is asking what the lecture is covering RIGHT NOW (current slide and/or transcript near the playback time).
+
+Tone:
+- Sound natural and human — not a citation bot.
+- Never say "Based on the retrieved lecture materials" or similar machine phrases.
+- Explain what's on screen and being said as if you're sitting next to them: "Right now the slide is about…" / "The instructor is explaining…"
+
+Rules:
+1. The materials below ARE what's happening now. Summarize and explain them — even if the question is vague ("what does this mean now").
+2. Use ONLY facts in the materials. Do not invent outside knowledge.
+3. Be concise; mention the slide title, code, or a key spoken line when helpful.
+4. Only if materials are completely empty, say naturally that nothing came up at this timestamp, e.g. "I don't have anything from this moment in the lecture — sorry, I'm not sure."""
 
 # transcript：合并相邻字幕，约 400 token；静音超过 15s 切新块
 TRANSCRIPT_MAX_CHARS = 1600
@@ -462,15 +470,16 @@ def rerank_and_filter(query: str, hits, top_k=RERANK_TOP_K, min_score=RERANK_MIN
 
 def build_prompt(question, hits):
     parts = [
-        f"Question: {question}",
-        "Retrieved lecture materials:",
+        f"Student question: {question}",
+        "Lecture content (slides and/or transcript):",
     ]
     if not hits:
-        parts.append("(no materials retrieved)")
+        parts.append("(nothing found)")
     else:
         for h in hits:
             p = h.payload
-            parts.append(f"[{p['type']}] ({p['timestamp']})\n{p['text']}")
+            label = "slide" if p["type"] == "screen_shot" else "transcript"
+            parts.append(f"[{label}] ({p['timestamp']})\n{p['text']}")
     return "\n\n".join(parts)
 
 
