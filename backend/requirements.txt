@@ -1,3 +1,4 @@
 qdrant-client[fastembed]
 requests
 openpyxl
+sentence-transformers
