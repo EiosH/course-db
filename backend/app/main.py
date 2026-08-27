@@ -61,38 +61,81 @@ Output JSON only:
 }}
 
 Rules:
-- rewritten_query: concise technical search query for lecture notes, screenshot OCR, and transcripts
-- Focus on domain terms (e.g. foldLeft, concurrency, operational semantics). Do NOT include course codes, instructor names, or quarter — those are already filtered
+- rewritten_query: informative search string for lecture notes, screenshot OCR, and transcripts (not a tiny 3-word stub)
+- Keep concrete labels and domain terms. Do NOT include course codes, instructor names, or quarter — those are already filtered
+- If the user refers to a numbered quiz/homework item (e.g. "Question 9", "Problem 3", "Q9", "exercise 2"):
+  * KEEP the exact label in rewritten_query (e.g. "Question 9")
+  * Expand with retrieval intents: full question stem, options/choices, correct answer, instructor explanation
+  * Example shape: "Question 9 quiz stem options answer explanation"
+  * Do NOT invent the actual question text — you do not know it yet; only keep the label + intents
+- For other questions: expand with synonyms and technical terms that likely appear on slides/transcripts
 - hard_constraints: pre-filters for retrieval
 - ONLY add {{"field":"timestamp","operator":"range","value":"{TIMESTAMP}"}} when the user explicitly asks about what is being discussed RIGHT NOW at the current moment (e.g. "现在在讲什么", "what are we covering now", "what does this mean now")
 - When adding a timestamp constraint, rewritten_query can be a short placeholder (e.g. "current slide and transcript"); retrieval will use the timestamp, not keywords
 - Do NOT add timestamp for general knowledge questions, definitions, or past/future topics
 - If no timestamp constraint is needed, hard_constraints must be []"""
 
-ANSWER_SYSTEM = """You are a friendly course assistant helping a student during a lecture.
+# 用户提到 Question/Problem N 时：先用题号锚定检索，再用题干扩充 query（不硬编码任何题目内容）
+REF_LABEL_RE = re.compile(
+    r"(?i)\b((?:question|problem|exercise|quiz|hw|homework)\s*#?\s*\d+|q\s*\d+)\b"
+)
+ANCHOR_LIMIT = 8
+ANCHOR_EXPAND_CHARS = 900
+
+ANSWER_SYSTEM = """You are a friendly course assistant sitting next to the student during lecture.
 
 Tone:
-- Sound natural and human, like a helpful classmate — not a search engine or citation bot.
-- Never say things like "Based on the retrieved lecture materials", "According to the provided context", or similar machine phrases.
-- Just answer directly. It's fine to say "The slide shows…" or "The instructor said…" when that fits.
+- Warm, brief, human — like a helpful classmate, not a search system.
+- NEVER use machine phrases such as:
+  "Based on the retrieved lecture materials",
+  "I don't know based on the retrieved lecture materials",
+  "According to the provided context",
+  "The retrieved materials do not contain…".
+- Answer directly. Prefer "The slide shows…" / "The instructor said…".
 
 Rules:
-1. Use ONLY facts from the materials shown below. Do not add outside knowledge.
-2. Be concise and clear. Quote a short phrase from the slide or transcript when it helps.
-3. If the materials are empty or truly don't cover the question, say naturally that you couldn't find it in this lecture, e.g. "I couldn't find that in the lecture notes — sorry, I'm not sure." Do NOT use stiff template wording."""
+1. Use ONLY facts from the lecture content below. No outside knowledge.
+2. Be concise; quote a short phrase when helpful.
+3. If the content includes a quiz/homework item the student asked about, briefly restate that item (stem / key options) then explain the answer using the materials.
+4. If the content is empty or doesn't cover the question, apologize like a person, e.g.:
+   "Hmm, I couldn't find that in this lecture — sorry, I'm not sure."
+   "I looked through the notes but nothing on that popped up. Want to try rephrasing?"
+   Do NOT use stiff template refusals."""
 
 NOW_ANSWER_SYSTEM = """You are a friendly course assistant. The student is asking what the lecture is covering RIGHT NOW (current slide and/or transcript near the playback time).
 
 Tone:
-- Sound natural and human — not a citation bot.
-- Never say "Based on the retrieved lecture materials" or similar machine phrases.
-- Explain what's on screen and being said as if you're sitting next to them: "Right now the slide is about…" / "The instructor is explaining…"
+- Warm and human — like you're watching the lecture with them.
+- NEVER use "Based on the retrieved lecture materials", "I don't know based on the retrieved…", or similar.
+- Prefer "Right now the slide is about…" / "The instructor is explaining…".
 
 Rules:
-1. The materials below ARE what's happening now. Summarize and explain them — even if the question is vague ("what does this mean now").
-2. Use ONLY facts in the materials. Do not invent outside knowledge.
-3. Be concise; mention the slide title, code, or a key spoken line when helpful.
-4. Only if materials are completely empty, say naturally that nothing came up at this timestamp, e.g. "I don't have anything from this moment in the lecture — sorry, I'm not sure."""
+1. The content below IS what's happening now. Explain it even if the question is vague.
+2. Use ONLY those facts. No outside knowledge.
+3. Be concise; mention slide title, code, or a key spoken line when helpful.
+4. If content is empty, say something like:
+   "I don't have anything from this moment in the lecture — sorry!"
+"""
+
+# 无检索结果时不交给模型套模板，直接用人话回复
+NO_HIT_REPLY = (
+    "Hmm, I couldn't find anything useful in the lecture notes for that — "
+    "sorry, I'm not sure. Want to try asking another way?"
+)
+NO_HIT_NOW_REPLY = (
+    "I don't have anything from this moment in the lecture — sorry! "
+    "Maybe scrub a bit or ask about a specific term on the slide."
+)
+
+# 模型仍可能吐出的生硬拒答 → 替换成助手语气
+STIFF_REFUSAL_RE = re.compile(
+    r"(?is)^\s*(?:based on (?:the )?(?:retrieved )?lecture materials[,.]?\s*)?"
+    r"i don'?t know(?: based on the retrieved lecture materials)?\.?\s*$"
+)
+STIFF_REFUSAL_REPLY = (
+    "Hmm, I couldn't find that in this lecture — sorry, I'm not sure. "
+    "Want to try rephrasing?"
+)
 
 # transcript：合并相邻字幕，约 400 token；静音超过 15s 切新块
 TRANSCRIPT_MAX_CHARS = 1600
@@ -189,6 +232,129 @@ def rewrite(query: str) -> dict:
         "rewritten_query": data["rewritten_query"],
         "hard_constraints": data.get("hard_constraints", []),
     }
+
+
+def extract_ref_labels(*texts: str) -> list[str]:
+    """Detect quiz/homework labels like Question 9 / Q9 from user or rewrite text."""
+    found = []
+    seen = set()
+    for text in texts:
+        if not text:
+            continue
+        for m in REF_LABEL_RE.finditer(text):
+            label = re.sub(r"\s+", " ", m.group(1)).strip()
+            key = label.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            found.append(label)
+    return found
+
+
+def normalize_ref_variants(label: str) -> list[str]:
+    """Generate a few BM25-friendly surface forms for the same label."""
+    variants = [label]
+    m = re.search(r"(?i)(?:question|problem|exercise|quiz|hw|homework|q)\s*#?\s*(\d+)", label)
+    if m:
+        n = m.group(1)
+        variants.extend(
+            [
+                f"Question {n}",
+                f"question {n}",
+                f"Q{n}",
+                f"Q {n}",
+            ]
+        )
+    # unique preserve order
+    out, seen = [], set()
+    for v in variants:
+        k = v.lower()
+        if k not in seen:
+            seen.add(k)
+            out.append(v)
+    return out
+
+
+def label_match_score(text: str, label: str) -> int:
+    """Prefer chunks that literally contain the numbered item."""
+    low = text.lower()
+    variants = normalize_ref_variants(label)
+    score = 0
+    for v in variants:
+        if v.lower() in low:
+            score += 3
+    # slight boost if options / answer cues appear near quiz OCR
+    for cue in ("options", "correct", "points", "consider the", "which of the following"):
+        if cue in low:
+            score += 1
+    return score
+
+
+def expand_query_with_anchors(client, query: str, rewritten_q: str, constraints):
+    """
+    Two-stage expansion for labeled items (Question N, …):
+    1) BM25-anchor on the label to pull the actual stem/options from slides
+    2) Append that content into the search query (no hardcoded question text)
+    Returns (expanded_query, anchor_hits).
+    """
+    labels = extract_ref_labels(query, rewritten_q)
+    if not labels:
+        return rewritten_q, []
+
+    anchor_hits = []
+    snippets = []
+    for label in labels:
+        # Prefer exact-ish keyword recall for the label on screenshots (quiz OCR)
+        label_q = " ".join(normalize_ref_variants(label)[:3])
+        raw_hits = merge_unique_hits(
+            search_bm25(client, label_q, "screen_shot", constraints, limit=ANCHOR_LIMIT),
+            search_bm25(client, label, "transcript", constraints, limit=max(3, ANCHOR_LIMIT // 2)),
+        )
+        ranked = sorted(
+            raw_hits,
+            key=lambda h: (
+                -label_match_score(h.payload.get("text", ""), label),
+                -(h.score or 0),
+            ),
+        )
+        # keep only chunks that actually mention the label
+        kept = [
+            h
+            for h in ranked
+            if label_match_score(h.payload.get("text", ""), label) >= 3
+        ] or ranked[:2]
+        for h in kept[:4]:
+            if any(a.id == h.id for a in anchor_hits):
+                continue
+            anchor_hits.append(h)
+            text = h.payload.get("text", "").strip()
+            if text:
+                snippets.append(text[:ANCHOR_EXPAND_CHARS])
+
+    if not snippets:
+        # still keep the label prominent even if anchor miss
+        return f"{rewritten_q}\n{' '.join(labels)}", []
+
+    # Deduplicate near-identical OCR frames (same quiz page captured many times)
+    unique_snips = []
+    for s in snippets:
+        head = s[:160]
+        if any(head in u or u[:160] in s for u in unique_snips):
+            continue
+        unique_snips.append(s)
+        if len(unique_snips) >= 2:
+            break
+
+    expanded = (
+        f"{rewritten_q}\n"
+        f"Related lecture excerpt for {' / '.join(labels)}:\n"
+        + "\n---\n".join(unique_snips)
+    )
+    print(
+        f"anchor expand labels={labels} hits={len(anchor_hits)} "
+        f"snippet_chars={sum(len(s) for s in unique_snips)}"
+    )
+    return expanded, anchor_hits
 
 
 def load_queries(path="query.txt"):
@@ -483,13 +649,29 @@ def build_prompt(question, hits):
     return "\n\n".join(parts)
 
 
+def soften_stiff_refusal(text: str) -> str:
+    """Replace machine-style refusals with a natural assistant reply."""
+    if STIFF_REFUSAL_RE.match(text.strip()):
+        return STIFF_REFUSAL_REPLY
+    # 句中仍夹带那句机器话术时，整句换成助手语气
+    bad = (
+        "i don't know based on the retrieved lecture materials",
+        "based on the retrieved lecture materials",
+    )
+    low = text.lower()
+    if any(p in low for p in bad) and ("don't know" in low or "do not know" in low):
+        return STIFF_REFUSAL_REPLY
+    return text
+
+
 def answer(prompt: str, *, system: str = ANSWER_SYSTEM) -> str:
-    return ollama_chat(
+    raw = ollama_chat(
         [
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
         ]
     )
+    return soften_stiff_refusal(raw)
 
 
 def format_hits(hits, channel: str = "") -> str:
@@ -676,23 +858,49 @@ for i, query in enumerate(load_queries(), 1):
                 "warning: timestamp filter matched 0 chunks — "
                 "re-run with --ingest to rebuild start_sec/end_sec indexes"
             )
-        prompt = build_prompt(query, final_hits)
-        answer_text = answer(prompt, system=NOW_ANSWER_SYSTEM)
+            prompt = build_prompt(query, final_hits)
+            answer_text = NO_HIT_NOW_REPLY
+        else:
+            prompt = build_prompt(query, final_hits)
+            answer_text = answer(prompt, system=NOW_ANSWER_SYSTEM)
     else:
-        ss_dense = search_dense(client, q, "screen_shot", constraints)
-        ss_bm25 = search_bm25(client, q, "screen_shot", constraints)
-        tr_dense = search_dense(client, q, "transcript", constraints)
-        tr_bm25 = search_bm25(client, q, "transcript", constraints)
+        # 题号类问题：先锚定找回题干，再扩充 query（dense 仍用短 query，避免向量被长 OCR 冲淡）
+        q_short = q
+        q_expand, anchor_hits = expand_query_with_anchors(
+            client, query, q_short, constraints
+        )
+        q = q_expand  # excel / 日志里展示扩充后的 rewritten
+        if anchor_hits:
+            print("rewrite (after anchor expand):")
+            print(q[:500] + ("..." if len(q) > 500 else ""))
+
+        ss_dense = search_dense(client, q_short, "screen_shot", constraints)
+        ss_bm25 = search_bm25(client, q_expand, "screen_shot", constraints)
+        tr_dense = search_dense(client, q_short, "transcript", constraints)
+        tr_bm25 = search_bm25(client, q_expand, "transcript", constraints)
+        # 额外用题号本身做一次短 BM25，稳住字面命中
+        labels = extract_ref_labels(query, q_short)
+        label_bm25 = []
+        for lab in labels:
+            label_bm25.extend(
+                search_bm25(client, lab, "screen_shot", constraints, limit=5)
+            )
         print(
             f"recall screen_shot dense={len(ss_dense)} bm25={len(ss_bm25)} | "
-            f"transcript dense={len(tr_dense)} bm25={len(tr_bm25)}"
+            f"transcript dense={len(tr_dense)} bm25={len(tr_bm25)} | "
+            f"anchors={len(anchor_hits)} label_bm25={len(label_bm25)}"
         )
-        candidates = merge_unique_hits(ss_dense, ss_bm25, tr_dense, tr_bm25)
-        rerank_query = f"{query}\n{q}"
+        candidates = merge_unique_hits(
+            anchor_hits, label_bm25, ss_dense, ss_bm25, tr_dense, tr_bm25
+        )
+        rerank_query = f"{query}\n{q_expand}"
         final_hits = rerank_and_filter(rerank_query, candidates)
         print(f"rerank kept {len(final_hits)}/{len(candidates)}")
         prompt = build_prompt(query, final_hits)
-        answer_text = answer(prompt)
+        if not final_hits:
+            answer_text = NO_HIT_REPLY
+        else:
+            answer_text = answer(prompt)
 
     print(prompt)
     print(f"\nanswer:\n{answer_text}")
