@@ -76,11 +76,77 @@ Rules:
 - Do NOT add timestamp for general knowledge questions, definitions, or past/future topics
 - If no timestamp constraint is needed, hard_constraints must be []"""
 
-# 定位短语（Question 9 等）：查询侧扩成整体 token，入库 BM25 同步写入同名 token。
-# BM25 词袋会拆开 "Question"+"9"；把 "Question 9" 收成 phquestion9 当作一个词即可，无需全文 scroll。
+# 多词定位短语（任意 "Label + 数字"）：收成单个 BM25 token，查询侧同步扩词。
+# token = "ph" + 去空白标点(label+num)，由规则动态生成（不是写死某个题号）。
 ANCHOR_PHRASE_RE = re.compile(
-    r"(?i)\b((?:question|problem|exercise|quiz|hw|homework|slide|page|part|section|chapter)"
-    r"\s*#?\s*\d+|q\s*\d+)\b"
+    r"(?i)\b([a-z]+)(?:\s*#\s*|\s+)(\d+)\b"
+)
+ANCHOR_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "and",
+        "or",
+        "of",
+        "to",
+        "in",
+        "on",
+        "for",
+        "is",
+        "are",
+        "was",
+        "be",
+        "by",
+        "at",
+        "as",
+        "it",
+        "this",
+        "that",
+        "with",
+        "from",
+        "not",
+        "do",
+        "does",
+        "did",
+        "if",
+        "so",
+        "no",
+        "yes",
+        "my",
+        "your",
+        "our",
+        "their",
+        "line",
+        "row",
+        "col",
+        "item",  # 太泛；真正的 Item 12 若需要可再放回 HINT
+    }
+)
+# 常见定位词；其它非停用词 Label+数字也可（如 Lab 3 / Assignment 2）
+ANCHOR_HINT_WORDS = frozenset(
+    {
+        "question",
+        "problem",
+        "exercise",
+        "quiz",
+        "homework",
+        "hw",
+        "slide",
+        "page",
+        "part",
+        "section",
+        "chapter",
+        "lecture",
+        "unit",
+        "module",
+        "topic",
+        "task",
+        "lab",
+        "assignment",
+        "homework",
+        "q",
+    }
 )
 ANCHOR_LIMIT = 8
 ANCHOR_EXPAND_CHARS = 900
@@ -238,13 +304,16 @@ def rewrite(query: str) -> dict:
 
 
 def extract_anchor_phrases(*texts: str) -> list[str]:
-    """Pull locator phrases from the user/rewrite text (whatever they named)."""
+    """Pull 'Label + number' locators from user/rewrite/chunk text (course-agnostic)."""
     found, seen = [], set()
     for text in texts:
         if not text:
             continue
         for m in ANCHOR_PHRASE_RE.finditer(text):
-            phrase = normalize_anchor_phrase(m.group(1))
+            label, num = m.group(1), m.group(2)
+            phrase = normalize_anchor_phrase(f"{label} {num}")
+            if not is_useful_anchor_phrase(phrase):
+                continue
             key = phrase.lower()
             if key in seen:
                 continue
@@ -253,35 +322,38 @@ def extract_anchor_phrases(*texts: str) -> list[str]:
     return found
 
 
+def is_useful_anchor_phrase(phrase: str) -> bool:
+    """Keep real locators; drop stopword noise like 'the 9'."""
+    m = re.match(r"(?i)^([a-z]+)\s+(\d+)$", phrase.strip())
+    if not m:
+        return False
+    word = m.group(1).lower()
+    if word in ANCHOR_HINT_WORDS:
+        return True
+    return word not in ANCHOR_STOPWORDS
+
+
 def normalize_anchor_phrase(phrase: str) -> str:
-    """Light normalize: Q9 → Question 9; collapse spaces."""
+    """Collapse spaces; Q9 → Question 9; capitalize label lightly."""
     phrase = re.sub(r"\s+", " ", phrase).strip()
     m = re.fullmatch(r"(?i)q\s*#?\s*(\d+)", phrase)
     if m:
         return f"Question {m.group(1)}"
-    m = re.match(
-        r"(?i)(question|problem|exercise|quiz|homework|hw|slide|page|part|section|chapter)"
-        r"\s*#?\s*(\d+)\s*$",
-        phrase,
-    )
-    if m:
-        kind = m.group(1).lower()
-        title = {
-            "hw": "Homework",
-            "q": "Question",
-        }.get(kind, kind.capitalize())
-        return f"{title} {m.group(2)}"
-    return phrase
+    m = re.match(r"(?i)^([a-z]+)\s*#?\s*(\d+)\s*$", phrase)
+    if not m:
+        return phrase
+    word, num = m.group(1).lower(), m.group(2)
+    aliases = {"hw": "Homework", "q": "Question"}
+    return f"{aliases.get(word, word.capitalize())} {num}"
 
 
 def phrase_token(phrase: str) -> str:
     """
-    Collapse a multi-word locator into one BM25 term so it cannot split.
-    "Question 9" → phquestion9
+    Any Label+number locator → one BM25 term (computed, never hardcoded).
+    formula: "ph" + alnum(normalize(phrase))
     """
     norm = normalize_anchor_phrase(phrase).lower()
     return "ph" + re.sub(r"[^a-z0-9]+", "", norm)
-
 
 def phrases_in_text(text: str) -> list[str]:
     """Locator phrases appearing inside a chunk (for BM25 index enrichment)."""
@@ -289,11 +361,10 @@ def phrases_in_text(text: str) -> list[str]:
 
 
 def bm25_index_text(text: str) -> str:
-    """Original text + whole-phrase tokens for sparse BM25."""
+    """Original text + dynamically derived whole-phrase tokens for sparse BM25."""
     tokens = [phrase_token(p) for p in phrases_in_text(text)]
     if not tokens:
         return text
-    # dedupe keep order
     seen, uniq = set(), []
     for t in tokens:
         if t not in seen:
@@ -303,7 +374,7 @@ def bm25_index_text(text: str) -> str:
 
 
 def bm25_phrase_query(*texts: str) -> str:
-    """Query-side expansion: emit whole-phrase tokens for detected locators."""
+    """Query-side expansion: emit glued tokens for whatever locators appear."""
     tokens = [phrase_token(p) for p in extract_anchor_phrases(*texts)]
     seen, uniq = set(), []
     for t in tokens:
@@ -317,7 +388,6 @@ def search_phrase_bm25(client, phrase: str, doc_type: str, constraints, limit=AN
     """BM25 with the glued phrase token (needs ingest/backfill that wrote those tokens)."""
     token = phrase_token(phrase)
     hits = search_bm25(client, token, doc_type, constraints, limit=limit)
-    # light sanity: prefer hits whose payload still literally contains the phrase
     kept = [
         h for h in hits if text_has_phrase(h.payload.get("text", ""), phrase)
     ]
@@ -325,14 +395,22 @@ def search_phrase_bm25(client, phrase: str, doc_type: str, constraints, limit=AN
 
 
 def text_has_phrase(text: str, phrase: str) -> bool:
+    """Check payload literally contains the locator (generic; not quiz-specific)."""
     if not text:
         return False
     low = text.lower()
-    variants = [normalize_anchor_phrase(phrase), phrase]
-    m = re.match(r"(?i)question\s+(\d+)$", normalize_anchor_phrase(phrase))
+    canon = normalize_anchor_phrase(phrase)
+    variants = [canon, phrase]
+    # compact form: "Question 9" ↔ "Q9" only when first word starts with Q-word single letter alias
+    m = re.match(r"(?i)^([a-z]+)\s+(\d+)$", canon)
     if m:
-        n = m.group(1)
-        variants.extend([f"Question {n}", f"question {n}", f"Q{n}", f"Q {n}"])
+        word, num = m.group(1), m.group(2)
+        variants.append(f"{word} {num}")
+        variants.append(f"{word}{num}")
+        if word.lower() == "question":
+            variants.extend([f"Q{num}", f"Q {num}"])
+        if word.lower() == "homework":
+            variants.extend([f"HW{num}", f"HW {num}"])
     seen = set()
     for v in variants:
         k = v.lower()
@@ -342,6 +420,7 @@ def text_has_phrase(text: str, phrase: str) -> bool:
         parts = [re.escape(p) for p in re.split(r"\s+", k) if p]
         if not parts:
             continue
+        # also allow zero-space compact match already in variants
         pat = r"\s*".join(parts)
         if re.search(rf"(?<![a-z0-9]){pat}(?![a-z0-9])", low):
             return True
@@ -368,9 +447,9 @@ def phrase_match_score(text: str, phrase: str) -> int:
 
 def expand_query_with_anchors(client, query: str, rewritten_q: str, constraints):
     """
-    Query-side phrase expansion:
-    - detect locators in the user question (e.g. Question 9)
-    - BM25-search the glued token phquestion9
+    Query-side phrase expansion (generic):
+    - detect any Label+number locator in the user question
+    - BM25-search its glued token (same token written at ingest)
     - append matching chunk text into the search query
     """
     phrases = extract_anchor_phrases(query, rewritten_q)
@@ -409,7 +488,6 @@ def expand_query_with_anchors(client, query: str, rewritten_q: str, constraints)
             if text:
                 snippets.append(text[:ANCHOR_EXPAND_CHARS])
 
-    # always append phrase tokens into the lexical query string
     base = rewritten_q if not phrase_q else f"{rewritten_q}\n{phrase_q}"
 
     if not snippets:
