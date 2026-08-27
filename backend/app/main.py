@@ -18,6 +18,7 @@ from qdrant_client.models import (
     Modifier,
     PayloadSchemaType,
     PointStruct,
+    PointVectors,
     Range,
     SparseVectorParams,
     VectorParams,
@@ -75,14 +76,14 @@ Rules:
 - Do NOT add timestamp for general knowledge questions, definitions, or past/future topics
 - If no timestamp constraint is needed, hard_constraints must be []"""
 
-# 用户提到 Question/Problem N 时：先用题号锚定检索，再用题干扩充 query（不硬编码任何题目内容）
-# BM25 会把 "Question"+"9" 拆开，和侧边栏 [9]、其它 Question K 混淆，不能靠纯 BM25 找题号
-REF_LABEL_RE = re.compile(
-    r"(?i)\b((?:question|problem|exercise|quiz|hw|homework)\s*#?\s*\d+|q\s*\d+)\b"
+# 定位短语（Question 9 等）：查询侧扩成整体 token，入库 BM25 同步写入同名 token。
+# BM25 词袋会拆开 "Question"+"9"；把 "Question 9" 收成 phquestion9 当作一个词即可，无需全文 scroll。
+ANCHOR_PHRASE_RE = re.compile(
+    r"(?i)\b((?:question|problem|exercise|quiz|hw|homework|slide|page|part|section|chapter)"
+    r"\s*#?\s*\d+|q\s*\d+)\b"
 )
 ANCHOR_LIMIT = 8
 ANCHOR_EXPAND_CHARS = 900
-ANCHOR_BM25_POOL = 80  # BM25 多捞再做字面过滤
 
 ANSWER_SYSTEM = """You are a friendly course assistant sitting next to the student during lecture.
 
@@ -236,220 +237,171 @@ def rewrite(query: str) -> dict:
     }
 
 
-def extract_ref_labels(*texts: str) -> list[str]:
-    """Detect quiz/homework labels like Question 9 / Q9 from user or rewrite text."""
-    found = []
-    seen = set()
+def extract_anchor_phrases(*texts: str) -> list[str]:
+    """Pull locator phrases from the user/rewrite text (whatever they named)."""
+    found, seen = [], set()
     for text in texts:
         if not text:
             continue
-        for m in REF_LABEL_RE.finditer(text):
-            label = canonicalize_ref_label(m.group(1))
-            key = label.lower()
+        for m in ANCHOR_PHRASE_RE.finditer(text):
+            phrase = normalize_anchor_phrase(m.group(1))
+            key = phrase.lower()
             if key in seen:
                 continue
             seen.add(key)
-            found.append(label)
+            found.append(phrase)
     return found
 
 
-def canonicalize_ref_label(label: str) -> str:
-    """Normalize Q9 / question 9 → Question 9 (generic, not tied to any one item)."""
-    m = re.search(
-        r"(?i)(question|problem|exercise|quiz|homework|hw|q)\s*#?\s*(\d+)",
-        label,
-    )
-    if not m:
-        return re.sub(r"\s+", " ", label).strip()
-    kind, n = m.group(1).lower(), m.group(2)
-    names = {
-        "q": "Question",
-        "question": "Question",
-        "problem": "Problem",
-        "exercise": "Exercise",
-        "quiz": "Quiz",
-        "hw": "Homework",
-        "homework": "Homework",
-    }
-    return f"{names.get(kind, kind.title())} {n}"
-
-
-def ref_labels_in_text(text: str) -> list[str]:
-    """Extract numbered item labels present in a chunk (for payload indexing)."""
-    return extract_ref_labels(text)
-
-
-def normalize_ref_variants(label: str) -> list[str]:
-    """Generate a few surface forms for the same label."""
-    canon = canonicalize_ref_label(label)
-    variants = [canon, label]
-    m = re.search(r"(?i)(question|problem|exercise|quiz|homework|hw|q)\s*#?\s*(\d+)", canon)
+def normalize_anchor_phrase(phrase: str) -> str:
+    """Light normalize: Q9 → Question 9; collapse spaces."""
+    phrase = re.sub(r"\s+", " ", phrase).strip()
+    m = re.fullmatch(r"(?i)q\s*#?\s*(\d+)", phrase)
     if m:
-        n = m.group(2)
+        return f"Question {m.group(1)}"
+    m = re.match(
+        r"(?i)(question|problem|exercise|quiz|homework|hw|slide|page|part|section|chapter)"
+        r"\s*#?\s*(\d+)\s*$",
+        phrase,
+    )
+    if m:
         kind = m.group(1).lower()
-        if kind in ("q", "question"):
-            variants.extend([f"Question {n}", f"question {n}", f"Q{n}", f"Q {n}"])
-        else:
-            variants.append(f"{m.group(1)} {n}")
-    out, seen = [], set()
-    for v in variants:
-        k = v.lower()
-        if k not in seen:
-            seen.add(k)
-            out.append(v)
-    return out
+        title = {
+            "hw": "Homework",
+            "q": "Question",
+        }.get(kind, kind.capitalize())
+        return f"{title} {m.group(2)}"
+    return phrase
 
 
-def text_has_ref_label(text: str, label: str) -> bool:
-    """True only if the chunk literally contains the labeled item (not sidebar [9])."""
+def phrase_token(phrase: str) -> str:
+    """
+    Collapse a multi-word locator into one BM25 term so it cannot split.
+    "Question 9" → phquestion9
+    """
+    norm = normalize_anchor_phrase(phrase).lower()
+    return "ph" + re.sub(r"[^a-z0-9]+", "", norm)
+
+
+def phrases_in_text(text: str) -> list[str]:
+    """Locator phrases appearing inside a chunk (for BM25 index enrichment)."""
+    return extract_anchor_phrases(text)
+
+
+def bm25_index_text(text: str) -> str:
+    """Original text + whole-phrase tokens for sparse BM25."""
+    tokens = [phrase_token(p) for p in phrases_in_text(text)]
+    if not tokens:
+        return text
+    # dedupe keep order
+    seen, uniq = set(), []
+    for t in tokens:
+        if t not in seen:
+            seen.add(t)
+            uniq.append(t)
+    return text + "\n" + " ".join(uniq)
+
+
+def bm25_phrase_query(*texts: str) -> str:
+    """Query-side expansion: emit whole-phrase tokens for detected locators."""
+    tokens = [phrase_token(p) for p in extract_anchor_phrases(*texts)]
+    seen, uniq = set(), []
+    for t in tokens:
+        if t not in seen:
+            seen.add(t)
+            uniq.append(t)
+    return " ".join(uniq)
+
+
+def search_phrase_bm25(client, phrase: str, doc_type: str, constraints, limit=ANCHOR_LIMIT):
+    """BM25 with the glued phrase token (needs ingest/backfill that wrote those tokens)."""
+    token = phrase_token(phrase)
+    hits = search_bm25(client, token, doc_type, constraints, limit=limit)
+    # light sanity: prefer hits whose payload still literally contains the phrase
+    kept = [
+        h for h in hits if text_has_phrase(h.payload.get("text", ""), phrase)
+    ]
+    return kept or hits
+
+
+def text_has_phrase(text: str, phrase: str) -> bool:
     if not text:
         return False
-    canon = canonicalize_ref_label(label)
-    m = re.search(
-        r"(?i)(question|problem|exercise|quiz|homework|hw|q)\s*#?\s*(\d+)",
-        canon,
-    )
-    if not m:
-        return canonicalize_ref_label(label).lower() in text.lower()
-    kind, n = m.group(1).lower(), m.group(2)
-    if kind in ("q", "question"):
-        return bool(re.search(rf"(?i)\bquestions?\s*{n}\b", text))
-    if kind == "problem":
-        return bool(re.search(rf"(?i)\bproblems?\s*{n}\b", text))
-    if kind == "exercise":
-        return bool(re.search(rf"(?i)\bexercises?\s*{n}\b", text))
-    if kind == "quiz":
-        return bool(re.search(rf"(?i)\bquiz\s*{n}\b", text))
-    return bool(re.search(rf"(?i)\b(?:hw|homework)\s*{n}\b", text))
+    low = text.lower()
+    variants = [normalize_anchor_phrase(phrase), phrase]
+    m = re.match(r"(?i)question\s+(\d+)$", normalize_anchor_phrase(phrase))
+    if m:
+        n = m.group(1)
+        variants.extend([f"Question {n}", f"question {n}", f"Q{n}", f"Q {n}"])
+    seen = set()
+    for v in variants:
+        k = v.lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        parts = [re.escape(p) for p in re.split(r"\s+", k) if p]
+        if not parts:
+            continue
+        pat = r"\s*".join(parts)
+        if re.search(rf"(?<![a-z0-9]){pat}(?![a-z0-9])", low):
+            return True
+    return False
 
 
-def label_match_score(text: str, label: str) -> int:
-    """Prefer chunks that literally contain the numbered item."""
-    if not text_has_ref_label(text, label):
+def phrase_match_score(text: str, phrase: str) -> int:
+    if not text_has_phrase(text, phrase):
         return 0
     score = 3
     low = text.lower()
-    for cue in ("options", "correct", "points", "consider the", "which of the following"):
+    for cue in (
+        "options",
+        "correct",
+        "points",
+        "consider the",
+        "which of the following",
+        "answer",
+    ):
         if cue in low:
             score += 1
     return score
 
 
-def search_ref_label_payload(client, label: str, doc_type: str | None, limit: int):
-    """Exact recall via ref_labels keyword payload (requires ingest/backfill)."""
-    canon = canonicalize_ref_label(label)
-    must = list(BASE_MUST) + [
-        FieldCondition(key="ref_labels", match=MatchValue(value=canon))
-    ]
-    if doc_type:
-        must.append(FieldCondition(key="type", match=MatchValue(value=doc_type)))
-    try:
-        points, _ = client.scroll(
-            collection_name="docs",
-            scroll_filter=Filter(must=must),
-            limit=limit,
-            with_payload=True,
-        )
-    except Exception as e:
-        print(f"ref_labels filter unavailable ({e})")
-        return []
-    return points
-
-
-def search_ref_label_phrase(client, label: str, doc_type: str, *, pool: int, limit: int):
-    """
-    BM25 bag-of-words confuses Question+9 with sidebar [9] + other Question K.
-    Pull a larger pool, then keep only chunks that literally contain the label.
-    """
-    variants = normalize_ref_variants(label)
-    label_q = " ".join(variants[:3])
-    raw = search_bm25(client, label_q, doc_type, [], limit=pool)
-    kept = [h for h in raw if text_has_ref_label(h.payload.get("text", ""), label)]
-    if kept:
-        return kept[:limit]
-
-    # BM25 top-pool 仍可能全是混淆项：分页 scroll 做字面扫描（只在题号锚定时用）
-    must = list(BASE_MUST) + [
-        FieldCondition(key="type", match=MatchValue(value=doc_type))
-    ]
-    found, offset = [], None
-    scanned = 0
-    while len(found) < limit and scanned < 12000:
-        points, offset = client.scroll(
-            collection_name="docs",
-            scroll_filter=Filter(must=must),
-            limit=256,
-            offset=offset,
-            with_payload=True,
-        )
-        if not points:
-            break
-        scanned += len(points)
-        for p in points:
-            if text_has_ref_label(p.payload.get("text", ""), label):
-                found.append(p)
-                if len(found) >= limit:
-                    break
-        if offset is None:
-            break
-    print(f"label phrase scan {label!r} type={doc_type}: scanned={scanned} found={len(found)}")
-    return found[:limit]
-
-
 def expand_query_with_anchors(client, query: str, rewritten_q: str, constraints):
     """
-    Two-stage expansion for labeled items (Question N, …):
-    1) Exact ref_labels / literal-phrase anchor to pull stem/options from slides
-    2) Append that content into the search query (no hardcoded question text)
-    Returns (expanded_query, anchor_hits).
+    Query-side phrase expansion:
+    - detect locators in the user question (e.g. Question 9)
+    - BM25-search the glued token phquestion9
+    - append matching chunk text into the search query
     """
-    labels = extract_ref_labels(query, rewritten_q)
-    if not labels:
+    phrases = extract_anchor_phrases(query, rewritten_q)
+    if not phrases:
         return rewritten_q, []
 
-    anchor_hits = []
-    snippets = []
-    for label in labels:
-        exact = search_ref_label_payload(
-            client, label, "screen_shot", limit=ANCHOR_LIMIT
-        )
-        if exact:
-            raw_hits = exact
-            print(f"anchor via ref_labels payload: {label} → {len(exact)}")
-        else:
-            raw_hits = search_ref_label_phrase(
-                client,
-                label,
-                "screen_shot",
-                pool=ANCHOR_BM25_POOL,
-                limit=ANCHOR_LIMIT,
-            )
-            # transcript 补充讲解
-            raw_hits = merge_unique_hits(
-                raw_hits,
-                search_ref_label_phrase(
-                    client,
-                    label,
-                    "transcript",
-                    pool=max(20, ANCHOR_BM25_POOL // 2),
-                    limit=max(3, ANCHOR_LIMIT // 2),
-                ),
-            )
-            print(f"anchor via literal phrase: {label} → {len(raw_hits)}")
+    phrase_q = bm25_phrase_query(query, rewritten_q)
+    print(f"phrase expand tokens: {phrase_q!r} from {phrases}")
 
+    anchor_hits, snippets = [], []
+    for phrase in phrases:
+        raw_hits = merge_unique_hits(
+            search_phrase_bm25(
+                client, phrase, "screen_shot", constraints, limit=ANCHOR_LIMIT
+            ),
+            search_phrase_bm25(
+                client,
+                phrase,
+                "transcript",
+                constraints,
+                limit=max(3, ANCHOR_LIMIT // 2),
+            ),
+        )
         ranked = sorted(
             raw_hits,
             key=lambda h: (
-                -label_match_score(h.payload.get("text", ""), label),
+                -phrase_match_score(h.payload.get("text", ""), phrase),
                 -(getattr(h, "score", None) or 0),
             ),
         )
-        kept = [
-            h
-            for h in ranked
-            if label_match_score(h.payload.get("text", ""), label) >= 3
-        ] or ranked[:2]
-        for h in kept[:4]:
+        for h in ranked[:4]:
             if any(a.id == h.id for a in anchor_hits):
                 continue
             anchor_hits.append(h)
@@ -457,8 +409,11 @@ def expand_query_with_anchors(client, query: str, rewritten_q: str, constraints)
             if text:
                 snippets.append(text[:ANCHOR_EXPAND_CHARS])
 
+    # always append phrase tokens into the lexical query string
+    base = rewritten_q if not phrase_q else f"{rewritten_q}\n{phrase_q}"
+
     if not snippets:
-        return f"{rewritten_q}\n{' '.join(labels)}", []
+        return base, []
 
     unique_snips = []
     for s in snippets:
@@ -470,12 +425,12 @@ def expand_query_with_anchors(client, query: str, rewritten_q: str, constraints)
             break
 
     expanded = (
-        f"{rewritten_q}\n"
-        f"Related lecture excerpt for {' / '.join(labels)}:\n"
+        f"{base}\n"
+        f"Related lecture excerpt for {' / '.join(phrases)}:\n"
         + "\n---\n".join(unique_snips)
     )
     print(
-        f"anchor expand labels={labels} hits={len(anchor_hits)} "
+        f"anchor expand phrases={phrases} hits={len(anchor_hits)} "
         f"snippet_chars={sum(len(s) for s in unique_snips)}"
     )
     return expanded, anchor_hits
@@ -873,56 +828,48 @@ parser.add_argument(
     help="chunk + embed + upsert; default skips ingest and searches existing data",
 )
 parser.add_argument(
-    "--backfill-ref-labels",
+    "--backfill-bm25-phrases",
     action="store_true",
-    help="scan existing payloads and set ref_labels (no re-embed); fixes Question N exact recall",
+    help="rebuild BM25 sparse vectors with phrase tokens from existing payloads (no dense re-embed)",
 )
 parser.add_argument(
-    "--inspect-label",
+    "--inspect-phrase",
     type=str,
     default=None,
-    help='check literal vs BM25 for a label, e.g. --inspect-label "Question 9"',
+    help='compare bag BM25 vs phrase-token BM25, e.g. --inspect-phrase "Question 9"',
 )
 args = parser.parse_args()
 
 client = QdrantClient(url="http://localhost:6333", check_compatibility=False)
 
-if args.inspect_label:
-    label = canonicalize_ref_label(args.inspect_label)
-    print(f"inspect label: {label}")
-    # BM25 top5 — 常会混淆
-    bm25_hits = search_bm25(client, label, "screen_shot", [], limit=5)
-    print(f"\nBM25 top {len(bm25_hits)} (bag-of-words, often WRONG):")
-    for h in bm25_hits:
+if args.inspect_phrase:
+    phrase = normalize_anchor_phrase(args.inspect_phrase)
+    token = phrase_token(phrase)
+    print(f"inspect phrase: {phrase} → token {token}")
+    bag = search_bm25(client, phrase, "screen_shot", [], limit=5)
+    print(f"\nBM25 bag query {phrase!r}:")
+    for h in bag:
         t = h.payload.get("text", "")
         print(
             f"  id={h.id} score={h.score:.4f} "
-            f"literal={text_has_ref_label(t, label)} ts={h.payload.get('timestamp')}"
+            f"literal={text_has_phrase(t, phrase)} ts={h.payload.get('timestamp')}"
         )
         print("   ", t[:120].replace("\n", " / "))
-    # 字面命中
-    phrase = search_ref_label_phrase(
-        client, label, "screen_shot", pool=ANCHOR_BM25_POOL, limit=5
-    )
-    print(f"\nliteral-phrase hits: {len(phrase)}")
-    for h in phrase:
+    ph = search_phrase_bm25(client, phrase, "screen_shot", [], limit=5)
+    print(f"\nBM25 phrase-token query {token!r}:")
+    for h in ph:
         t = h.payload.get("text", "")
-        print(f"  id={h.id} ts={h.payload.get('timestamp')}")
-        print("   ", t[:160].replace("\n", " / "))
-    exact = search_ref_label_payload(client, label, "screen_shot", limit=5)
-    print(f"\nref_labels payload hits: {len(exact)}")
+        print(
+            f"  id={h.id} score={h.score:.4f} "
+            f"literal={text_has_phrase(t, phrase)} ts={h.payload.get('timestamp')}"
+        )
+        print("   ", t[:120].replace("\n", " / "))
     raise SystemExit(0)
 
-if args.backfill_ref_labels:
-    # 只改 payload，不重算向量
-    try:
-        client.create_payload_index(
-            "docs", "ref_labels", field_schema=PayloadSchemaType.KEYWORD
-        )
-    except Exception as e:
-        print(f"ref_labels index: {e}")
+if args.backfill_bm25_phrases:
+    # 只重写 bm25 稀疏向量，不重算 dense
     offset = None
-    updated = tagged = 0
+    updated = with_tok = 0
     while True:
         points, offset = client.scroll(
             collection_name="docs",
@@ -932,20 +879,24 @@ if args.backfill_ref_labels:
         )
         if not points:
             break
+        batch_vecs = []
         for p in points:
-            labels = ref_labels_in_text(p.payload.get("text", ""))
-            client.set_payload(
-                collection_name="docs",
-                payload={"ref_labels": labels},
-                points=[p.id],
+            text = p.payload.get("text", "")
+            idx = bm25_index_text(text)
+            if idx != text:
+                with_tok += 1
+            batch_vecs.append(
+                PointVectors(
+                    id=p.id,
+                    vector={"bm25": Document(text=idx, model=BM25_MODEL)},
+                )
             )
             updated += 1
-            if labels:
-                tagged += 1
-        print(f"backfill ref_labels {updated} (tagged {tagged})")
+        client.update_vectors(collection_name="docs", points=batch_vecs)
+        print(f"backfill bm25 phrases {updated} (with tokens {with_tok})")
         if offset is None:
             break
-    print(f"done: updated={updated} with_labels={tagged}")
+    print(f"done: updated={updated} with_phrase_tokens={with_tok}")
     raise SystemExit(0)
 
 if args.ingest:
@@ -969,7 +920,7 @@ if args.ingest:
             "bm25": SparseVectorParams(modifier=Modifier.IDF),
         },
     )
-    for field in ("course_id", "quarter", "lecturer", "type", "timestamp", "ref_labels"):
+    for field in ("course_id", "quarter", "lecturer", "type", "timestamp"):
         client.create_payload_index(
             "docs", field, field_schema=PayloadSchemaType.KEYWORD
         )
@@ -989,7 +940,10 @@ if args.ingest:
                     id=start + j,
                     vector={
                         "dense": vectors[start + j],
-                        "bm25": Document(text=c["text"], model=BM25_MODEL),
+                        # BM25 用带短语整体 token 的文本；payload.text 仍是干净原文
+                        "bm25": Document(
+                            text=bm25_index_text(c["text"]), model=BM25_MODEL
+                        ),
                     },
                     payload={
                         "text": c["text"],
@@ -1000,7 +954,6 @@ if args.ingest:
                         "course_id": COURSE_ID,
                         "quarter": QUARTER,
                         "lecturer": LECTURER,
-                        "ref_labels": ref_labels_in_text(c["text"]),
                     },
                 )
                 for j, c in enumerate(batch)
@@ -1075,20 +1028,13 @@ for i, query in enumerate(load_queries(), 1):
         ss_bm25 = search_bm25(client, q_expand, "screen_shot", constraints)
         tr_dense = search_dense(client, q_short, "transcript", constraints)
         tr_bm25 = search_bm25(client, q_expand, "transcript", constraints)
-        # 额外用题号本身做一次短 BM25，稳住字面命中
-        labels = extract_ref_labels(query, q_short)
-        label_bm25 = []
-        for lab in labels:
-            label_bm25.extend(
-                search_bm25(client, lab, "screen_shot", constraints, limit=5)
-            )
         print(
             f"recall screen_shot dense={len(ss_dense)} bm25={len(ss_bm25)} | "
             f"transcript dense={len(tr_dense)} bm25={len(tr_bm25)} | "
-            f"anchors={len(anchor_hits)} label_bm25={len(label_bm25)}"
+            f"anchors={len(anchor_hits)}"
         )
         candidates = merge_unique_hits(
-            anchor_hits, label_bm25, ss_dense, ss_bm25, tr_dense, tr_bm25
+            anchor_hits, ss_dense, ss_bm25, tr_dense, tr_bm25
         )
         rerank_query = f"{query}\n{q_expand}"
         final_hits = rerank_and_filter(rerank_query, candidates)
