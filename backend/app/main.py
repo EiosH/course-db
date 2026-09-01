@@ -53,7 +53,7 @@ RERANK_MIN_SCORE = 0.0  # Qwen3-Reranker: yes/no logit diff，>0 表示相关
 
 REWRITE_SYSTEM = f"""You are a search query rewrite assistant for lecture retrieval.
 
-Current playback timestamp (mock): {TIMESTAMP}
+Current playback timestamp: {TIMESTAMP}
 
 Output JSON only:
 {{
@@ -71,16 +71,14 @@ Rules:
   * Do NOT invent the actual question text — you do not know it yet; only keep the label + intents
 - For other questions: expand with synonyms and technical terms that likely appear on slides/transcripts
 - hard_constraints: pre-filters for retrieval
-- ONLY add {{"field":"timestamp","operator":"range","value":"{TIMESTAMP}"}} when the user explicitly asks about what is being discussed RIGHT NOW at the current moment (e.g. "现在在讲什么", "what are we covering now", "what does this mean now")
+- ONLY add {{"field":"timestamp","operator":"range","value":"{TIMESTAMP}"}} when the user explicitly asks about what is being discussed at current time or a specific time (e.g. "what are we covering now", "what does this mean at 14:35")
 - When adding a timestamp constraint, rewritten_query can be a short placeholder (e.g. "current slide and transcript"); retrieval will use the timestamp, not keywords
 - Do NOT add timestamp for general knowledge questions, definitions, or past/future topics
 - If no timestamp constraint is needed, hard_constraints must be []"""
 
 # 多词定位短语（任意 "Label + 数字"）：收成单个 BM25 token，查询侧同步扩词。
 # token = "ph" + 去空白标点(label+num)，由规则动态生成（不是写死某个题号）。
-ANCHOR_PHRASE_RE = re.compile(
-    r"(?i)\b([a-z]+)(?:\s*#\s*|\s+)(\d+)\b"
-)
+ANCHOR_PHRASE_RE = re.compile(r"(?i)\b([a-z]+)(?:\s*#\s*|\s+)(\d+)\b")
 ANCHOR_STOPWORDS = frozenset(
     {
         "a",
@@ -154,34 +152,37 @@ ANCHOR_EXPAND_CHARS = 900
 ANSWER_SYSTEM = """You are a friendly course assistant sitting next to the student during lecture.
 
 Tone:
-- Warm, brief, human — like a helpful classmate, not a search system.
+- Warm, brief, direct — get to the point. No filler, no repeating the question, no padding.
+- NEVER name internal/raw sources: do not say transcript, screenshot, screen shot, OCR, retrieved materials, context, chunks, etc.
+- Refer naturally instead: "the instructor said/explained", "in class", "on the slide", "the lecture covered…".
 - NEVER use machine phrases such as:
   "Based on the retrieved lecture materials",
   "I don't know based on the retrieved lecture materials",
   "According to the provided context",
   "The retrieved materials do not contain…".
-- Answer directly. Prefer "The slide shows…" / "The instructor said…".
+- Answer directly. Prefer "On the slide…" / "The instructor explained…".
 
 Rules:
 1. Use ONLY facts from the lecture content below. No outside knowledge.
-2. Be concise; quote a short phrase when helpful.
-3. If the content includes a quiz/homework item the student asked about, briefly restate that item (stem / key options) then explain the answer using the materials.
-4. If the content is empty or doesn't cover the question, apologize like a person, e.g.:
+2. Be concise — one clear answer; quote at most one short phrase if it helps.
+3. If the content includes a quiz/homework item the student asked about, answer directly; only restate stem/options when necessary to explain.
+4. If the content is empty or doesn't cover the question, apologize briefly like a person, e.g.:
    "Hmm, I couldn't find that in this lecture — sorry, I'm not sure."
    "I looked through the notes but nothing on that popped up. Want to try rephrasing?"
    Do NOT use stiff template refusals."""
 
-NOW_ANSWER_SYSTEM = """You are a friendly course assistant. The student is asking what the lecture is covering RIGHT NOW (current slide and/or transcript near the playback time).
+NOW_ANSWER_SYSTEM = """You are a friendly course assistant. The student is asking what the lecture is covering RIGHT NOW.
 
 Tone:
-- Warm and human — like you're watching the lecture with them.
+- Warm and brief — explain what's happening now in plain language. No filler or repetition.
+- NEVER name internal/raw sources: do not say transcript, screenshot, screen shot, OCR, retrieved materials, etc.
+- Prefer "Right now the slide shows…" / "The instructor is explaining…" / "In class right now…".
 - NEVER use "Based on the retrieved lecture materials", "I don't know based on the retrieved…", or similar.
-- Prefer "Right now the slide is about…" / "The instructor is explaining…".
 
 Rules:
 1. The content below IS what's happening now. Explain it even if the question is vague.
 2. Use ONLY those facts. No outside knowledge.
-3. Be concise; mention slide title, code, or a key spoken line when helpful.
+3. Be concise — lead with the main point; mention a slide title, code snippet, or key line only if it helps.
 4. If content is empty, say something like:
    "I don't have anything from this moment in the lecture — sorry!"
 """
@@ -273,7 +274,10 @@ def ollama_chat(messages, *, format=None, timeout=OLLAMA_CHAT_TIMEOUT):
             )
             r.raise_for_status()
             return r.json()["message"]["content"].strip()
-        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError) as e:
+        except (
+            requests.exceptions.ReadTimeout,
+            requests.exceptions.ConnectionError,
+        ) as e:
             last_err = e
             if attempt < OLLAMA_CHAT_RETRIES:
                 wait = 5 * attempt
@@ -355,6 +359,7 @@ def phrase_token(phrase: str) -> str:
     norm = normalize_anchor_phrase(phrase).lower()
     return "ph" + re.sub(r"[^a-z0-9]+", "", norm)
 
+
 def phrases_in_text(text: str) -> list[str]:
     """Locator phrases appearing inside a chunk (for BM25 index enrichment)."""
     return extract_anchor_phrases(text)
@@ -384,13 +389,13 @@ def bm25_phrase_query(*texts: str) -> str:
     return " ".join(uniq)
 
 
-def search_phrase_bm25(client, phrase: str, doc_type: str, constraints, limit=ANCHOR_LIMIT):
+def search_phrase_bm25(
+    client, phrase: str, doc_type: str, constraints, limit=ANCHOR_LIMIT
+):
     """BM25 with the glued phrase token (needs ingest/backfill that wrote those tokens)."""
     token = phrase_token(phrase)
     hits = search_bm25(client, token, doc_type, constraints, limit=limit)
-    kept = [
-        h for h in hits if text_has_phrase(h.payload.get("text", ""), phrase)
-    ]
+    kept = [h for h in hits if text_has_phrase(h.payload.get("text", ""), phrase)]
     return kept or hits
 
 
@@ -627,7 +632,9 @@ def time_distance(center: float, payload: dict) -> float:
     return float("inf")
 
 
-def _scroll_time_filter(center: float, ts_value: str, doc_type: str | None, *, use_range: bool):
+def _scroll_time_filter(
+    center: float, ts_value: str, doc_type: str | None, *, use_range: bool
+):
     must = list(BASE_MUST)
     if doc_type:
         must.append(FieldCondition(key="type", match=MatchValue(value=doc_type)))
@@ -645,9 +652,7 @@ def _scroll_time_filter(center: float, ts_value: str, doc_type: str | None, *, u
             ]
         )
     else:
-        must.append(
-            FieldCondition(key="timestamp", match=MatchValue(value=ts_value))
-        )
+        must.append(FieldCondition(key="timestamp", match=MatchValue(value=ts_value)))
     return Filter(must=must)
 
 
@@ -669,7 +674,9 @@ def _scroll_all(client, scroll_filter: Filter, page_size: int = 256):
     return out
 
 
-def search_time_window(client, constraints, doc_type: str | None = None, limit=TIME_NEAR_TOP_K):
+def search_time_window(
+    client, constraints, doc_type: str | None = None, limit=TIME_NEAR_TOP_K
+):
     """Filter-only recall: chunks nearest to the playback timestamp (no semantic search)."""
     ts_value = timestamp_constraint_value(constraints)
     if ts_value is None:
@@ -694,7 +701,6 @@ def search_time_window(client, constraints, doc_type: str | None = None, limit=T
         payload["time_distance"] = time_distance(center, payload)
         kept.append(SimpleNamespace(id=p.id, payload=payload, score=None))
     return kept
-
 
 
 def build_filter(doc_type: str, constraints) -> Filter:
@@ -759,7 +765,9 @@ def pick_by_type_quota(hits, top_k=RERANK_TOP_K):
         return []
     ss = [h for h in hits if h.payload.get("type") == "screen_shot"]
     tr = [h for h in hits if h.payload.get("type") == "transcript"]
-    other = [h for h in hits if h.payload.get("type") not in ("screen_shot", "transcript")]
+    other = [
+        h for h in hits if h.payload.get("type") not in ("screen_shot", "transcript")
+    ]
     ss_n = min(len(ss), (top_k + 1) // 2)
     tr_n = min(len(tr), top_k - ss_n)
     # 一侧不足时把名额补给另一侧
@@ -794,14 +802,14 @@ def rerank_and_filter(query: str, hits, top_k=RERANK_TOP_K, min_score=RERANK_MIN
 def build_prompt(question, hits):
     parts = [
         f"Student question: {question}",
-        "Lecture content (slides and/or transcript):",
+        "Lecture content:",
     ]
     if not hits:
         parts.append("(nothing found)")
     else:
         for h in hits:
             p = h.payload
-            label = "slide" if p["type"] == "screen_shot" else "transcript"
+            label = "On slide" if p["type"] == "screen_shot" else "Instructor said"
             parts.append(f"[{label}] ({p['timestamp']})\n{p['text']}")
     return "\n\n".join(parts)
 
@@ -846,7 +854,6 @@ def format_hits(hits, channel: str = "") -> str:
             extra += f" dt={td:.1f}s"
         blocks.append(f"[{p['timestamp']}] score={score}{tag}{extra}\n{p['text']}")
     return "\n\n---\n\n".join(blocks)
-
 
 
 ANSWER_HEADERS = [
@@ -1007,9 +1014,7 @@ if args.ingest:
             "docs", field, field_schema=PayloadSchemaType.KEYWORD
         )
     for field in ("start_sec", "end_sec"):
-        client.create_payload_index(
-            "docs", field, field_schema=PayloadSchemaType.FLOAT
-        )
+        client.create_payload_index("docs", field, field_schema=PayloadSchemaType.FLOAT)
 
     UPSERT_BATCH = 64
     total = len(chunks)
