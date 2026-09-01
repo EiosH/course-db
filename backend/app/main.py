@@ -849,53 +849,57 @@ def format_hits(hits, channel: str = "") -> str:
 
 
 
-def write_excel(rows, path: str):
+ANSWER_HEADERS = [
+    "序号",
+    "原问题",
+    "rewritten_query",
+    "hard_constraints",
+    "course_id",
+    "quarter",
+    "lecturer",
+    "screen_shot语义召回",
+    "screen_shot关键词召回",
+    "transcript语义召回",
+    "transcript关键词召回",
+    "rerank后检索",
+    "答案",
+]
+ANSWER_COL_WIDTHS = {
+    "A": 6,
+    "B": 36,
+    "C": 40,
+    "D": 28,
+    "E": 12,
+    "F": 14,
+    "G": 20,
+    "H": 42,
+    "I": 42,
+    "J": 42,
+    "K": 42,
+    "L": 50,
+    "M": 50,
+}
+CELL_WRAP = Alignment(vertical="top", wrap_text=True)
+
+
+def init_answer_workbook(path: str):
     wb = Workbook()
     ws = wb.active
     ws.title = "answers"
-    headers = [
-        "序号",
-        "原问题",
-        "rewritten_query",
-        "hard_constraints",
-        "course_id",
-        "quarter",
-        "lecturer",
-        "screen_shot语义召回",
-        "screen_shot关键词召回",
-        "transcript语义召回",
-        "transcript关键词召回",
-        "rerank后检索",
-        "答案",
-    ]
-    ws.append(headers)
+    ws.append(ANSWER_HEADERS)
     for cell in ws[1]:
         cell.font = Font(bold=True)
-        cell.alignment = Alignment(vertical="top", wrap_text=True)
-
-    wrap = Alignment(vertical="top", wrap_text=True)
-    for row in rows:
-        ws.append(row)
-        for cell in ws[ws.max_row]:
-            cell.alignment = wrap
-
-    widths = {
-        "A": 6,
-        "B": 36,
-        "C": 40,
-        "D": 28,
-        "E": 12,
-        "F": 14,
-        "G": 20,
-        "H": 42,
-        "I": 42,
-        "J": 42,
-        "K": 42,
-        "L": 50,
-        "M": 50,
-    }
-    for col, width in widths.items():
+        cell.alignment = CELL_WRAP
+    for col, width in ANSWER_COL_WIDTHS.items():
         ws.column_dimensions[col].width = width
+    wb.save(path)
+    return wb, ws
+
+
+def append_answer_row(wb, ws, path: str, row):
+    ws.append(row)
+    for cell in ws[ws.max_row]:
+        cell.alignment = CELL_WRAP
     wb.save(path)
 
 
@@ -1041,7 +1045,11 @@ if args.ingest:
 else:
     print("skip ingest, search existing collection")
 
-out_rows = []
+stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+out_path = f"answer_{stamp}.xlsx"
+wb, ws = init_answer_workbook(out_path)
+print(f"writing answers incrementally to {out_path}")
+
 for i, query in enumerate(load_queries(), 1):
     rewritten = rewrite(query)
     q = rewritten["rewritten_query"]
@@ -1126,7 +1134,10 @@ for i, query in enumerate(load_queries(), 1):
     print(prompt)
     print(f"\nanswer:\n{answer_text}")
 
-    out_rows.append(
+    append_answer_row(
+        wb,
+        ws,
+        out_path,
         [
             i,
             query,
@@ -1141,10 +1152,8 @@ for i, query in enumerate(load_queries(), 1):
             format_hits(tr_bm25, "keyword"),
             format_hits(final_hits, "time" if ts_value else "rerank"),
             answer_text,
-        ]
+        ],
     )
+    print(f"wrote row {i} → {out_path}")
 
-stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-out_path = f"answer_{stamp}.xlsx"
-write_excel(out_rows, out_path)
-print(f"wrote {out_path}")
+print(f"done: {out_path}")
