@@ -37,6 +37,7 @@ COURSE_ID = "CSC447"
 QUARTER = "2026-Spring"
 LECTURER = "Eric J. Fredericks"
 TIMESTAMP = "01:22:09"  # mock 当前播放位置，仅时间类问题启用
+LECTURE_MAX_TS = "03:30:00"  # 本课视频最长时长，用于校正 anchor 时间格式
 TIME_WINDOW_SEC = 120  # 时间戳约束：±2 分钟，优先当前画面/台词
 BASE_MUST = [
     FieldCondition(key="course_id", match=MatchValue(value=COURSE_ID)),
@@ -53,28 +54,60 @@ RERANK_MIN_SCORE = 0.0  # Qwen3-Reranker: yes/no logit diff，>0 表示相关
 
 REWRITE_SYSTEM = f"""You are a search query rewrite assistant for lecture retrieval.
 
-Current playback timestamp: {TIMESTAMP}
+Current playback timestamp (mock "now" only): {TIMESTAMP}
 
 Output JSON only:
 {{
   "rewritten_query": "...",
+  "time_mode": "none",
   "hard_constraints": []
 }}
 
+Fields:
+- rewritten_query: informative search string for lecture notes and spoken content (not a tiny 3-word stub)
+- time_mode: how to use time in retrieval — YOU must interpret what the user's time reference means:
+  * "now" — user asks about the current playback moment (e.g. "what does this mean now", "目前在讲什么"); no specific clock time in the question
+  * "anchor" — user points to a specific moment or span in the lecture (e.g. "at 14:35", "around 42:10", "16:00 ~ 17:00", "earlier when he talked about folds"); YOU decide the anchor time(s) and normalize to HH:MM:SS
+  * "none" — no time reference, or time is irrelevant (general concepts, question numbers, code walkthroughs without a timestamp)
+- hard_constraints: pre-filters. When time_mode is "now" or "anchor", include exactly one timestamp constraint:
+  {{"field":"timestamp","operator":"range","value":"<HH:MM:SS>"}}
+
 Rules:
-- rewritten_query: informative search string for lecture notes, screenshot OCR, and transcripts (not a tiny 3-word stub)
 - Keep concrete labels and domain terms. Do NOT include course codes, instructor names, or quarter — those are already filtered
-- If the user refers to a numbered quiz/homework item (e.g. "Question 9", "Problem 3", "Q9", "exercise 2"):
-  * KEEP the exact label in rewritten_query (e.g. "Question 9")
-  * Expand with retrieval intents: full question stem, options/choices, correct answer, instructor explanation
-  * Example shape: "Question 9 quiz stem options answer explanation"
-  * Do NOT invent the actual question text — you do not know it yet; only keep the label + intents
-- For other questions: expand with synonyms and technical terms that likely appear on slides/transcripts
-- hard_constraints: pre-filters for retrieval
-- ONLY add {{"field":"timestamp","operator":"range","value":"{TIMESTAMP}"}} when the user explicitly asks about what is being discussed at current time or a specific time (e.g. "what are we covering now", "what does this mean at 14:35")
-- When adding a timestamp constraint, rewritten_query can be a short placeholder (e.g. "current slide and transcript"); retrieval will use the timestamp, not keywords
-- Do NOT add timestamp for general knowledge questions, definitions, or past/future topics
-- If no timestamp constraint is needed, hard_constraints must be []"""
+- If the user refers to a numbered quiz/homework item (e.g. "Question 9", "Problem 3", "Q9"):
+  * KEEP the exact label in rewritten_query
+  * Expand with retrieval intents: stem, options, answer, instructor explanation
+  * Do NOT invent the actual question text
+- For other questions: expand with synonyms and technical terms likely on slides or in speech
+
+time_mode details:
+
+"now":
+- value MUST be "{TIMESTAMP}" (current playback time)
+- rewritten_query: short placeholder (e.g. "current slide and spoken line"); retrieval is mostly time-driven
+
+"anchor":
+- Lecture positions are **elapsed time from video start**, stored as HH:MM:SS (this lecture is 0:00–{LECTURE_MAX_TS})
+- When the user writes **two parts** (MM:SS), that is minutes:seconds from the start — normalize to 00:MM:SS:
+  * "05:00" → 00:05:00 (5 minutes in), NOT 05:00:00
+  * "14:35" → 00:14:35, NOT 14:35:00
+  * "42:10" → 00:42:10
+- When the user writes **three parts** (HH:MM:SS), keep as elapsed HH:MM:SS (e.g. 01:22:09)
+- NEVER pad MM:SS by appending ":00" to the minutes (that wrongly turns 05:00 into 05:00:00)
+- For a range (e.g. 16:00 ~ 17:00), pick one representative point inside the span
+- rewritten_query: still expand with topic/intent — retrieval uses BOTH time filter and keywords
+- Do NOT use "{TIMESTAMP}" unless the user truly means the current playback moment
+
+"none":
+- hard_constraints must be []
+- Examples: "What is Fold Left?", "Question 9 answer", code pasted without a timestamp
+
+Examples (illustrative — adapt to the actual user question):
+- "What does this mean now?" → time_mode "now", value "{TIMESTAMP}", rewritten_query short
+- "What does the lecturer illustrate at 14:35?" → time_mode "anchor", value 00:14:35, rewritten_query expands illustrate/diagram/example terms
+- "What did lecturer say at 05:00?" → time_mode "anchor", value 00:05:00, NOT 05:00:00
+- "Explain 16:00 ~ 17:00" → time_mode "anchor", value 00:16:30 (midpoint), rewritten_query expands the asked topic
+- "What is tail recursion?" → time_mode "none", hard_constraints []"""
 
 # 多词定位短语（任意 "Label + 数字"）：收成单个 BM25 token，查询侧同步扩词。
 # token = "ph" + 去空白标点(label+num)，由规则动态生成（不是写死某个题号）。
@@ -151,6 +184,8 @@ ANCHOR_EXPAND_CHARS = 900
 
 ANSWER_SYSTEM = """You are a friendly course assistant sitting next to the student during lecture.
 
+Your job: answer the student's question directly. The lecture content is background — use only what helps answer what they asked. Do not summarize unrelated material or lecture the full slide.
+
 Tone:
 - Warm, brief, direct — get to the point. No filler, no repeating the question, no padding.
 - NEVER name internal/raw sources: do not say transcript, screenshot, screen shot, OCR, retrieved materials, context, chunks, etc.
@@ -163,29 +198,14 @@ Tone:
 - Answer directly. Prefer "On the slide…" / "The instructor explained…".
 
 Rules:
-1. Use ONLY facts from the lecture content below. No outside knowledge.
-2. Be concise — one clear answer; quote at most one short phrase if it helps.
-3. If the content includes a quiz/homework item the student asked about, answer directly; only restate stem/options when necessary to explain.
-4. If the content is empty or doesn't cover the question, apologize briefly like a person, e.g.:
+1. Read the student question first; every sentence in your reply should serve that question.
+2. Use ONLY facts from the lecture content below. No outside knowledge.
+3. Be concise — one clear answer; skip tangents even if they appear in the materials.
+4. If the content includes a quiz/homework item the student asked about, answer their question directly; only restate stem/options when necessary.
+5. If the content is empty or doesn't cover the question, apologize briefly like a person, e.g.:
    "Hmm, I couldn't find that in this lecture — sorry, I'm not sure."
    "I looked through the notes but nothing on that popped up. Want to try rephrasing?"
    Do NOT use stiff template refusals."""
-
-NOW_ANSWER_SYSTEM = """You are a friendly course assistant. The student is asking what the lecture is covering RIGHT NOW.
-
-Tone:
-- Warm and brief — explain what's happening now in plain language. No filler or repetition.
-- NEVER name internal/raw sources: do not say transcript, screenshot, screen shot, OCR, retrieved materials, etc.
-- Prefer "Right now the slide shows…" / "The instructor is explaining…" / "In class right now…".
-- NEVER use "Based on the retrieved lecture materials", "I don't know based on the retrieved…", or similar.
-
-Rules:
-1. The content below IS what's happening now. Explain it even if the question is vague.
-2. Use ONLY those facts. No outside knowledge.
-3. Be concise — lead with the main point; mention a slide title, code snippet, or key line only if it helps.
-4. If content is empty, say something like:
-   "I don't have anything from this moment in the lecture — sorry!"
-"""
 
 # 无检索结果时不交给模型套模板，直接用人话回复
 NO_HIT_REPLY = (
@@ -289,6 +309,62 @@ def ollama_chat(messages, *, format=None, timeout=OLLAMA_CHAT_TIMEOUT):
     raise last_err
 
 
+def normalize_ts_hms(ts: str) -> str:
+    """Lecture timestamp → canonical HH:MM:SS (accepts MM:SS or HH:MM:SS)."""
+    ts = ts.strip()
+    parts = ts.split(":")
+    if len(parts) == 2:
+        m, s = int(parts[0]), int(parts[1])
+        return f"00:{m:02d}:{s:02d}"
+    if len(parts) == 3:
+        h, m, s = int(parts[0]), int(parts[1]), int(parts[2])
+        return f"{h:02d}:{m:02d}:{s:02d}"
+    raise ValueError(f"invalid timestamp: {ts!r}")
+
+
+def _ts_hms_to_sec(h: int, m: int, s: int) -> float:
+    return h * 3600 + m * 60 + float(s)
+
+
+def canonicalize_anchor_timestamp(ts: str) -> str:
+    """
+    Normalize rewrite/output timestamps for index lookup.
+    - MM:SS → 00:MM:SS
+    - Fix common LLM mistake: 05:00 → 05:00:00 when user meant 00:05:00
+    """
+    ts = normalize_ts_hms(ts)
+    h, m, s = map(int, ts.split(":"))
+    if _ts_hms_to_sec(h, m, s) <= _ts_hms_to_sec(
+        *map(int, LECTURE_MAX_TS.split(":"))
+    ):
+        return ts
+    if h < 60 and m < 60:
+        return f"00:{h:02d}:{m:02d}"
+    return ts
+
+
+def normalize_rewrite_timestamps(rewritten: dict) -> dict:
+    constraints = []
+    for c in rewritten.get("hard_constraints", []):
+        if c.get("field") == "timestamp" and c.get("value"):
+            c = {**c, "value": canonicalize_anchor_timestamp(str(c["value"]))}
+        constraints.append(c)
+    return {**rewritten, "hard_constraints": constraints}
+
+
+def resolve_time_mode(rewritten: dict) -> str:
+    """Route retrieval from rewrite LLM output (no regex on user text)."""
+    mode = rewritten.get("time_mode")
+    if mode in ("now", "anchor", "none"):
+        return mode
+    ts = timestamp_constraint_value(rewritten.get("hard_constraints", []))
+    if ts is None:
+        return "none"
+    if ts == TIMESTAMP:
+        return "now"
+    return "anchor"
+
+
 def rewrite(query: str) -> dict:
     raw = ollama_chat(
         [
@@ -301,10 +377,13 @@ def rewrite(query: str) -> dict:
         raw = re.sub(r"^```(?:json)?\s*", "", raw)
         raw = re.sub(r"\s*```$", "", raw)
     data = json.loads(raw)
-    return {
-        "rewritten_query": data["rewritten_query"],
-        "hard_constraints": data.get("hard_constraints", []),
-    }
+    return normalize_rewrite_timestamps(
+        {
+            "rewritten_query": data["rewritten_query"],
+            "time_mode": data.get("time_mode", "none"),
+            "hard_constraints": data.get("hard_constraints", []),
+        }
+    )
 
 
 def extract_anchor_phrases(*texts: str) -> list[str]:
@@ -529,8 +608,8 @@ def load_queries(path="query.txt"):
 
 
 def ts_to_sec(ts: str) -> float:
-    h, m, s = ts.strip().split(":")
-    return int(h) * 3600 + int(m) * 60 + float(s)
+    h, m, s = map(int, canonicalize_anchor_timestamp(ts).split(":"))
+    return _ts_hms_to_sec(h, m, s)
 
 
 def clean_screenshot_text(body: str) -> str:
@@ -612,7 +691,8 @@ def load_transcript(path="transcript.vtt"):
 def timestamp_constraint_value(constraints):
     for c in constraints:
         if c.get("field") == "timestamp":
-            return c.get("value", TIMESTAMP)
+            raw = c.get("value", TIMESTAMP)
+            return canonicalize_anchor_timestamp(str(raw))
     return None
 
 
@@ -802,7 +882,7 @@ def rerank_and_filter(query: str, hits, top_k=RERANK_TOP_K, min_score=RERANK_MIN
 def build_prompt(question, hits):
     parts = [
         f"Student question: {question}",
-        "Lecture content:",
+        "Lecture content (use only what is needed to answer the question above):",
     ]
     if not hits:
         parts.append("(nothing found)")
@@ -1059,13 +1139,14 @@ for i, query in enumerate(load_queries(), 1):
     rewritten = rewrite(query)
     q = rewritten["rewritten_query"]
     constraints = rewritten["hard_constraints"]
+    time_mode = resolve_time_mode(rewritten)
     print(f"\nquery:    {query}")
     print("rewrite:")
     print(json.dumps(rewritten, ensure_ascii=False, indent=2))
 
     ts_value = timestamp_constraint_value(constraints)
 
-    if ts_value:
+    if ts_value and time_mode == "now":
         # “现在在讲什么”：只按时间邻近取内容，不做语义检索 / rerank
         # 每类各取 top_k，再按类型配额合并，避免截图挤掉 transcript
         tw_ss = search_time_window(
@@ -1103,7 +1184,7 @@ for i, query in enumerate(load_queries(), 1):
             answer_text = NO_HIT_NOW_REPLY
         else:
             prompt = build_prompt(query, final_hits)
-            answer_text = answer(prompt, system=NOW_ANSWER_SYSTEM)
+            answer_text = answer(prompt)
     else:
         # 题号类问题：先锚定找回题干，再扩充 query（dense 仍用短 query，避免向量被长 OCR 冲淡）
         q_short = q
