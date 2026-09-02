@@ -60,11 +60,15 @@ Output JSON only:
 {{
   "rewritten_query": "...",
   "time_mode": "none",
+  "course_general_knowledge": false,
   "hard_constraints": []
 }}
 
 Fields:
 - rewritten_query: informative search string for lecture notes and spoken content (not a tiny 3-word stub)
+- course_general_knowledge: true when the question is **conceptual common knowledge within this course's subject** ({COURSE_ID} — programming languages / functional programming / Scala-style topics), answerable from standard textbook knowledge **without** this lecture's slides, transcript, or homework
+  * true: "What is tail recursion?", "What is fold left?", "How do programming languages handle concurrency?" (general concepts), "What is CSC447 about?"
+  * false: needs **this class recording** — quiz/homework numbers (Question 9), timestamps ("at 14:35", "now"), "example 3 in this lecture", pasted in-class code, "what did the instructor say", anything asking what happened in a specific moment or assignment
 - time_mode: how to use time in retrieval — YOU must interpret what the user's time reference means:
   * "now" — user asks about the current playback moment (e.g. "what does this mean now", "目前在讲什么"); no specific clock time in the question
   * "anchor" — user points to a specific moment or span in the lecture (e.g. "at 14:35", "around 42:10", "16:00 ~ 17:00", "earlier when he talked about folds"); YOU decide the anchor time(s) and normalize to HH:MM:SS
@@ -107,7 +111,10 @@ Examples (illustrative — adapt to the actual user question):
 - "What does the lecturer illustrate at 14:35?" → time_mode "anchor", value 00:14:35, rewritten_query expands illustrate/diagram/example terms
 - "What did lecturer say at 05:00?" → time_mode "anchor", value 00:05:00, NOT 05:00:00
 - "Explain 16:00 ~ 17:00" → time_mode "anchor", value 00:16:30 (midpoint), rewritten_query expands the asked topic
-- "What is tail recursion?" → time_mode "none", hard_constraints []"""
+- "What is tail recursion?" → time_mode "none", course_general_knowledge true, hard_constraints []
+- "What is Fold Left exactly?" → time_mode "none", course_general_knowledge true, hard_constraints []
+- "I don't understand Question 9" → time_mode "none", course_general_knowledge false, hard_constraints []
+- "What is CSC447?" → time_mode "none", course_general_knowledge true, hard_constraints []"""
 
 # 多词定位短语（任意 "Label + 数字"）：收成单个 BM25 token，查询侧同步扩词。
 # token = "ph" + 去空白标点(label+num)，由规则动态生成（不是写死某个题号）。
@@ -206,6 +213,17 @@ Rules:
    "Hmm, I couldn't find that in this lecture — sorry, I'm not sure."
    "I looked through the notes but nothing on that popped up. Want to try rephrasing?"
    Do NOT use stiff template refusals."""
+
+COURSE_GENERAL_ANSWER_SYSTEM = f"""You are a friendly course assistant for {COURSE_ID} ({QUARTER}, instructor {LECTURER}) — a programming languages course (functional programming, Scala, recursion, folds, types, concurrency, etc.).
+
+The student asked a conceptual question in this subject area. No lecture materials were retrieved.
+
+Rules:
+1. Answer directly and concisely using standard programming-languages common knowledge — definitions and how things generally work.
+2. Stay within topics appropriate for this course; do not drift into unrelated fields.
+3. Do NOT invent this lecture's slides, transcript, homework items, quiz answers, or instructor-specific examples.
+4. If the question still needs something only this class recording would have, say you don't have that from the lecture.
+5. Keep the same warm, brief tone as in class."""
 
 # 无检索结果时不交给模型套模板，直接用人话回复
 NO_HIT_REPLY = (
@@ -381,6 +399,9 @@ def rewrite(query: str) -> dict:
         {
             "rewritten_query": data["rewritten_query"],
             "time_mode": data.get("time_mode", "none"),
+            "course_general_knowledge": bool(
+                data.get("course_general_knowledge", False)
+            ),
             "hard_constraints": data.get("hard_constraints", []),
         }
     )
@@ -919,6 +940,14 @@ def answer(prompt: str, *, system: str = ANSWER_SYSTEM) -> str:
     return soften_stiff_refusal(raw)
 
 
+def no_hit_answer(query: str, rewritten: dict, *, now: bool = False) -> str:
+    """No retrieval hits: answer subject common knowledge only; else fixed refusal."""
+    if rewritten.get("course_general_knowledge"):
+        prompt = f"Student question: {query}"
+        return answer(prompt, system=COURSE_GENERAL_ANSWER_SYSTEM)
+    return NO_HIT_NOW_REPLY if now else NO_HIT_REPLY
+
+
 def format_hits(hits, channel: str = "") -> str:
     if not hits:
         return ""
@@ -1181,7 +1210,7 @@ for i, query in enumerate(load_queries(), 1):
                 "re-run with --ingest to rebuild start_sec/end_sec indexes"
             )
             prompt = build_prompt(query, final_hits)
-            answer_text = NO_HIT_NOW_REPLY
+            answer_text = no_hit_answer(query, rewritten, now=True)
         else:
             prompt = build_prompt(query, final_hits)
             answer_text = answer(prompt)
@@ -1213,7 +1242,7 @@ for i, query in enumerate(load_queries(), 1):
         print(f"rerank kept {len(final_hits)}/{len(candidates)}")
         prompt = build_prompt(query, final_hits)
         if not final_hits:
-            answer_text = NO_HIT_REPLY
+            answer_text = no_hit_answer(query, rewritten)
         else:
             answer_text = answer(prompt)
 
