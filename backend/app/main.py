@@ -1175,34 +1175,56 @@ for i, query in enumerate(load_queries(), 1):
 
     ts_value = timestamp_constraint_value(constraints)
 
-    if ts_value and time_mode == "now":
-        # “现在在讲什么”：只按时间邻近取内容，不做语义检索 / rerank
-        # 每类各取 top_k，再按类型配额合并，避免截图挤掉 transcript
-        tw_ss = search_time_window(
-            client, constraints, "screen_shot", limit=TIME_NEAR_TOP_K
-        )
-        tw_tr = search_time_window(
-            client, constraints, "transcript", limit=TIME_NEAR_TOP_K
-        )
+    if ts_value:
         center = ts_to_sec(ts_value)
-        # 各类内部已按时间距离排序；配额合并保证两边都进最终结果
+        if time_mode == "now":
+            # “现在在讲什么”：只按时间邻近取内容，不做语义检索 / rerank
+            tw_ss = search_time_window(
+                client, constraints, "screen_shot", limit=TIME_NEAR_TOP_K
+            )
+            tw_tr = search_time_window(
+                client, constraints, "transcript", limit=TIME_NEAR_TOP_K
+            )
+            ss_dense = tw_ss
+            ss_bm25 = []
+            tr_dense = tw_tr
+            tr_bm25 = []
+            anchor_hits = []
+        else:
+            # 显式时间点：语义召回 + 时间过滤，但不 rerank
+            q_short = q
+            q_expand, anchor_hits = expand_query_with_anchors(
+                client, query, q_short, constraints
+            )
+            q = q_expand
+            if anchor_hits:
+                print("rewrite (after anchor expand):")
+                print(q[:500] + ("..." if len(q) > 500 else ""))
+            ss_dense = search_dense(client, q_short, "screen_shot", constraints)
+            ss_bm25 = search_bm25(client, q_expand, "screen_shot", constraints)
+            tr_dense = search_dense(client, q_short, "transcript", constraints)
+            tr_bm25 = search_bm25(client, q_expand, "transcript", constraints)
+            print(
+                f"time-filter recall ss dense={len(ss_dense)} bm25={len(ss_bm25)} | "
+                f"tr dense={len(tr_dense)} bm25={len(tr_bm25)} | "
+                f"anchors={len(anchor_hits)}"
+            )
+            tw_ss = merge_unique_hits(anchor_hits, ss_dense, ss_bm25)
+            tw_tr = merge_unique_hits(tr_dense, tr_bm25)
+
         final_hits = pick_by_type_quota(
             merge_unique_hits(tw_ss, tw_tr),
             TIME_NEAR_TOP_K,
         )
-        # 最终再按时间距离排一下，方便阅读
         final_hits = sorted(
             final_hits,
             key=lambda h: time_distance(center, h.payload),
         )
-        ss_dense = tw_ss
-        ss_bm25 = []
-        tr_dense = tw_tr
-        tr_bm25 = []
         print(
-            f"time-only recall ss={len(tw_ss)} tr={len(tw_tr)} → kept {len(final_hits)} "
+            f"time kept {len(final_hits)} "
             f"(ss={sum(1 for h in final_hits if h.payload.get('type')=='screen_shot')} "
-            f"tr={sum(1 for h in final_hits if h.payload.get('type')=='transcript')})"
+            f"tr={sum(1 for h in final_hits if h.payload.get('type')=='transcript')}, "
+            f"no rerank)"
         )
         if not final_hits:
             print(
@@ -1210,7 +1232,9 @@ for i, query in enumerate(load_queries(), 1):
                 "re-run with --ingest to rebuild start_sec/end_sec indexes"
             )
             prompt = build_prompt(query, final_hits)
-            answer_text = no_hit_answer(query, rewritten, now=True)
+            answer_text = no_hit_answer(
+                query, rewritten, now=(time_mode == "now")
+            )
         else:
             prompt = build_prompt(query, final_hits)
             answer_text = answer(prompt)
