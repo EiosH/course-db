@@ -61,6 +61,7 @@ def format_entity_judge(preprobe: dict | None) -> str:
         {
             "needs_preprobe": bool(preprobe.get("needs_preprobe")),
             "unknown_entity": preprobe.get("unknown_entity"),
+            "referent_unclear": bool(preprobe.get("referent_unclear")),
             "reason": preprobe.get("reason") or "",
         },
         ensure_ascii=False,
@@ -77,6 +78,7 @@ def format_preprobe(preprobe: dict | None) -> str:
     gloss = preprobe.get("gloss") or {}
     lines = [
         f"entity={preprobe.get('unknown_entity') or ''}",
+        f"referent_unclear={bool(preprobe.get('referent_unclear'))}",
         f"query={preprobe.get('query') or ''}",
         f"hits={len(preprobe.get('hits') or [])}",
         f"entity_not_found={bool(preprobe.get('entity_not_found'))}",

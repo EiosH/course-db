@@ -51,6 +51,7 @@ def _empty_preprobe() -> dict:
     return {
         "needs_preprobe": False,
         "unknown_entity": None,
+        "referent_unclear": False,
         "reason": "",
         "query": None,
         "hits": [],
@@ -61,14 +62,15 @@ def _empty_preprobe() -> dict:
 
 def _preprobe(state: dict) -> dict:
     """
-    Stage 0: entity unfamiliarity → optional forced pre-probe.
-    Pre-probe uses one query "What is {entity}", top 1–3, no rerank.
+    Stage 0: entity unfamiliarity / unclear referent → optional forced pre-probe.
+    Named entity → "What is {entity}"; deixis → resolve the vague phrase. Top 1–3, no rerank.
     """
     query = state["query"]
     judgment = judge_unknown_entity(query)
     info = _empty_preprobe()
     info["needs_preprobe"] = judgment["needs_preprobe"]
     info["unknown_entity"] = judgment["unknown_entity"]
+    info["referent_unclear"] = judgment.get("referent_unclear", False)
     info["reason"] = judgment["reason"]
 
     if not judgment["needs_preprobe"]:
@@ -76,9 +78,18 @@ def _preprobe(state: dict) -> dict:
         return {**state, "preprobe": info}
 
     entity = judgment["unknown_entity"]
-    print(f"preprobe: force on entity={entity!r} ({judgment.get('reason')})")
-    # Pre-probe has no time/homework constraints — definition lookup over the lecture
-    hits, pre_q = search_preprobe(state["client"], entity, constraints=[])
+    referent_unclear = judgment.get("referent_unclear", False)
+    print(
+        f"preprobe: force on entity={entity!r} "
+        f"referent_unclear={referent_unclear} ({judgment.get('reason')})"
+    )
+    # Pre-probe has no time/homework constraints — definition / referent lookup over the lecture
+    hits, pre_q = search_preprobe(
+        state["client"],
+        entity,
+        constraints=[],
+        referent_unclear=referent_unclear,
+    )
     info["query"] = pre_q
     info["hits"] = hits
 

@@ -27,7 +27,7 @@ def _parse_json_content(raw: str) -> dict:
 
 
 def judge_unknown_entity(query: str) -> dict:
-    """LLM: only whether an unfamiliar entity needs pre-probe (not answerability)."""
+    """LLM: whether an unfamiliar entity or unclear referent needs pre-probe."""
     raw = ollama_chat(
         [
             {"role": "system", "content": ENTITY_JUDGE_SYSTEM},
@@ -42,11 +42,16 @@ def judge_unknown_entity(query: str) -> dict:
         entity = entity.strip() or None
     else:
         entity = None
+    referent_unclear = bool(data.get("referent_unclear", False))
     if needs and not entity:
         needs = False
+        referent_unclear = False
+    if not needs:
+        referent_unclear = False
     return {
         "needs_preprobe": needs,
         "unknown_entity": entity if needs else None,
+        "referent_unclear": referent_unclear if needs else False,
         "reason": str(data.get("reason") or "").strip(),
     }
 

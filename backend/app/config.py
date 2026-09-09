@@ -50,9 +50,9 @@ PREPROBE_DENSE_LIMIT = 3
 PREPROBE_BM25_LIMIT = 3
 PREPROBE_MIN_CONFIDENCE = 0.35  # 低于此置信度的释义不当作可靠实体提示
 
-ENTITY_JUDGE_SYSTEM = f"""You are an entity unfamiliarity detector for a lecture Q&A assistant ({COURSE_ID}).
+ENTITY_JUDGE_SYSTEM = f"""You are an entity unfamiliarity / referent detector for a lecture Q&A assistant ({COURSE_ID}).
 
-Your ONLY job: decide whether the student question contains an unfamiliar / opaque entity (term, noun, symbol, API, jargon) that should be looked up for a short definition BEFORE the main lecture retrieval.
+Your ONLY job: decide whether the student question needs a short pre-probe lookup BEFORE the main lecture retrieval — either because it contains an unfamiliar / opaque entity, OR because a key referent is unclear (deixis / underspecified noun phrase).
 
 Do NOT judge whether the question can ultimately be answered.
 Do NOT rewrite the question.
@@ -61,38 +61,43 @@ Do NOT invent lecture facts.
 Mark needs_preprobe=true when:
 - The question hinges on a course-specific or technical noun/entity whose meaning is unclear from the wording alone
 - The student asks "what is X", or uses an opaque acronym/API/name that definition lookup would help
+- The question uses an unclear referent / deixis that does not name the concrete concept — e.g. "this", "that", "it", "this concept", "that idea", "the previous one", "the same approach", "Is there a simpler example for this concept?"
+  * For these, set referent_unclear=true and put the vague phrase in unknown_entity (e.g. "this concept")
 
 Mark needs_preprobe=false when:
-- Everyday words, or entities already clearly defined/expanded in the question itself
-- Pure code-trace / homework-number / timestamp / "what is on screen now" questions with no opaque named entity
-- The question is only about evaluating pasted code without an unknown named concept
+- Everyday words, or entities already clearly named and self-contained in the question itself
+- Pure code-trace / homework-number / timestamp questions with no opaque named entity and no vague referent
+- The question is only about evaluating pasted code without an unknown named concept or unclear "this/that"
 
 Output JSON only:
 {{
   "needs_preprobe": false,
   "unknown_entity": null,
+  "referent_unclear": false,
   "reason": "..."
 }}
 
 Fields:
-- needs_preprobe: true iff a definition pre-lookup is warranted
-- unknown_entity: the single most important unfamiliar entity/noun to look up (string), or null when needs_preprobe is false
-- reason: one short sentence (why unfamiliar / why skip)
+- needs_preprobe: true iff a definition / referent pre-lookup is warranted
+- unknown_entity: the single most important unfamiliar entity/noun OR the vague deictic phrase to resolve; null when needs_preprobe is false
+- referent_unclear: true when the trigger is underspecified deixis ("this concept", …), not a clearly named technical term
+- reason: one short sentence (why unfamiliar / why unclear referent / why skip)
 
-Pick at most ONE primary entity. Prefer the opaque technical term over generic words."""
+Pick at most ONE primary entity or vague phrase. Prefer a named opaque technical term over a deictic phrase when both appear."""
 
 ENTITY_EXTRACT_SYSTEM = """You extract a short entity/noun definition from lecture snippets for a pre-probe step.
 
-Given an entity name and retrieved snippets, output JSON only:
+Given an entity name (or a vague deictic phrase like "this concept") and retrieved snippets, output JSON only:
 {
-  "entity": "<same entity>",
+  "entity": "<resolved concrete entity/noun if deixis, otherwise the same entity>",
   "definition": "<one concise definition sentence, or empty string if snippets do not define it>",
   "confidence": 0.0
 }
 
 Rules:
 - definition: ONLY a noun/entity gloss (what it is). No full answer to the student question. No long quote dump.
-- Use ONLY the snippets. If they do not define the entity, set definition="" and confidence<=0.2
+- If the input entity is a vague referent ("this concept", "that", "it"), resolve it to the concrete concept named in the snippets when possible, and put that concrete name in "entity".
+- Use ONLY the snippets. If they do not define / resolve the entity, set definition="" and confidence<=0.2
 - confidence: 0.0–1.0 how sure you are the gloss matches this entity in these snippets
 - Prefer lecture wording; keep definition under ~50 English words"""
 

@@ -214,13 +214,24 @@ def rerank_and_filter(query: str, hits, top_k=RERANK_TOP_K, min_score=RERANK_MIN
     return pick_by_type_quota(scored, top_k)
 
 
-def search_preprobe(client, entity: str, constraints=None, top_k=PREPROBE_TOP_K):
+def search_preprobe(
+    client,
+    entity: str,
+    constraints=None,
+    top_k=PREPROBE_TOP_K,
+    *,
+    referent_unclear: bool = False,
+):
     """
-    Lightweight entity definition recall: one query "What is {entity}",
-    small dense+BM25 top-k, no rerank.
+    Lightweight entity / referent recall: one query, small dense+BM25 top-k, no rerank.
+    Named entity → "What is {entity}".
+    Unclear deixis → resolve what the vague phrase refers to in the lecture.
     """
     constraints = constraints or []
-    q = f"What is {entity}"
+    if referent_unclear:
+        q = f"What concept or topic is being discussed ({entity})"
+    else:
+        q = f"What is {entity}"
     hits = merge_unique_hits(
         search_dense(
             client, q, "screen_shot", constraints, limit=PREPROBE_DENSE_LIMIT
