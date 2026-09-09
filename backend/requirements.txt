@@ -2,3 +2,4 @@ qdrant-client[fastembed]
 requests
 openpyxl
 sentence-transformers
+langchain-core
