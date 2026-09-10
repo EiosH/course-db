@@ -11,6 +11,8 @@ from answering import (
     build_prompt,
     extract_entity_gloss,
     no_hit_answer,
+    plan_preprobe,
+    plan_preprobe_is_referent,
     plan_query,
     rewrite,
 )
@@ -49,28 +51,22 @@ class QueryResult:
 
 def _empty_preprobe() -> dict:
     return {
-        "needs_preprobe": False,
-        "unknown_entity": None,
-        "preprobe_target": None,
-        "referent_unclear": False,
-        "unresolved_referents": [],
-        "opaque_entities": [],
-        "reason": "",
+        "plan": None,
         "query": None,
         "hits": [],
         "gloss": None,
-        "plan": None,
     }
 
 
 def _plan(state: dict) -> dict:
-    """Stage 0a: unified plan (time + referents + opaque entities)."""
+    """Stage 0a: unified plan (time + referents/entities + optional preprobe)."""
     plan = plan_query(state["query"])
+    target = plan_preprobe(plan)
     print(
         f"plan: time_mode={plan.get('time_mode')} "
-        f"needs_preprobe={plan.get('needs_preprobe')} "
-        f"target={plan.get('preprobe_target')!r} "
-        f"unresolved={plan.get('unresolved_referents')} "
+        f"preprobe={target!r} "
+        f"referents={plan.get('referents')} "
+        f"entities={plan.get('entities')} "
         f"({plan.get('reason')})"
     )
     return {**state, "plan": plan}
@@ -85,46 +81,38 @@ def _preprobe(state: dict) -> dict:
     plan = state.get("plan") or {}
     info = _empty_preprobe()
     info["plan"] = plan
-    info["needs_preprobe"] = bool(plan.get("needs_preprobe"))
-    info["unknown_entity"] = plan.get("preprobe_target") or plan.get("unknown_entity")
-    info["preprobe_target"] = info["unknown_entity"]
-    info["referent_unclear"] = bool(plan.get("referent_unclear"))
-    info["unresolved_referents"] = list(plan.get("unresolved_referents") or [])
-    info["opaque_entities"] = list(plan.get("opaque_entities") or [])
-    info["reason"] = plan.get("reason") or ""
+    target = plan_preprobe(plan)
 
-    if not info["needs_preprobe"]:
-        print(f"preprobe: skip ({info['reason'] or 'no preprobe target'})")
+    if not target:
+        print(f"preprobe: skip ({plan.get('reason') or 'no preprobe'})")
         return {**state, "preprobe": info}
 
-    entity = info["unknown_entity"]
-    # Prefer plan time constraints so referent resolution is context-local
+    is_referent = plan_preprobe_is_referent(plan)
     constraints = list(plan.get("hard_constraints") or [])
     print(
-        f"preprobe: force on target={entity!r} "
-        f"referent_unclear={info['referent_unclear']} "
+        f"preprobe: target={target!r} is_referent={is_referent} "
         f"constraints={constraints}"
     )
     hits, pre_q = search_preprobe(
         state["client"],
-        entity,
+        target,
         constraints=constraints,
-        referent_unclear=info["referent_unclear"],
+        is_referent=is_referent,
     )
     info["query"] = pre_q
     info["hits"] = hits
 
     if not hits:
         info["gloss"] = {
-            "entity": entity,
+            "entity": target,
             "definition": "",
             "confidence": 0.0,
             "found": False,
         }
-        print(f"preprobe: empty recall for {entity!r}; continue main retrieval")
+        print(f"preprobe: empty recall for {target!r}; continue main retrieval")
         return {**state, "preprobe": info}
 
-    gloss = extract_entity_gloss(entity, hits)
+    gloss = extract_entity_gloss(target, hits)
     info["gloss"] = gloss
     print(
         f"preprobe: hits={len(hits)} found={gloss.get('found')} "
@@ -146,7 +134,7 @@ def _prepare(state: dict) -> dict:
     # If time is only for resolving a local referent, keep plan context for the
     # rewriter but strip time filters from main retrieval.
     rewritten = rewrite(query, plan=plan, entity_hints=entity_hints or None)
-    if plan.get("scope_time_to_preprobe_only"):
+    if plan.get("time_preprobe_only"):
         rewritten = {
             **rewritten,
             "time_mode": "none",

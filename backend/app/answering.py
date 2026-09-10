@@ -39,11 +39,30 @@ def _as_str_list(value) -> list[str]:
     return out
 
 
+def plan_preprobe(plan: dict | None) -> str | None:
+    """Target string to pre-probe, or None to skip. Derived: bool(this) ⇒ run preprobe."""
+    if not plan:
+        return None
+    raw = plan.get("preprobe")
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip()
+    return None
+
+
+def plan_preprobe_is_referent(plan: dict | None) -> bool:
+    """True when preprobe target comes from referents (not named entities)."""
+    target = plan_preprobe(plan)
+    if not target or not plan:
+        return False
+    return any(
+        target.lower() == r.lower() for r in (plan.get("referents") or [])
+    )
+
+
 def plan_query(query: str) -> dict:
     """
-    Single structured plan: time + unresolved referents + opaque entities.
-    Drives both pre-probe and (later) grounded rewrite — avoids a separate
-    flaky yes/no judge that fights the rewriter.
+    Single structured plan: time + referents/entities + optional preprobe string.
+    needs_preprobe / is_referent are derived from `preprobe` + `referents` — not stored.
     """
     raw = ollama_chat(
         [
@@ -53,22 +72,18 @@ def plan_query(query: str) -> dict:
         format="json",
     )
     data = _parse_json_content(raw)
-    unresolved = _as_str_list(data.get("unresolved_referents"))
-    opaque = _as_str_list(data.get("opaque_entities"))
-    target = data.get("preprobe_target")
+    # Accept short names; fall back to older keys if a model still emits them
+    referents = _as_str_list(data.get("referents") or data.get("unresolved_referents"))
+    entities = _as_str_list(data.get("entities") or data.get("opaque_entities"))
+    target = data.get("preprobe")
+    if target is None:
+        target = data.get("preprobe_target")
     if isinstance(target, str):
         target = target.strip() or None
     else:
         target = None
     if not target:
-        target = unresolved[0] if unresolved else (opaque[0] if opaque else None)
-    referent_unclear = bool(data.get("referent_unclear", False))
-    if target and target in unresolved:
-        referent_unclear = True
-    needs = bool(data.get("needs_preprobe", False)) or bool(target)
-    if not target:
-        needs = False
-        referent_unclear = False
+        target = referents[0] if referents else (entities[0] if entities else None)
 
     planned = normalize_rewrite_timestamps(
         {
@@ -77,18 +92,16 @@ def plan_query(query: str) -> dict:
             "course_general_knowledge": False,
         }
     )
+    time_preprobe_only = bool(
+        data.get("time_preprobe_only", data.get("scope_time_to_preprobe_only", False))
+    )
     return {
         "time_mode": planned.get("time_mode", "none"),
         "hard_constraints": planned.get("hard_constraints", []),
-        "scope_time_to_preprobe_only": bool(
-            data.get("scope_time_to_preprobe_only", False)
-        ),
-        "unresolved_referents": unresolved,
-        "opaque_entities": opaque,
-        "preprobe_target": target if needs else None,
-        "unknown_entity": target if needs else None,  # alias for reporters / gloss
-        "referent_unclear": referent_unclear if needs else False,
-        "needs_preprobe": needs,
+        "time_preprobe_only": time_preprobe_only,
+        "referents": referents,
+        "entities": entities,
+        "preprobe": target,
         "reason": str(data.get("reason") or "").strip(),
     }
 
@@ -151,10 +164,9 @@ def _rewrite_user_message(
                 {
                     "time_mode": plan.get("time_mode"),
                     "hard_constraints": plan.get("hard_constraints", []),
-                    "unresolved_referents": plan.get("unresolved_referents", []),
-                    "opaque_entities": plan.get("opaque_entities", []),
-                    "preprobe_target": plan.get("preprobe_target"),
-                    "referent_unclear": plan.get("referent_unclear"),
+                    "referents": plan.get("referents", []),
+                    "entities": plan.get("entities", []),
+                    "preprobe": plan.get("preprobe"),
                 },
                 ensure_ascii=False,
                 indent=2,
@@ -224,24 +236,24 @@ def rewrite(
 def build_prompt(question, hits, *, preprobe: dict | None = None):
     parts = [f"Student question: {question}"]
 
-    if preprobe and preprobe.get("needs_preprobe"):
-        entity = preprobe.get("unknown_entity") or preprobe.get("preprobe_target") or ""
-        gloss = preprobe.get("gloss") or {}
+    plan = (preprobe or {}).get("plan") or {}
+    target = plan_preprobe(plan)
+    if target:
+        gloss = (preprobe or {}).get("gloss") or {}
         if gloss.get("found") and gloss.get("definition"):
             conf = gloss.get("confidence")
             conf_s = f"{conf:.2f}" if isinstance(conf, (int, float)) else "?"
             parts.append(
                 "Entity glossary (from pre-probe; use only as term definition):\n"
-                f"- {gloss.get('entity') or entity} "
+                f"- {gloss.get('entity') or target} "
                 f"(confidence={conf_s}): {gloss['definition']}"
             )
         else:
-            note = "No related entity definition was found in the lecture materials"
-            if entity:
-                note += f" for '{entity}'"
             parts.append(
                 "Entity pre-probe note: "
-                f"{note}. Answer using lecture content below; do not invent a definition."
+                f"No related entity definition was found in the lecture materials"
+                f" for '{target}'. "
+                "Answer using lecture content below; do not invent a definition."
             )
 
     parts.append(

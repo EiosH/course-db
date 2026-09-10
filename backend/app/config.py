@@ -50,8 +50,7 @@ PREPROBE_DENSE_LIMIT = 3
 PREPROBE_BM25_LIMIT = 3
 PREPROBE_MIN_CONFIDENCE = 0.35  # 低于此置信度的释义不当作可靠实体提示
 
-# Unified query plan: time + unresolved referents + opaque entities in ONE LLM call.
-# Pre-probe is driven by the plan (not a separate flaky yes/no judge that fights rewrite).
+# Unified query plan: time + what to resolve, in ONE LLM call.
 QUERY_PLAN_SYSTEM = f"""You analyze a student question for a lecture Q&A retrieval system ({COURSE_ID}).
 
 Produce a structured plan. Do NOT answer the student. Do NOT invent lecture facts, homework items, quiz numbers, or topic labels that are not licensed by the question text.
@@ -63,12 +62,10 @@ Output JSON only:
 {{
   "time_mode": "none",
   "hard_constraints": [],
-  "scope_time_to_preprobe_only": false,
-  "unresolved_referents": [],
-  "opaque_entities": [],
-  "preprobe_target": null,
-  "referent_unclear": false,
-  "needs_preprobe": false,
+  "time_preprobe_only": false,
+  "referents": [],
+  "entities": [],
+  "preprobe": null,
   "reason": "..."
 }}
 
@@ -90,28 +87,27 @@ Fields:
   * "2h24min" / "2h24" → 02:24:00; prefer hours when the user wrote "h"
   * For a range (e.g. 16:00 ~ 17:00), pick one representative point inside the span (e.g. 00:16:30)
   * Do NOT use "{TIMESTAMP}" unless the user truly means the current playback moment
-- scope_time_to_preprobe_only: true when the timestamp is mainly for resolving a local referent/example, but the student ALSO asks for related material that may appear elsewhere (e.g. find the example at 2h24, then locate questions about that concept). false when the whole answer should stay near that timestamp.
-- unresolved_referents: underspecified noun phrases that must be resolved from lecture context — e.g. "the example", "this concept", "that idea", "it", "the previous one". Include them EVEN IF a timestamp is also present. Time alone does NOT resolve what "the example" / "this concept" refers to.
-- opaque_entities: clearly named but jargon-like terms that may need a short definition lookup. Empty if none.
-- preprobe_target: single best string to look up first — prefer the most underspecified unresolved referent; else the most opaque named entity; else null
-- referent_unclear: true iff preprobe_target comes from unresolved_referents
-- needs_preprobe: true iff preprobe_target is non-null
+- time_preprobe_only: true when the timestamp is mainly to resolve a local referent/example, but the student ALSO asks for related material that may appear elsewhere (e.g. find the example at 2h24, then locate questions about that concept). false when the whole answer should stay near that timestamp.
+- referents: underspecified phrases that need context to resolve — e.g. "the example", "this concept", "that idea", "it". Include EVEN IF a timestamp is also present.
+- entities: clearly named jargon/terms that may need a short definition. Empty if none.
+- preprobe: the single string to look up first (prefer a referent, else an entity), or null to skip pre-probe. Non-null ⇒ pre-probe runs.
 - reason: one short sentence
 
 Critical consistency:
-- A question can have BOTH a time anchor AND unresolved referents. Then needs_preprobe MUST be true.
-- Do NOT set needs_preprobe=false merely because a timestamp exists.
-- For "example around TIME + questions about this concept", prefer scope_time_to_preprobe_only=true.
+- A question can have BOTH a time anchor AND referents. Then preprobe MUST be set (not null).
+- Do NOT leave preprobe null merely because a timestamp exists.
+- For "example around TIME + questions about this concept", prefer time_preprobe_only=true.
 
 Illustrative examples (adapt to the actual question):
-- "What does this mean now?" → time_mode "now", value "{TIMESTAMP}", unresolved_referents ["this"], needs_preprobe true, preprobe_target "this", scope_time_to_preprobe_only false
-- "What does the lecturer illustrate at 14:35?" → time_mode "anchor", value 00:14:35, needs_preprobe false (no vague concept beyond the timed ask)
+- "What does this mean now?" → time_mode "now", value "{TIMESTAMP}", referents ["this"], preprobe "this", time_preprobe_only false
+- "What does the lecturer illustrate at 14:35?" → time_mode "anchor", value 00:14:35, preprobe null
 - "What did lecturer say at 05:00?" → time_mode "anchor", value 00:05:00, NOT 05:00:00
 - "Explain 16:00 ~ 17:00" → time_mode "anchor", value 00:16:30 (midpoint)
-- "Could you find the example around 2h24min, and locate the questions about this concept?" → time_mode "anchor", value 02:24:00, unresolved_referents ["the example","this concept"], needs_preprobe true, scope_time_to_preprobe_only true
-- "What is tail recursion?" → time_mode "none", hard_constraints [], opaque_entities ["tail recursion"] or needs_preprobe for that term if opaque; no time
-- "I don't understand Question 9" → time_mode "none", hard_constraints [], needs_preprobe false (concrete labeled item)
-- "Is there a simpler example for this concept?" → time_mode "none", unresolved_referents ["this concept"], needs_preprobe true, referent_unclear true"""
+- "Could you find the example around 2h24min, and locate the questions about this concept?" → time_mode "anchor", value 02:24:00, referents ["the example","this concept"], preprobe "the example" (or "this concept"), time_preprobe_only true
+- "What is tail recursion?" → time_mode "none", entities ["tail recursion"], preprobe "tail recursion" if opaque lookup helps
+- "I don't understand Question 9" → time_mode "none", preprobe null (concrete labeled item)
+- "Is there a simpler example for this concept?" → time_mode "none", referents ["this concept"], preprobe "this concept"
+"""
 
 ENTITY_EXTRACT_SYSTEM = """You extract a short entity/noun definition from lecture snippets for a pre-probe step.
 

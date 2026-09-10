@@ -220,16 +220,15 @@ def search_preprobe(
     constraints=None,
     top_k=PREPROBE_TOP_K,
     *,
-    referent_unclear: bool = False,
+    is_referent: bool = False,
 ):
     """
     Lightweight entity / referent recall: one query, small dense+BM25 top-k, no rerank.
     Named entity → "What is {entity}".
-    Unclear deixis → resolve what the vague phrase refers to (optionally time-filtered
-    via constraints from the query plan).
+    Referent → resolve what the vague phrase refers to (optionally time-filtered).
     """
     constraints = constraints or []
-    if referent_unclear:
+    if is_referent:
         q = f"What is being referred to by '{entity}'"
     else:
         q = f"What is {entity}"

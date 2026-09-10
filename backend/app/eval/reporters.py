@@ -10,7 +10,7 @@ from typing import Protocol
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 
-from answering import format_hits
+from answering import format_hits, plan_preprobe, plan_preprobe_is_referent
 from config import COURSE_ID, LECTURER, OUTPUT_DIR, QUARTER
 from pipeline import QueryResult
 
@@ -54,28 +54,20 @@ CELL_WRAP = Alignment(vertical="top", wrap_text=True)
 
 
 def format_entity_judge(preprobe: dict | None) -> str:
-    """Query-plan / pre-probe decision fields for Excel / logs."""
+    """Query plan for Excel / logs (derived flags computed, not stored twice)."""
     if not preprobe:
         return ""
     plan = preprobe.get("plan") or {}
+    target = plan_preprobe(plan)
     return json.dumps(
         {
-            "needs_preprobe": bool(preprobe.get("needs_preprobe")),
-            "preprobe_target": preprobe.get("preprobe_target")
-            or preprobe.get("unknown_entity"),
-            "referent_unclear": bool(preprobe.get("referent_unclear")),
-            "unresolved_referents": preprobe.get("unresolved_referents")
-            or plan.get("unresolved_referents")
-            or [],
-            "opaque_entities": preprobe.get("opaque_entities")
-            or plan.get("opaque_entities")
-            or [],
             "time_mode": plan.get("time_mode"),
             "hard_constraints": plan.get("hard_constraints") or [],
-            "scope_time_to_preprobe_only": bool(
-                plan.get("scope_time_to_preprobe_only")
-            ),
-            "reason": preprobe.get("reason") or plan.get("reason") or "",
+            "time_preprobe_only": bool(plan.get("time_preprobe_only")),
+            "referents": plan.get("referents") or [],
+            "entities": plan.get("entities") or [],
+            "preprobe": target,
+            "reason": plan.get("reason") or "",
         },
         ensure_ascii=False,
         indent=2,
@@ -83,15 +75,17 @@ def format_entity_judge(preprobe: dict | None) -> str:
 
 
 def format_preprobe(preprobe: dict | None) -> str:
-    """Pre-probe execution summary (after entity judgment)."""
+    """Pre-probe execution summary."""
     if not preprobe:
         return ""
-    if not preprobe.get("needs_preprobe"):
+    plan = preprobe.get("plan") or {}
+    target = plan_preprobe(plan)
+    if not target:
         return "skipped"
     gloss = preprobe.get("gloss") or {}
     lines = [
-        f"entity={preprobe.get('unknown_entity') or ''}",
-        f"referent_unclear={bool(preprobe.get('referent_unclear'))}",
+        f"preprobe={target}",
+        f"is_referent={plan_preprobe_is_referent(plan)}",
         f"query={preprobe.get('query') or ''}",
         f"hits={len(preprobe.get('hits') or [])}",
     ]
