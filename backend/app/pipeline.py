@@ -10,8 +10,8 @@ from answering import (
     answer,
     build_prompt,
     extract_entity_gloss,
-    judge_unknown_entity,
     no_hit_answer,
+    plan_query,
     rewrite,
 )
 from config import TIME_NEAR_TOP_K
@@ -51,50 +51,70 @@ def _empty_preprobe() -> dict:
     return {
         "needs_preprobe": False,
         "unknown_entity": None,
+        "preprobe_target": None,
         "referent_unclear": False,
+        "unresolved_referents": [],
+        "opaque_entities": [],
         "reason": "",
         "query": None,
         "hits": [],
         "gloss": None,
-        "entity_not_found": False,
+        "plan": None,
     }
+
+
+def _plan(state: dict) -> dict:
+    """Stage 0a: unified plan (time + referents + opaque entities)."""
+    plan = plan_query(state["query"])
+    print(
+        f"plan: time_mode={plan.get('time_mode')} "
+        f"needs_preprobe={plan.get('needs_preprobe')} "
+        f"target={plan.get('preprobe_target')!r} "
+        f"unresolved={plan.get('unresolved_referents')} "
+        f"({plan.get('reason')})"
+    )
+    return {**state, "plan": plan}
 
 
 def _preprobe(state: dict) -> dict:
     """
-    Stage 0: entity unfamiliarity / unclear referent → optional forced pre-probe.
-    Named entity → "What is {entity}"; deixis → resolve the vague phrase. Top 1–3, no rerank.
+    Stage 0b: plan-driven pre-probe.
+    Uses plan time constraints when present so deixis like "the example at 2h24"
+    resolves near that moment — not a blind whole-lecture definition search.
     """
-    query = state["query"]
-    judgment = judge_unknown_entity(query)
+    plan = state.get("plan") or {}
     info = _empty_preprobe()
-    info["needs_preprobe"] = judgment["needs_preprobe"]
-    info["unknown_entity"] = judgment["unknown_entity"]
-    info["referent_unclear"] = judgment.get("referent_unclear", False)
-    info["reason"] = judgment["reason"]
+    info["plan"] = plan
+    info["needs_preprobe"] = bool(plan.get("needs_preprobe"))
+    info["unknown_entity"] = plan.get("preprobe_target") or plan.get("unknown_entity")
+    info["preprobe_target"] = info["unknown_entity"]
+    info["referent_unclear"] = bool(plan.get("referent_unclear"))
+    info["unresolved_referents"] = list(plan.get("unresolved_referents") or [])
+    info["opaque_entities"] = list(plan.get("opaque_entities") or [])
+    info["reason"] = plan.get("reason") or ""
 
-    if not judgment["needs_preprobe"]:
-        print(f"preprobe: skip ({judgment.get('reason') or 'no unfamiliar entity'})")
+    if not info["needs_preprobe"]:
+        print(f"preprobe: skip ({info['reason'] or 'no preprobe target'})")
         return {**state, "preprobe": info}
 
-    entity = judgment["unknown_entity"]
-    referent_unclear = judgment.get("referent_unclear", False)
+    entity = info["unknown_entity"]
+    # Prefer plan time constraints so referent resolution is context-local
+    constraints = list(plan.get("hard_constraints") or [])
     print(
-        f"preprobe: force on entity={entity!r} "
-        f"referent_unclear={referent_unclear} ({judgment.get('reason')})"
+        f"preprobe: force on target={entity!r} "
+        f"referent_unclear={info['referent_unclear']} "
+        f"constraints={constraints}"
     )
-    # Pre-probe has no time/homework constraints — definition / referent lookup over the lecture
     hits, pre_q = search_preprobe(
         state["client"],
         entity,
-        constraints=[],
-        referent_unclear=referent_unclear,
+        constraints=constraints,
+        referent_unclear=info["referent_unclear"],
     )
     info["query"] = pre_q
     info["hits"] = hits
 
     if not hits:
-        info["entity_not_found"] = True
         info["gloss"] = {
             "entity": entity,
             "definition": "",
@@ -106,7 +126,6 @@ def _preprobe(state: dict) -> dict:
 
     gloss = extract_entity_gloss(entity, hits)
     info["gloss"] = gloss
-    info["entity_not_found"] = not gloss.get("found")
     print(
         f"preprobe: hits={len(hits)} found={gloss.get('found')} "
         f"confidence={gloss.get('confidence')} def={gloss.get('definition')!r}"
@@ -116,13 +135,23 @@ def _preprobe(state: dict) -> dict:
 
 def _prepare(state: dict) -> dict:
     query = state["query"]
+    plan = state.get("plan") or {}
     preprobe = state.get("preprobe") or _empty_preprobe()
     entity_hints = []
     gloss = preprobe.get("gloss")
     if gloss and gloss.get("found"):
         entity_hints = [gloss]
 
-    rewritten = rewrite(query, entity_hints=entity_hints or None)
+    # Time comes from plan; rewrite only builds a grounded rewritten_query.
+    # If time is only for resolving a local referent, keep plan context for the
+    # rewriter but strip time filters from main retrieval.
+    rewritten = rewrite(query, plan=plan, entity_hints=entity_hints or None)
+    if plan.get("scope_time_to_preprobe_only"):
+        rewritten = {
+            **rewritten,
+            "time_mode": "none",
+            "hard_constraints": [],
+        }
     return {
         **state,
         "preprobe": preprobe,
@@ -222,9 +251,10 @@ def _to_result(state: dict) -> QueryResult:
     )
 
 
-# entity-judge → optional preprobe → rewrite → branch(retrieve) → answer → QueryResult
+# plan → optional preprobe → grounded rewrite → branch(retrieve) → answer → QueryResult
 _CHAIN = (
-    RunnableLambda(_preprobe)
+    RunnableLambda(_plan)
+    | RunnableLambda(_preprobe)
     | RunnableLambda(_prepare)
     | RunnableBranch(
         (lambda s: s["time_mode"] == "now", RunnableLambda(_retrieve_now)),

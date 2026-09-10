@@ -50,44 +50,72 @@ PREPROBE_DENSE_LIMIT = 3
 PREPROBE_BM25_LIMIT = 3
 PREPROBE_MIN_CONFIDENCE = 0.35  # 低于此置信度的释义不当作可靠实体提示
 
-ENTITY_JUDGE_SYSTEM = f"""You are an entity unfamiliarity / referent detector for a lecture Q&A assistant ({COURSE_ID}).
+# Unified query plan: time + unresolved referents + opaque entities in ONE LLM call.
+# Pre-probe is driven by the plan (not a separate flaky yes/no judge that fights rewrite).
+QUERY_PLAN_SYSTEM = f"""You analyze a student question for a lecture Q&A retrieval system ({COURSE_ID}).
 
-Your ONLY job: decide whether the student question needs a short pre-probe lookup BEFORE the main lecture retrieval — either because it contains an unfamiliar / opaque entity, OR because a key referent is unclear (deixis / underspecified noun phrase).
+Produce a structured plan. Do NOT answer the student. Do NOT invent lecture facts, homework items, quiz numbers, or topic labels that are not licensed by the question text.
 
-Do NOT judge whether the question can ultimately be answered.
-Do NOT rewrite the question.
-Do NOT invent lecture facts.
-
-Mark needs_preprobe=true when:
-- The question hinges on a course-specific or technical noun/entity whose meaning is unclear from the wording alone
-- The student asks "what is X", or uses an opaque acronym/API/name that definition lookup would help
-- The question uses an unclear referent / deixis that does not name the concrete concept — e.g. "this", "that", "it", "this concept", "that idea", "the previous one", "the same approach", "Is there a simpler example for this concept?"
-  * For these, set referent_unclear=true and put the vague phrase in unknown_entity (e.g. "this concept")
-
-Mark needs_preprobe=false when:
-- Everyday words, or entities already clearly named and self-contained in the question itself
-- Pure code-trace / homework-number / timestamp questions with no opaque named entity and no vague referent
-- The question is only about evaluating pasted code without an unknown named concept or unclear "this/that"
+Current playback timestamp (mock "now" only): {TIMESTAMP}
+Lecture elapsed time is 0:00–{LECTURE_MAX_TS}, stored as HH:MM:SS.
 
 Output JSON only:
 {{
-  "needs_preprobe": false,
-  "unknown_entity": null,
+  "time_mode": "none",
+  "hard_constraints": [],
+  "scope_time_to_preprobe_only": false,
+  "unresolved_referents": [],
+  "opaque_entities": [],
+  "preprobe_target": null,
   "referent_unclear": false,
+  "needs_preprobe": false,
   "reason": "..."
 }}
 
 Fields:
-- needs_preprobe: true iff a definition / referent pre-lookup is warranted
-- unknown_entity: the single most important unfamiliar entity/noun OR the vague deictic phrase to resolve; null when needs_preprobe is false
-- referent_unclear: true when the trigger is underspecified deixis ("this concept", …), not a clearly named technical term
-- reason: one short sentence (why unfamiliar / why unclear referent / why skip)
+- time_mode:
+  * "now" — current playback moment with no clock time in the question (e.g. "what does this mean now")
+  * "anchor" — a specific elapsed time / span in the lecture (e.g. "at 14:35", "around 42:10", "2h24min", "16:00 ~ 17:00")
+  * "none" — no usable time reference
+- hard_constraints: when time_mode is "now" or "anchor", exactly one
+  {{"field":"timestamp","operator":"range","value":"<HH:MM:SS>"}}
+  * "now" → value MUST be "{TIMESTAMP}"
+  * Lecture positions are **elapsed time from video start** (0:00–{LECTURE_MAX_TS})
+  * When the user writes **two parts** (MM:SS), that is minutes:seconds from the start — normalize to 00:MM:SS:
+    - "05:00" → 00:05:00 (5 minutes in), NOT 05:00:00
+    - "14:35" → 00:14:35, NOT 14:35:00
+    - "42:10" → 00:42:10
+  * When the user writes **three parts** (HH:MM:SS), keep as elapsed HH:MM:SS (e.g. 01:22:09)
+  * NEVER pad MM:SS by appending ":00" to the minutes (that wrongly turns 05:00 into 05:00:00)
+  * "2h24min" / "2h24" → 02:24:00; prefer hours when the user wrote "h"
+  * For a range (e.g. 16:00 ~ 17:00), pick one representative point inside the span (e.g. 00:16:30)
+  * Do NOT use "{TIMESTAMP}" unless the user truly means the current playback moment
+- scope_time_to_preprobe_only: true when the timestamp is mainly for resolving a local referent/example, but the student ALSO asks for related material that may appear elsewhere (e.g. find the example at 2h24, then locate questions about that concept). false when the whole answer should stay near that timestamp.
+- unresolved_referents: underspecified noun phrases that must be resolved from lecture context — e.g. "the example", "this concept", "that idea", "it", "the previous one". Include them EVEN IF a timestamp is also present. Time alone does NOT resolve what "the example" / "this concept" refers to.
+- opaque_entities: clearly named but jargon-like terms that may need a short definition lookup. Empty if none.
+- preprobe_target: single best string to look up first — prefer the most underspecified unresolved referent; else the most opaque named entity; else null
+- referent_unclear: true iff preprobe_target comes from unresolved_referents
+- needs_preprobe: true iff preprobe_target is non-null
+- reason: one short sentence
 
-Pick at most ONE primary entity or vague phrase. Prefer a named opaque technical term over a deictic phrase when both appear."""
+Critical consistency:
+- A question can have BOTH a time anchor AND unresolved referents. Then needs_preprobe MUST be true.
+- Do NOT set needs_preprobe=false merely because a timestamp exists.
+- For "example around TIME + questions about this concept", prefer scope_time_to_preprobe_only=true.
+
+Illustrative examples (adapt to the actual question):
+- "What does this mean now?" → time_mode "now", value "{TIMESTAMP}", unresolved_referents ["this"], needs_preprobe true, preprobe_target "this", scope_time_to_preprobe_only false
+- "What does the lecturer illustrate at 14:35?" → time_mode "anchor", value 00:14:35, needs_preprobe false (no vague concept beyond the timed ask)
+- "What did lecturer say at 05:00?" → time_mode "anchor", value 00:05:00, NOT 05:00:00
+- "Explain 16:00 ~ 17:00" → time_mode "anchor", value 00:16:30 (midpoint)
+- "Could you find the example around 2h24min, and locate the questions about this concept?" → time_mode "anchor", value 02:24:00, unresolved_referents ["the example","this concept"], needs_preprobe true, scope_time_to_preprobe_only true
+- "What is tail recursion?" → time_mode "none", hard_constraints [], opaque_entities ["tail recursion"] or needs_preprobe for that term if opaque; no time
+- "I don't understand Question 9" → time_mode "none", hard_constraints [], needs_preprobe false (concrete labeled item)
+- "Is there a simpler example for this concept?" → time_mode "none", unresolved_referents ["this concept"], needs_preprobe true, referent_unclear true"""
 
 ENTITY_EXTRACT_SYSTEM = """You extract a short entity/noun definition from lecture snippets for a pre-probe step.
 
-Given an entity name (or a vague deictic phrase like "this concept") and retrieved snippets, output JSON only:
+Given an entity name (or a vague deictic phrase like "this concept" / "the example") and retrieved snippets, output JSON only:
 {
   "entity": "<resolved concrete entity/noun if deixis, otherwise the same entity>",
   "definition": "<one concise definition sentence, or empty string if snippets do not define it>",
@@ -96,74 +124,50 @@ Given an entity name (or a vague deictic phrase like "this concept") and retriev
 
 Rules:
 - definition: ONLY a noun/entity gloss (what it is). No full answer to the student question. No long quote dump.
-- If the input entity is a vague referent ("this concept", "that", "it"), resolve it to the concrete concept named in the snippets when possible, and put that concrete name in "entity".
+- If the input is a vague referent ("this concept", "the example", "that", "it"), resolve it to the concrete concept/example named in the snippets when possible, and put that concrete name in "entity".
 - Use ONLY the snippets. If they do not define / resolve the entity, set definition="" and confidence<=0.2
 - confidence: 0.0–1.0 how sure you are the gloss matches this entity in these snippets
 - Prefer lecture wording; keep definition under ~50 English words"""
 
-REWRITE_SYSTEM = f"""You are a search query rewrite assistant for lecture retrieval.
+REWRITE_SYSTEM = f"""You write a retrieval query string for lecture notes / transcript search ({COURSE_ID}).
 
-Current playback timestamp (mock "now" only): {TIMESTAMP}
+You receive:
+1) the original student question
+2) an optional query plan (time already decided elsewhere — do NOT change time)
+3) optional resolved entity glosses from a prior pre-probe
 
 Output JSON only:
 {{
   "rewritten_query": "...",
-  "time_mode": "none",
-  "course_general_knowledge": false,
-  "hard_constraints": []
+  "course_general_knowledge": false
 }}
 
 Fields:
-- rewritten_query: informative search string for lecture notes and spoken content (not a tiny 3-word stub)
+- rewritten_query: a grounded search string for slides and spoken content (not a tiny 3-word stub)
 - course_general_knowledge: true when the question is **conceptual common knowledge within this course's subject** ({COURSE_ID} — programming languages / functional programming / Scala-style topics), answerable from standard textbook knowledge **without** this lecture's slides, transcript, or homework
-  * true: "What is tail recursion?", "What is fold left?", "How do programming languages handle concurrency?" (general concepts), "What is CSC447 about?"
-  * false: needs **this class recording** — quiz/homework numbers (Question 9), timestamps ("at 14:35", "now"), "example 3 in this lecture", pasted in-class code, "what did the instructor say", anything asking what happened in a specific moment or assignment
-- time_mode: how to use time in retrieval — YOU must interpret what the user's time reference means:
-  * "now" — user asks about the current playback moment (e.g. "what does this mean now", "what is being covered right now"); no specific clock time in the question
-  * "anchor" — user points to a specific moment or span in the lecture (e.g. "at 14:35", "around 42:10", "16:00 ~ 17:00", "earlier when he talked about folds"); YOU decide the anchor time(s) and normalize to HH:MM:SS
-  * "none" — no time reference, or time is irrelevant (general concepts, question numbers, code walkthroughs without a timestamp)
-- hard_constraints: pre-filters. When time_mode is "now" or "anchor", include exactly one timestamp constraint:
-  {{"field":"timestamp","operator":"range","value":"<HH:MM:SS>"}}
+  * true: "What is tail recursion?", "What is fold left?", "How do programming languages handle concurrency?", "What is CSC447 about?"
+  * false: needs **this class recording** — quiz/homework numbers (Question 9), timestamps, "example in this lecture", pasted in-class code, "what did the instructor say"
 
-Rules:
-- Keep concrete labels and domain terms. Do NOT include course codes, instructor names, or quarter — those are already filtered
-- If the user refers to a numbered quiz/homework item (e.g. "Question 9", "Problem 3", "Q9"):
+Grounding (architectural constraint — not optional):
+- rewritten_query MUST be licensed by (a) words/phrases in the student question, and/or (b) resolved gloss entities/definitions provided below.
+- You may rephrase, lemmatize, or lightly add close paraphrases of those licensed terms.
+- Do NOT introduce new assignment genres or inventory labels the student did not say and glosses do not mention — e.g. do not add homework / quiz / assignment / problem / exam unless those words (or the gloss) already license them.
+- If the student says "questions about this concept", keep that intent; do not upgrade it into homework/assignment language.
+- If glosses resolved a vague referent, you MAY include the resolved concrete name.
+- Prefer staying close to the student's wording over aggressive synonym stuffing.
+- Keep concrete labels (e.g. Question 9). Do NOT invent the actual question text.
+- If the user refers to a numbered quiz/homework item already present in the question (e.g. "Question 9", "Problem 3", "Q9"):
   * KEEP the exact label in rewritten_query
-  * Expand with retrieval intents: stem, options, answer, instructor explanation
-  * Do NOT invent the actual question text
-- For other questions: expand with synonyms and technical terms likely on slides or in speech
+  * You may add retrieval intents licensed by that label: stem, options, answer, instructor explanation
 
-time_mode details:
-
-"now":
-- value MUST be "{TIMESTAMP}" (current playback time)
-- rewritten_query: short placeholder (e.g. "current slide and spoken line"); retrieval is mostly time-driven
-
-"anchor":
-- Lecture positions are **elapsed time from video start**, stored as HH:MM:SS (this lecture is 0:00–{LECTURE_MAX_TS})
-- When the user writes **two parts** (MM:SS), that is minutes:seconds from the start — normalize to 00:MM:SS:
-  * "05:00" → 00:05:00 (5 minutes in), NOT 05:00:00
-  * "14:35" → 00:14:35, NOT 14:35:00
-  * "42:10" → 00:42:10
-- When the user writes **three parts** (HH:MM:SS), keep as elapsed HH:MM:SS (e.g. 01:22:09)
-- NEVER pad MM:SS by appending ":00" to the minutes (that wrongly turns 05:00 into 05:00:00)
-- For a range (e.g. 16:00 ~ 17:00), pick one representative point inside the span
-- rewritten_query: still expand with topic/intent — retrieval uses BOTH time filter and keywords
-- Do NOT use "{TIMESTAMP}" unless the user truly means the current playback moment
-
-"none":
-- hard_constraints must be []
-- Examples: "What is Fold Left?", "Question 9 answer", code pasted without a timestamp
-
-Examples (illustrative — adapt to the actual user question):
-- "What does this mean now?" → time_mode "now", value "{TIMESTAMP}", rewritten_query short
-- "What does the lecturer illustrate at 14:35?" → time_mode "anchor", value 00:14:35, rewritten_query expands illustrate/diagram/example terms
-- "What did lecturer say at 05:00?" → time_mode "anchor", value 00:05:00, NOT 05:00:00
-- "Explain 16:00 ~ 17:00" → time_mode "anchor", value 00:16:30 (midpoint), rewritten_query expands the asked topic
-- "What is tail recursion?" → time_mode "none", course_general_knowledge true, hard_constraints []
-- "What is Fold Left exactly?" → time_mode "none", course_general_knowledge true, hard_constraints []
-- "I don't understand Question 9" → time_mode "none", course_general_knowledge false, hard_constraints []
-- "What is CSC447?" → time_mode "none", course_general_knowledge true, hard_constraints []"""
+Illustrative examples (adapt; stay grounded):
+- "What does this mean now?" + plan time_mode now → short placeholder about current slide / spoken line
+- "What does the lecturer illustrate at 14:35?" → expand illustrate / diagram / example terms; do not invent homework
+- "example around 2h24min ... questions about this concept" + gloss resolves concept → include example / resolved concept name / questions; do NOT invent "homework assignment problem"
+- "I don't understand Question 9" → keep "Question 9"; may add stem / options / answer / explanation
+- "What is tail recursion?" → conceptual terms; course_general_knowledge true
+- "What is Fold Left exactly?" → course_general_knowledge true
+- "What is CSC447?" → course_general_knowledge true"""
 
 # 多词定位短语（任意 "Label + 数字"）：收成单个 BM25 token，查询侧同步扩词。
 # token = "ph" + 去空白标点(label+num)，由规则动态生成（不是写死某个题号）。

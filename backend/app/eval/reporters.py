@@ -17,7 +17,7 @@ from pipeline import QueryResult
 ANSWER_HEADERS = [
     "序号",
     "原问题",
-    "实体判断",
+    "查询计划",
     "预探查",
     "预探查召回",
     "rewritten_query",
@@ -54,15 +54,28 @@ CELL_WRAP = Alignment(vertical="top", wrap_text=True)
 
 
 def format_entity_judge(preprobe: dict | None) -> str:
-    """LLM entity-judgment output (whether to pre-probe)."""
+    """Query-plan / pre-probe decision fields for Excel / logs."""
     if not preprobe:
         return ""
+    plan = preprobe.get("plan") or {}
     return json.dumps(
         {
             "needs_preprobe": bool(preprobe.get("needs_preprobe")),
-            "unknown_entity": preprobe.get("unknown_entity"),
+            "preprobe_target": preprobe.get("preprobe_target")
+            or preprobe.get("unknown_entity"),
             "referent_unclear": bool(preprobe.get("referent_unclear")),
-            "reason": preprobe.get("reason") or "",
+            "unresolved_referents": preprobe.get("unresolved_referents")
+            or plan.get("unresolved_referents")
+            or [],
+            "opaque_entities": preprobe.get("opaque_entities")
+            or plan.get("opaque_entities")
+            or [],
+            "time_mode": plan.get("time_mode"),
+            "hard_constraints": plan.get("hard_constraints") or [],
+            "scope_time_to_preprobe_only": bool(
+                plan.get("scope_time_to_preprobe_only")
+            ),
+            "reason": preprobe.get("reason") or plan.get("reason") or "",
         },
         ensure_ascii=False,
         indent=2,
@@ -81,7 +94,6 @@ def format_preprobe(preprobe: dict | None) -> str:
         f"referent_unclear={bool(preprobe.get('referent_unclear'))}",
         f"query={preprobe.get('query') or ''}",
         f"hits={len(preprobe.get('hits') or [])}",
-        f"entity_not_found={bool(preprobe.get('entity_not_found'))}",
     ]
     if gloss:
         conf = gloss.get("confidence")
@@ -89,6 +101,8 @@ def format_preprobe(preprobe: dict | None) -> str:
         lines.append(f"gloss_found={bool(gloss.get('found'))}")
         lines.append(f"confidence={conf_s}")
         lines.append(f"definition={gloss.get('definition') or ''}")
+    else:
+        lines.append("gloss_found=False")
     return "\n".join(lines)
 
 
@@ -175,7 +189,7 @@ class TxtReporter:
         hits_block = format_hits(preprobe_hits, "preprobe") or "(none)"
         block = (
             f"{index}. 原问题: {result.query}\n"
-            f"entity_judge:\n"
+            f"query_plan:\n"
             f"{format_entity_judge(result.preprobe)}\n"
             f"\n"
             f"preprobe:\n"
@@ -214,7 +228,7 @@ class ConsoleReporter:
 
     def record(self, index: int, result: QueryResult) -> None:
         print(f"\nquery:    {result.query}")
-        print("entity_judge:")
+        print("query_plan:")
         print(format_entity_judge(result.preprobe) or "(none)")
         print("preprobe:")
         print(format_preprobe(result.preprobe) or "(none)")

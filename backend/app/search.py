@@ -225,11 +225,12 @@ def search_preprobe(
     """
     Lightweight entity / referent recall: one query, small dense+BM25 top-k, no rerank.
     Named entity → "What is {entity}".
-    Unclear deixis → resolve what the vague phrase refers to in the lecture.
+    Unclear deixis → resolve what the vague phrase refers to (optionally time-filtered
+    via constraints from the query plan).
     """
     constraints = constraints or []
     if referent_unclear:
-        q = f"What concept or topic is being discussed ({entity})"
+        q = f"What is being referred to by '{entity}'"
     else:
         q = f"What is {entity}"
     hits = merge_unique_hits(

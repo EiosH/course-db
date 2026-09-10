@@ -1,4 +1,4 @@
-"""Query rewrite and answer generation."""
+"""Query plan, rewrite, and answer generation."""
 
 import json
 import re
@@ -7,10 +7,10 @@ from config import (
     ANSWER_SYSTEM,
     COURSE_GENERAL_ANSWER_SYSTEM,
     ENTITY_EXTRACT_SYSTEM,
-    ENTITY_JUDGE_SYSTEM,
     NO_HIT_NOW_REPLY,
     NO_HIT_REPLY,
     PREPROBE_MIN_CONFIDENCE,
+    QUERY_PLAN_SYSTEM,
     REWRITE_SYSTEM,
     STIFF_REFUSAL_RE,
     STIFF_REFUSAL_REPLY,
@@ -26,32 +26,69 @@ def _parse_json_content(raw: str) -> dict:
     return json.loads(raw)
 
 
-def judge_unknown_entity(query: str) -> dict:
-    """LLM: whether an unfamiliar entity or unclear referent needs pre-probe."""
+def _as_str_list(value) -> list[str]:
+    if not value:
+        return []
+    if isinstance(value, str):
+        s = value.strip()
+        return [s] if s else []
+    out = []
+    for item in value:
+        if isinstance(item, str) and item.strip():
+            out.append(item.strip())
+    return out
+
+
+def plan_query(query: str) -> dict:
+    """
+    Single structured plan: time + unresolved referents + opaque entities.
+    Drives both pre-probe and (later) grounded rewrite — avoids a separate
+    flaky yes/no judge that fights the rewriter.
+    """
     raw = ollama_chat(
         [
-            {"role": "system", "content": ENTITY_JUDGE_SYSTEM},
+            {"role": "system", "content": QUERY_PLAN_SYSTEM},
             {"role": "user", "content": query},
         ],
         format="json",
     )
     data = _parse_json_content(raw)
-    needs = bool(data.get("needs_preprobe", False))
-    entity = data.get("unknown_entity")
-    if isinstance(entity, str):
-        entity = entity.strip() or None
+    unresolved = _as_str_list(data.get("unresolved_referents"))
+    opaque = _as_str_list(data.get("opaque_entities"))
+    target = data.get("preprobe_target")
+    if isinstance(target, str):
+        target = target.strip() or None
     else:
-        entity = None
+        target = None
+    if not target:
+        target = unresolved[0] if unresolved else (opaque[0] if opaque else None)
     referent_unclear = bool(data.get("referent_unclear", False))
-    if needs and not entity:
+    if target and target in unresolved:
+        referent_unclear = True
+    needs = bool(data.get("needs_preprobe", False)) or bool(target)
+    if not target:
         needs = False
         referent_unclear = False
-    if not needs:
-        referent_unclear = False
+
+    planned = normalize_rewrite_timestamps(
+        {
+            "time_mode": data.get("time_mode", "none"),
+            "hard_constraints": data.get("hard_constraints", []),
+            "course_general_knowledge": False,
+        }
+    )
     return {
-        "needs_preprobe": needs,
-        "unknown_entity": entity if needs else None,
+        "time_mode": planned.get("time_mode", "none"),
+        "hard_constraints": planned.get("hard_constraints", []),
+        "scope_time_to_preprobe_only": bool(
+            data.get("scope_time_to_preprobe_only", False)
+        ),
+        "unresolved_referents": unresolved,
+        "opaque_entities": opaque,
+        "preprobe_target": target if needs else None,
+        "unknown_entity": target if needs else None,  # alias for reporters / gloss
         "referent_unclear": referent_unclear if needs else False,
+        "needs_preprobe": needs,
         "reason": str(data.get("reason") or "").strip(),
     }
 
@@ -84,6 +121,7 @@ def extract_entity_gloss(entity: str, hits) -> dict:
     )
     data = _parse_json_content(raw)
     definition = str(data.get("definition") or "").strip()
+    resolved = str(data.get("entity") or entity).strip() or entity
     try:
         confidence = float(data.get("confidence", 0.0))
     except (TypeError, ValueError):
@@ -91,16 +129,37 @@ def extract_entity_gloss(entity: str, hits) -> dict:
     confidence = max(0.0, min(1.0, confidence))
     found = bool(definition) and confidence >= PREPROBE_MIN_CONFIDENCE
     return {
-        "entity": entity,
+        "entity": resolved if found else entity,
         "definition": definition,
         "confidence": confidence,
         "found": found,
     }
 
 
-def _rewrite_user_message(query: str, entity_hints: list[dict] | None = None) -> str:
-    """Original student query + refined entity glosses (never dump full pre-probe text)."""
+def _rewrite_user_message(
+    query: str,
+    *,
+    plan: dict | None = None,
+    entity_hints: list[dict] | None = None,
+) -> str:
+    """Original student query + plan summary + glosses (no full pre-probe dump)."""
     parts = [f"Student question:\n{query}"]
+    if plan:
+        parts.append(
+            "Query plan (time already fixed — do not change it):\n"
+            + json.dumps(
+                {
+                    "time_mode": plan.get("time_mode"),
+                    "hard_constraints": plan.get("hard_constraints", []),
+                    "unresolved_referents": plan.get("unresolved_referents", []),
+                    "opaque_entities": plan.get("opaque_entities", []),
+                    "preprobe_target": plan.get("preprobe_target"),
+                    "referent_unclear": plan.get("referent_unclear"),
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     hints = [
         h
         for h in (entity_hints or [])
@@ -108,9 +167,8 @@ def _rewrite_user_message(query: str, entity_hints: list[dict] | None = None) ->
     ]
     if hints:
         lines = [
-            "Entity glosses from a prior definition lookup "
-            "(clarify terms only; do NOT replace the student question; "
-            "still ground rewritten_query on the original question):"
+            "Resolved entity glosses from pre-probe "
+            "(licensed grounding only; do NOT replace the student question):"
         ]
         for h in hints:
             conf = h.get("confidence")
@@ -120,22 +178,44 @@ def _rewrite_user_message(query: str, entity_hints: list[dict] | None = None) ->
     return "\n\n".join(parts)
 
 
-def rewrite(query: str, *, entity_hints: list[dict] | None = None) -> dict:
+def rewrite(
+    query: str,
+    *,
+    plan: dict | None = None,
+    entity_hints: list[dict] | None = None,
+) -> dict:
+    """
+    Grounded rewritten_query only. Time / constraints come from plan when present.
+    """
     raw = ollama_chat(
         [
             {"role": "system", "content": REWRITE_SYSTEM},
-            {"role": "user", "content": _rewrite_user_message(query, entity_hints)},
+            {
+                "role": "user",
+                "content": _rewrite_user_message(
+                    query, plan=plan, entity_hints=entity_hints
+                ),
+            },
         ],
         format="json",
     )
     data = _parse_json_content(raw)
+    rewritten_query = str(data.get("rewritten_query") or "").strip() or query
+    course_general = bool(data.get("course_general_knowledge", False))
+
+    if plan:
+        return {
+            "rewritten_query": rewritten_query,
+            "time_mode": plan.get("time_mode", "none"),
+            "course_general_knowledge": course_general,
+            "hard_constraints": list(plan.get("hard_constraints") or []),
+        }
+    # Fallback if called without a plan (should be rare)
     return normalize_rewrite_timestamps(
         {
-            "rewritten_query": data["rewritten_query"],
+            "rewritten_query": rewritten_query,
             "time_mode": data.get("time_mode", "none"),
-            "course_general_knowledge": bool(
-                data.get("course_general_knowledge", False)
-            ),
+            "course_general_knowledge": course_general,
             "hard_constraints": data.get("hard_constraints", []),
         }
     )
@@ -145,7 +225,7 @@ def build_prompt(question, hits, *, preprobe: dict | None = None):
     parts = [f"Student question: {question}"]
 
     if preprobe and preprobe.get("needs_preprobe"):
-        entity = preprobe.get("unknown_entity") or ""
+        entity = preprobe.get("unknown_entity") or preprobe.get("preprobe_target") or ""
         gloss = preprobe.get("gloss") or {}
         if gloss.get("found") and gloss.get("definition"):
             conf = gloss.get("confidence")
@@ -181,7 +261,6 @@ def soften_stiff_refusal(text: str) -> str:
     """Replace machine-style refusals with a natural assistant reply."""
     if STIFF_REFUSAL_RE.match(text.strip()):
         return STIFF_REFUSAL_REPLY
-    # 句中仍夹带那句机器话术时，整句换成助手语气
     bad = (
         "i don't know based on the retrieved lecture materials",
         "based on the retrieved lecture materials",
