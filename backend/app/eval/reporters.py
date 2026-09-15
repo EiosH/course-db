@@ -7,8 +7,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
 
 from answering import format_hits, plan_preprobe, plan_preprobe_is_referent
 from config import COURSE_ID, LECTURER, OUTPUT_DIR, QUARTER
@@ -32,6 +33,9 @@ ANSWER_HEADERS = [
     "rerank后检索",
     "答案",
 ]
+# 1-based Excel column of the first answer cell ("答案")
+ANSWER_COL = ANSWER_HEADERS.index("答案") + 1
+QUERY_COL = ANSWER_HEADERS.index("原问题") + 1
 ANSWER_COL_WIDTHS = {
     "A": 6,
     "B": 36,
@@ -50,6 +54,7 @@ ANSWER_COL_WIDTHS = {
     "O": 50,
     "P": 50,
 }
+DEFAULT_ANSWER_WIDTH = 50
 CELL_WRAP = Alignment(vertical="top", wrap_text=True)
 
 
@@ -111,16 +116,25 @@ class Reporter(Protocol):
 
 
 class ExcelReporter:
-    """Incremental .xlsx dump of retrieval + answer (eval-only)."""
+    """
+    Persistent .xlsx dump of retrieval + answer (eval-only).
+
+    Same question → append answer in the next empty answer column.
+    New question → append a full new row.
+    """
 
     def __init__(self, path: Path | str | None = None):
-        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.path = Path(path) if path else OUTPUT_DIR / f"answer_{stamp}.xlsx"
+        self.path = Path(path) if path else OUTPUT_DIR / "answer.xlsx"
         self.wb = None
         self.ws = None
 
     def start(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        if self.path.exists():
+            self.wb = load_workbook(self.path)
+            self.ws = self.wb.active
+            print(f"[excel] appending → {self.path}")
+            return
         self.wb = Workbook()
         self.ws = self.wb.active
         self.ws.title = "answers"
@@ -133,7 +147,51 @@ class ExcelReporter:
         self.wb.save(self.path)
         print(f"[excel] writing → {self.path}")
 
+    def _find_question_row(self, query: str) -> int | None:
+        for row_idx in range(2, (self.ws.max_row or 1) + 1):
+            val = self.ws.cell(row=row_idx, column=QUERY_COL).value
+            if val is not None and str(val).strip() == query.strip():
+                return row_idx
+        return None
+
+    def _next_answer_col(self, row_idx: int) -> int:
+        col = ANSWER_COL
+        while True:
+            val = self.ws.cell(row=row_idx, column=col).value
+            if val is None or (isinstance(val, str) and not val.strip()):
+                return col
+            col += 1
+
+    def _ensure_answer_header(self, col: int) -> None:
+        cell = self.ws.cell(row=1, column=col)
+        if cell.value:
+            return
+        n = col - ANSWER_COL + 1
+        cell.value = "答案" if n == 1 else f"答案{n}"
+        cell.font = Font(bold=True)
+        cell.alignment = CELL_WRAP
+        letter = get_column_letter(col)
+        if not self.ws.column_dimensions[letter].width:
+            self.ws.column_dimensions[letter].width = DEFAULT_ANSWER_WIDTH
+
+    def _append_answer_cell(self, row_idx: int, answer_text: str) -> int:
+        col = self._next_answer_col(row_idx)
+        self._ensure_answer_header(col)
+        cell = self.ws.cell(row=row_idx, column=col, value=answer_text)
+        cell.alignment = CELL_WRAP
+        return col
+
     def record(self, index: int, result: QueryResult) -> None:
+        existing = self._find_question_row(result.query)
+        if existing is not None:
+            col = self._append_answer_cell(existing, result.answer_text)
+            self.wb.save(self.path)
+            letter = get_column_letter(col)
+            print(
+                f"[excel] same question → row {existing} col {letter} → {self.path}"
+            )
+            return
+
         channel = "time" if result.ts_value else "semantic"
         final_channel = "time" if result.ts_value else "rerank"
         preprobe_hits = (result.preprobe or {}).get("hits") or []
@@ -159,7 +217,7 @@ class ExcelReporter:
         for cell in self.ws[self.ws.max_row]:
             cell.alignment = CELL_WRAP
         self.wb.save(self.path)
-        print(f"[excel] wrote row {index} → {self.path}")
+        print(f"[excel] new row {self.ws.max_row} → {self.path}")
 
     def finish(self) -> None:
         print(f"[excel] done: {self.path}")
