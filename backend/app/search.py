@@ -205,46 +205,38 @@ def rerank_and_filter(query: str, hits, top_k=RERANK_TOP_K, min_score=RERANK_MIN
     ranked = sorted(zip(hits, scores), key=lambda x: x[1], reverse=True)
     scored = []
     for h, s in ranked:
-        if s < min_score:
-            continue
         payload = dict(h.payload)
         payload["rerank_score"] = float(s)
         scored.append(SimpleNamespace(id=h.id, payload=payload, score=float(s)))
+    kept = [h for h in scored if h.score >= min_score]
+    if not kept and scored:
+        # All below threshold: keep the best anyway so we don't empty-out the answer.
+        kept = scored[: max(1, top_k)]
+        print(
+            f"rerank: all {len(scored)} below min_score={min_score}; "
+            f"keeping top {len(kept)} as fallback"
+        )
     # 按分数已排序；配额保证 transcript 不被 screen_shot 全部挤掉
-    return pick_by_type_quota(scored, top_k)
+    return pick_by_type_quota(kept, top_k)
 
 
 def search_preprobe(
     client,
-    entity: str,
+    phrase: str,
     constraints=None,
     top_k=PREPROBE_TOP_K,
-    *,
-    is_referent: bool = False,
 ):
     """
-    Lightweight entity / referent recall: one query, small dense+BM25 top-k, no rerank.
-    Named entity → "What is {entity}".
-    Referent → resolve what the vague phrase refers to (optionally time-filtered).
+    Lightweight resolve recall: the vague phrase as query, small dense+BM25, no rerank.
+    Optional time constraints come from the plan (to locate the phrase).
     """
     constraints = constraints or []
-    if is_referent:
-        q = f"What is being referred to by '{entity}'"
-    else:
-        q = f"What is {entity}"
+    q = phrase
     hits = merge_unique_hits(
-        search_dense(
-            client, q, "screen_shot", constraints, limit=PREPROBE_DENSE_LIMIT
-        ),
-        search_dense(
-            client, q, "transcript", constraints, limit=PREPROBE_DENSE_LIMIT
-        ),
-        search_bm25(
-            client, q, "screen_shot", constraints, limit=PREPROBE_BM25_LIMIT
-        ),
-        search_bm25(
-            client, q, "transcript", constraints, limit=PREPROBE_BM25_LIMIT
-        ),
+        search_dense(client, q, "screen_shot", constraints, limit=PREPROBE_DENSE_LIMIT),
+        search_dense(client, q, "transcript", constraints, limit=PREPROBE_DENSE_LIMIT),
+        search_bm25(client, q, "screen_shot", constraints, limit=PREPROBE_BM25_LIMIT),
+        search_bm25(client, q, "transcript", constraints, limit=PREPROBE_BM25_LIMIT),
     )
     # Prefer higher native score when present; keep order stable otherwise
     ranked = sorted(

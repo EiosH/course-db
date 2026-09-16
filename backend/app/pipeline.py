@@ -9,11 +9,10 @@ from langchain_core.runnables import RunnableBranch, RunnableLambda
 from answering import (
     answer,
     build_prompt,
-    extract_entity_gloss,
-    no_hit_answer,
-    plan_preprobe,
-    plan_preprobe_is_referent,
+    extract_resolved_name,
+    no_hit_reply,
     plan_query,
+    plan_resolve,
     rewrite,
 )
 from config import TIME_NEAR_TOP_K
@@ -27,7 +26,12 @@ from search import (
     search_preprobe,
     search_time_window,
 )
-from time_utils import resolve_time_mode, time_distance, timestamp_constraint_value, ts_to_sec
+from time_utils import (
+    resolve_time_mode,
+    time_distance,
+    timestamp_constraint_value,
+    ts_to_sec,
+)
 
 
 @dataclass
@@ -54,19 +58,18 @@ def _empty_preprobe() -> dict:
         "plan": None,
         "query": None,
         "hits": [],
-        "gloss": None,
+        "resolved": None,
     }
 
 
 def _plan(state: dict) -> dict:
-    """Stage 0a: unified plan (time + referents/entities + optional preprobe)."""
+    """Stage 0a: unified plan (time + optional resolve + course_general)."""
     plan = plan_query(state["query"])
-    target = plan_preprobe(plan)
     print(
         f"plan: time_mode={plan.get('time_mode')} "
-        f"preprobe={target!r} "
-        f"referents={plan.get('referents')} "
-        f"entities={plan.get('entities')} "
+        f"course_general={bool(plan.get('course_general_knowledge'))} "
+        f"resolve={plan.get('resolve')!r} "
+        f"time_preprobe_only={bool(plan.get('time_preprobe_only'))} "
         f"({plan.get('reason')})"
     )
     return {**state, "plan": plan}
@@ -74,49 +77,44 @@ def _plan(state: dict) -> dict:
 
 def _preprobe(state: dict) -> dict:
     """
-    Stage 0b: plan-driven pre-probe.
-    Uses plan time constraints when present so deixis like "the example at 2h24"
-    resolves near that moment — not a blind whole-lecture definition search.
+    Stage 0b: optional resolve search.
+    When resolve is set, a small recall (optionally time-filtered) yields one
+    concrete name for rewrite. Main retrieval is separate.
     """
     plan = state.get("plan") or {}
     info = _empty_preprobe()
     info["plan"] = plan
-    target = plan_preprobe(plan)
+    target = plan_resolve(plan)
 
     if not target:
-        print(f"preprobe: skip ({plan.get('reason') or 'no preprobe'})")
+        print(f"preprobe: skip ({plan.get('reason') or 'no resolve'})")
         return {**state, "preprobe": info}
 
-    is_referent = plan_preprobe_is_referent(plan)
     constraints = list(plan.get("hard_constraints") or [])
-    print(
-        f"preprobe: target={target!r} is_referent={is_referent} "
-        f"constraints={constraints}"
-    )
+    print(f"preprobe: resolve={target!r} constraints={constraints}")
     hits, pre_q = search_preprobe(
         state["client"],
         target,
         constraints=constraints,
-        is_referent=is_referent,
     )
     info["query"] = pre_q
     info["hits"] = hits
 
     if not hits:
-        info["gloss"] = {
-            "entity": target,
-            "definition": "",
+        info["resolved"] = {
+            "phrase": target,
+            "name": "",
             "confidence": 0.0,
             "found": False,
         }
         print(f"preprobe: empty recall for {target!r}; continue main retrieval")
         return {**state, "preprobe": info}
 
-    gloss = extract_entity_gloss(target, hits)
-    info["gloss"] = gloss
+    resolved = extract_resolved_name(target, hits)
+    info["resolved"] = resolved
     print(
-        f"preprobe: hits={len(hits)} found={gloss.get('found')} "
-        f"confidence={gloss.get('confidence')} def={gloss.get('definition')!r}"
+        f"preprobe: hits={len(hits)} found={resolved.get('found')} "
+        f"confidence={resolved.get('confidence')} name={resolved.get('name')!r}"
     )
     return {**state, "preprobe": info}
 
@@ -125,16 +123,14 @@ def _prepare(state: dict) -> dict:
     query = state["query"]
     plan = state.get("plan") or {}
     preprobe = state.get("preprobe") or _empty_preprobe()
-    entity_hints = []
-    gloss = preprobe.get("gloss")
-    if gloss and gloss.get("found"):
-        entity_hints = [gloss]
+    resolved = preprobe.get("resolved") or {}
+    resolved_name = resolved.get("name") if resolved.get("found") else None
 
     # Time comes from plan; rewrite only builds a grounded rewritten_query.
-    # If time is only for resolving a local referent, keep plan context for the
-    # rewriter but strip time filters from main retrieval.
-    rewritten = rewrite(query, plan=plan, entity_hints=entity_hints or None)
-    if plan.get("time_preprobe_only"):
+    # time_preprobe_only: timestamp locates the resolve phrase; main search
+    # then runs without time (related content elsewhere in the lecture).
+    rewritten = rewrite(query, plan, resolved_name)
+    if plan_resolve(plan) and plan.get("time_preprobe_only"):
         rewritten = {
             **rewritten,
             "time_mode": "none",
@@ -208,16 +204,18 @@ def _finalize_rerank(state: dict) -> dict:
 
 
 def _answer(state: dict) -> dict:
-    preprobe = state.get("preprobe") or _empty_preprobe()
-    prompt = build_prompt(state["query"], state["final_hits"], preprobe=preprobe)
-    if state["final_hits"]:
+    rewritten = state["rewritten"]
+    hits = state["final_hits"]
+    course_general = bool(rewritten.get("course_general_knowledge"))
+    prompt = build_prompt(
+        state["query"],
+        hits,
+        course_general=course_general,
+    )
+    if hits or course_general:
         text = answer(prompt)
     else:
-        text = no_hit_answer(
-            state["query"],
-            state["rewritten"],
-            now=state["time_mode"] == "now",
-        )
+        text = no_hit_reply(now=state["time_mode"] == "now")
     return {**state, "prompt": prompt, "answer_text": text}
 
 
@@ -239,7 +237,7 @@ def _to_result(state: dict) -> QueryResult:
     )
 
 
-# plan → optional preprobe → grounded rewrite → branch(retrieve) → answer → QueryResult
+# plan → optional resolve search → grounded rewrite → branch(retrieve) → answer → QueryResult
 _CHAIN = (
     RunnableLambda(_plan)
     | RunnableLambda(_preprobe)

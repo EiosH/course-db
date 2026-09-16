@@ -5,12 +5,11 @@ import re
 
 from config import (
     ANSWER_SYSTEM,
-    COURSE_GENERAL_ANSWER_SYSTEM,
-    ENTITY_EXTRACT_SYSTEM,
     NO_HIT_NOW_REPLY,
     NO_HIT_REPLY,
     PREPROBE_MIN_CONFIDENCE,
     QUERY_PLAN_SYSTEM,
+    RESOLVE_EXTRACT_SYSTEM,
     REWRITE_SYSTEM,
     STIFF_REFUSAL_RE,
     STIFF_REFUSAL_REPLY,
@@ -26,44 +25,18 @@ def _parse_json_content(raw: str) -> dict:
     return json.loads(raw)
 
 
-def _as_str_list(value) -> list[str]:
-    if not value:
-        return []
-    if isinstance(value, str):
-        s = value.strip()
-        return [s] if s else []
-    out = []
-    for item in value:
-        if isinstance(item, str) and item.strip():
-            out.append(item.strip())
-    return out
-
-
-def plan_preprobe(plan: dict | None) -> str | None:
-    """Target string to pre-probe, or None to skip. Derived: bool(this) ⇒ run preprobe."""
+def plan_resolve(plan: dict | None) -> str | None:
+    """Vague phrase to resolve first, or None to skip preprobe."""
     if not plan:
         return None
-    raw = plan.get("preprobe")
+    raw = plan.get("resolve")
     if isinstance(raw, str) and raw.strip():
         return raw.strip()
     return None
 
 
-def plan_preprobe_is_referent(plan: dict | None) -> bool:
-    """True when preprobe target comes from referents (not named entities)."""
-    target = plan_preprobe(plan)
-    if not target or not plan:
-        return False
-    return any(
-        target.lower() == r.lower() for r in (plan.get("referents") or [])
-    )
-
-
 def plan_query(query: str) -> dict:
-    """
-    Single structured plan: time + referents/entities + optional preprobe string.
-    needs_preprobe / is_referent are derived from `preprobe` + `referents` — not stored.
-    """
+    """Time + optional resolve + course_general_knowledge."""
     raw = ollama_chat(
         [
             {"role": "system", "content": QUERY_PLAN_SYSTEM},
@@ -72,78 +45,67 @@ def plan_query(query: str) -> dict:
         format="json",
     )
     data = _parse_json_content(raw)
-    # Accept short names; fall back to older keys if a model still emits them
-    referents = _as_str_list(data.get("referents") or data.get("unresolved_referents"))
-    entities = _as_str_list(data.get("entities") or data.get("opaque_entities"))
-    target = data.get("preprobe")
-    if target is None:
-        target = data.get("preprobe_target")
-    if isinstance(target, str):
-        target = target.strip() or None
+    resolve = data.get("resolve")
+    if isinstance(resolve, str):
+        resolve = resolve.strip() or None
     else:
-        target = None
-    if not target:
-        target = referents[0] if referents else (entities[0] if entities else None)
+        resolve = None
 
     planned = normalize_rewrite_timestamps(
         {
             "time_mode": data.get("time_mode", "none"),
             "hard_constraints": data.get("hard_constraints", []),
-            "course_general_knowledge": False,
         }
-    )
-    time_preprobe_only = bool(
-        data.get("time_preprobe_only", data.get("scope_time_to_preprobe_only", False))
     )
     return {
         "time_mode": planned.get("time_mode", "none"),
         "hard_constraints": planned.get("hard_constraints", []),
-        "time_preprobe_only": time_preprobe_only,
-        "referents": referents,
-        "entities": entities,
-        "preprobe": target,
+        "time_preprobe_only": bool(data.get("time_preprobe_only")) and bool(resolve),
+        "course_general_knowledge": bool(data.get("course_general_knowledge")),
+        "resolve": resolve,
         "reason": str(data.get("reason") or "").strip(),
     }
 
 
-def extract_entity_gloss(entity: str, hits) -> dict:
-    """From pre-probe hits, extract a short noun definition + confidence."""
+def extract_resolved_name(phrase: str, hits) -> dict:
+    empty = {
+        "phrase": phrase,
+        "name": "",
+        "confidence": 0.0,
+        "found": False,
+    }
     if not hits:
-        return {
-            "entity": entity,
-            "definition": "",
-            "confidence": 0.0,
-            "found": False,
-        }
+        return empty
     snippets = []
     for h in hits:
         p = h.payload
         label = "slide" if p.get("type") == "screen_shot" else "speech"
         snippets.append(f"[{label}] ({p.get('timestamp', '')})\n{p.get('text', '')}")
-    user = (
-        f"Entity: {entity}\n\n"
-        "Retrieved snippets:\n"
-        + "\n\n---\n\n".join(snippets)
-    )
     raw = ollama_chat(
         [
-            {"role": "system", "content": ENTITY_EXTRACT_SYSTEM},
-            {"role": "user", "content": user},
+            {"role": "system", "content": RESOLVE_EXTRACT_SYSTEM},
+            {
+                "role": "user",
+                "content": (
+                    f"Phrase: {phrase}\n\nRetrieved snippets:\n"
+                    + "\n\n---\n\n".join(snippets)
+                ),
+            },
         ],
         format="json",
     )
     data = _parse_json_content(raw)
-    definition = str(data.get("definition") or "").strip()
-    resolved = str(data.get("entity") or entity).strip() or entity
+    name = str(data.get("name") or "").strip()
     try:
         confidence = float(data.get("confidence", 0.0))
     except (TypeError, ValueError):
         confidence = 0.0
     confidence = max(0.0, min(1.0, confidence))
-    found = bool(definition) and confidence >= PREPROBE_MIN_CONFIDENCE
+    same = bool(name) and name.lower() == phrase.lower()
+    found = bool(name) and not same and confidence >= PREPROBE_MIN_CONFIDENCE
     return {
-        "entity": resolved if found else entity,
-        "definition": definition,
+        "phrase": phrase,
+        "name": name if found else "",
         "confidence": confidence,
         "found": found,
     }
@@ -151,114 +113,71 @@ def extract_entity_gloss(entity: str, hits) -> dict:
 
 def _rewrite_user_message(
     query: str,
-    *,
-    plan: dict | None = None,
-    entity_hints: list[dict] | None = None,
+    plan: dict,
+    resolved_name: str | None = None,
 ) -> str:
-    """Original student query + plan summary + glosses (no full pre-probe dump)."""
-    parts = [f"Student question:\n{query}"]
-    if plan:
-        parts.append(
-            "Query plan (time already fixed — do not change it):\n"
-            + json.dumps(
-                {
-                    "time_mode": plan.get("time_mode"),
-                    "hard_constraints": plan.get("hard_constraints", []),
-                    "referents": plan.get("referents", []),
-                    "entities": plan.get("entities", []),
-                    "preprobe": plan.get("preprobe"),
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
-    hints = [
-        h
-        for h in (entity_hints or [])
-        if h.get("found") and h.get("entity") and h.get("definition")
+    parts = [
+        f"Student question:\n{query}",
+        "Query plan (time already fixed — do not change it):\n"
+        + json.dumps(
+            {
+                "time_mode": plan.get("time_mode"),
+                "hard_constraints": plan.get("hard_constraints", []),
+                "time_preprobe_only": bool(plan.get("time_preprobe_only")),
+                "course_general_knowledge": bool(plan.get("course_general_knowledge")),
+                "resolve": plan.get("resolve"),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
     ]
-    if hints:
-        lines = [
-            "Resolved entity glosses from pre-probe "
-            "(licensed grounding only; do NOT replace the student question):"
-        ]
-        for h in hints:
-            conf = h.get("confidence")
-            conf_s = f"{conf:.2f}" if isinstance(conf, (int, float)) else "?"
-            lines.append(f"- {h['entity']} (confidence={conf_s}): {h['definition']}")
-        parts.append("\n".join(lines))
+    if resolved_name:
+        parts.append(f"Resolved name for {plan.get('resolve')!r}: {resolved_name}")
     return "\n\n".join(parts)
 
 
 def rewrite(
     query: str,
-    *,
-    plan: dict | None = None,
-    entity_hints: list[dict] | None = None,
+    plan: dict,
+    resolved_name: str | None = None,
 ) -> dict:
-    """
-    Grounded rewritten_query only. Time / constraints come from plan when present.
-    """
+    """Build rewritten_query. Time / course_general_knowledge come from plan."""
     raw = ollama_chat(
         [
             {"role": "system", "content": REWRITE_SYSTEM},
             {
                 "role": "user",
-                "content": _rewrite_user_message(
-                    query, plan=plan, entity_hints=entity_hints
-                ),
+                "content": _rewrite_user_message(query, plan, resolved_name),
             },
         ],
         format="json",
     )
     data = _parse_json_content(raw)
     rewritten_query = str(data.get("rewritten_query") or "").strip() or query
-    course_general = bool(data.get("course_general_knowledge", False))
-
-    if plan:
-        return {
-            "rewritten_query": rewritten_query,
-            "time_mode": plan.get("time_mode", "none"),
-            "course_general_knowledge": course_general,
-            "hard_constraints": list(plan.get("hard_constraints") or []),
-        }
-    # Fallback if called without a plan (should be rare)
-    return normalize_rewrite_timestamps(
-        {
-            "rewritten_query": rewritten_query,
-            "time_mode": data.get("time_mode", "none"),
-            "course_general_knowledge": course_general,
-            "hard_constraints": data.get("hard_constraints", []),
-        }
-    )
+    return {
+        "rewritten_query": rewritten_query,
+        "time_mode": plan.get("time_mode", "none"),
+        "course_general_knowledge": bool(plan.get("course_general_knowledge")),
+        "hard_constraints": list(plan.get("hard_constraints") or []),
+    }
 
 
-def build_prompt(question, hits, *, preprobe: dict | None = None):
+def build_prompt(
+    question,
+    hits,
+    *,
+    course_general: bool = False,
+):
     parts = [f"Student question: {question}"]
+    if course_general:
+        parts.append(
+            "Course subject knowledge is allowed. Lecture snippets below are "
+            "optional support — solve the question even if they are missing "
+            "or only loosely related. Do not invent this lecture's slides, "
+            "quotes, or homework items."
+        )
 
-    plan = (preprobe or {}).get("plan") or {}
-    target = plan_preprobe(plan)
-    if target:
-        gloss = (preprobe or {}).get("gloss") or {}
-        if gloss.get("found") and gloss.get("definition"):
-            conf = gloss.get("confidence")
-            conf_s = f"{conf:.2f}" if isinstance(conf, (int, float)) else "?"
-            parts.append(
-                "Entity glossary (from pre-probe; use only as term definition):\n"
-                f"- {gloss.get('entity') or target} "
-                f"(confidence={conf_s}): {gloss['definition']}"
-            )
-        else:
-            parts.append(
-                "Entity pre-probe note: "
-                f"No related entity definition was found in the lecture materials"
-                f" for '{target}'. "
-                "Answer using lecture content below; do not invent a definition."
-            )
-
-    parts.append(
-        "Lecture content (use only what is needed to answer the question above):"
-    )
+    parts.append("Lecture content:")
     if not hits:
         parts.append("(nothing found)")
     else:
@@ -269,35 +188,19 @@ def build_prompt(question, hits, *, preprobe: dict | None = None):
     return "\n\n".join(parts)
 
 
-def soften_stiff_refusal(text: str) -> str:
-    """Replace machine-style refusals with a natural assistant reply."""
-    if STIFF_REFUSAL_RE.match(text.strip()):
-        return STIFF_REFUSAL_REPLY
-    bad = (
-        "i don't know based on the retrieved lecture materials",
-        "based on the retrieved lecture materials",
-    )
-    low = text.lower()
-    if any(p in low for p in bad) and ("don't know" in low or "do not know" in low):
-        return STIFF_REFUSAL_REPLY
-    return text
-
-
-def answer(prompt: str, *, system: str = ANSWER_SYSTEM) -> str:
+def answer(prompt: str) -> str:
     raw = ollama_chat(
         [
-            {"role": "system", "content": system},
+            {"role": "system", "content": ANSWER_SYSTEM},
             {"role": "user", "content": prompt},
         ]
     )
-    return soften_stiff_refusal(raw)
+    if STIFF_REFUSAL_RE.match(raw.strip()):
+        return STIFF_REFUSAL_REPLY
+    return raw
 
 
-def no_hit_answer(query: str, rewritten: dict, *, now: bool = False) -> str:
-    """No retrieval hits: answer subject common knowledge only; else fixed refusal."""
-    if rewritten.get("course_general_knowledge"):
-        prompt = f"Student question: {query}"
-        return answer(prompt, system=COURSE_GENERAL_ANSWER_SYSTEM)
+def no_hit_reply(*, now: bool = False) -> str:
     return NO_HIT_NOW_REPLY if now else NO_HIT_REPLY
 
 

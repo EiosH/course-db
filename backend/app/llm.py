@@ -10,6 +10,8 @@ from config import (
     OLLAMA_CHAT_RETRIES,
     OLLAMA_CHAT_TIMEOUT,
     OLLAMA_MODEL,
+    OLLAMA_SEED,
+    OLLAMA_TEMPERATURE,
     OLLAMA_URL,
     RERANK_MODEL,
 )
@@ -52,6 +54,10 @@ def ollama_chat(messages, *, format=None, timeout=OLLAMA_CHAT_TIMEOUT):
         "messages": messages,
         "stream": False,
         "think": False,
+        "options": {
+            "temperature": OLLAMA_TEMPERATURE,
+            "seed": OLLAMA_SEED,
+        },
     }
     if format is not None:
         payload["format"] = format

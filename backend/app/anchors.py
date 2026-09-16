@@ -121,18 +121,4 @@ def text_has_phrase(text: str, phrase: str) -> bool:
 
 
 def phrase_match_score(text: str, phrase: str) -> int:
-    if not text_has_phrase(text, phrase):
-        return 0
-    score = 3
-    low = text.lower()
-    for cue in (
-        "options",
-        "correct",
-        "points",
-        "consider the",
-        "which of the following",
-        "answer",
-    ):
-        if cue in low:
-            score += 1
-    return score
+    return 1 if text_has_phrase(text, phrase) else 0

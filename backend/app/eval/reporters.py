@@ -11,7 +11,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
 
-from answering import format_hits, plan_preprobe, plan_preprobe_is_referent
+from answering import format_hits, plan_resolve
 from config import COURSE_ID, LECTURER, OUTPUT_DIR, QUARTER
 from pipeline import QueryResult
 
@@ -58,20 +58,18 @@ DEFAULT_ANSWER_WIDTH = 50
 CELL_WRAP = Alignment(vertical="top", wrap_text=True)
 
 
-def format_entity_judge(preprobe: dict | None) -> str:
-    """Query plan for Excel / logs (derived flags computed, not stored twice)."""
+def format_query_plan(preprobe: dict | None) -> str:
+    """Query plan for Excel / logs."""
     if not preprobe:
         return ""
     plan = preprobe.get("plan") or {}
-    target = plan_preprobe(plan)
     return json.dumps(
         {
             "time_mode": plan.get("time_mode"),
             "hard_constraints": plan.get("hard_constraints") or [],
             "time_preprobe_only": bool(plan.get("time_preprobe_only")),
-            "referents": plan.get("referents") or [],
-            "entities": plan.get("entities") or [],
-            "preprobe": target,
+            "course_general_knowledge": bool(plan.get("course_general_knowledge")),
+            "resolve": plan_resolve(plan),
             "reason": plan.get("reason") or "",
         },
         ensure_ascii=False,
@@ -80,29 +78,26 @@ def format_entity_judge(preprobe: dict | None) -> str:
 
 
 def format_preprobe(preprobe: dict | None) -> str:
-    """Pre-probe execution summary."""
+    """Resolve-search execution summary."""
     if not preprobe:
         return ""
     plan = preprobe.get("plan") or {}
-    target = plan_preprobe(plan)
+    target = plan_resolve(plan)
     if not target:
         return "skipped"
-    gloss = preprobe.get("gloss") or {}
-    lines = [
-        f"preprobe={target}",
-        f"is_referent={plan_preprobe_is_referent(plan)}",
-        f"query={preprobe.get('query') or ''}",
-        f"hits={len(preprobe.get('hits') or [])}",
-    ]
-    if gloss:
-        conf = gloss.get("confidence")
-        conf_s = f"{conf:.2f}" if isinstance(conf, (int, float)) else "?"
-        lines.append(f"gloss_found={bool(gloss.get('found'))}")
-        lines.append(f"confidence={conf_s}")
-        lines.append(f"definition={gloss.get('definition') or ''}")
-    else:
-        lines.append("gloss_found=False")
-    return "\n".join(lines)
+    resolved = preprobe.get("resolved") or {}
+    conf = resolved.get("confidence")
+    conf_s = f"{conf:.2f}" if isinstance(conf, (int, float)) else "?"
+    return "\n".join(
+        [
+            f"resolve={target}",
+            f"query={preprobe.get('query') or ''}",
+            f"hits={len(preprobe.get('hits') or [])}",
+            f"found={bool(resolved.get('found'))}",
+            f"name={resolved.get('name') or ''}",
+            f"confidence={conf_s}",
+        ]
+    )
 
 
 class Reporter(Protocol):
@@ -187,9 +182,7 @@ class ExcelReporter:
             col = self._append_answer_cell(existing, result.answer_text)
             self.wb.save(self.path)
             letter = get_column_letter(col)
-            print(
-                f"[excel] same question → row {existing} col {letter} → {self.path}"
-            )
+            print(f"[excel] same question → row {existing} col {letter} → {self.path}")
             return
 
         channel = "time" if result.ts_value else "semantic"
@@ -198,11 +191,13 @@ class ExcelReporter:
         row = [
             index,
             result.query,
-            format_entity_judge(result.preprobe),
+            format_query_plan(result.preprobe),
             format_preprobe(result.preprobe),
             format_hits(preprobe_hits, "preprobe"),
             result.search_query,
-            json.dumps(result.rewritten.get("hard_constraints", []), ensure_ascii=False),
+            json.dumps(
+                result.rewritten.get("hard_constraints", []), ensure_ascii=False
+            ),
             COURSE_ID,
             QUARTER,
             LECTURER,
@@ -242,7 +237,7 @@ class TxtReporter:
         block = (
             f"{index}. 原问题: {result.query}\n"
             f"query_plan:\n"
-            f"{format_entity_judge(result.preprobe)}\n"
+            f"{format_query_plan(result.preprobe)}\n"
             f"\n"
             f"preprobe:\n"
             f"{format_preprobe(result.preprobe)}\n"
@@ -281,7 +276,7 @@ class ConsoleReporter:
     def record(self, index: int, result: QueryResult) -> None:
         print(f"\nquery:    {result.query}")
         print("query_plan:")
-        print(format_entity_judge(result.preprobe) or "(none)")
+        print(format_query_plan(result.preprobe) or "(none)")
         print("preprobe:")
         print(format_preprobe(result.preprobe) or "(none)")
         preprobe_hits = (result.preprobe or {}).get("hits") or []
@@ -294,8 +289,12 @@ class ConsoleReporter:
             print("rewrite (after anchor expand):")
             q = result.search_query
             print(q[:500] + ("..." if len(q) > 500 else ""))
-        n_ss = sum(1 for h in result.final_hits if h.payload.get("type") == "screen_shot")
-        n_tr = sum(1 for h in result.final_hits if h.payload.get("type") == "transcript")
+        n_ss = sum(
+            1 for h in result.final_hits if h.payload.get("type") == "screen_shot"
+        )
+        n_tr = sum(
+            1 for h in result.final_hits if h.payload.get("type") == "transcript"
+        )
         if result.ts_value:
             print(
                 f"time kept {len(result.final_hits)} "
