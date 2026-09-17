@@ -19,8 +19,9 @@ BM25_MODEL = "Qdrant/bm25"
 RERANK_MODEL = "Qwen/Qwen3-Reranker-0.6B"
 OLLAMA_CHAT_TIMEOUT = 600
 OLLAMA_CHAT_RETRIES = 3
-# Keep planning / rewrite / answer stable across reruns (Ollama sampling).
+# Plan / resolve-extract / rewrite stay greedy for stable JSON and retrieval.
 OLLAMA_TEMPERATURE = 0.0
+ANSWER_TEMPERATURE = 0.2  # answer() only: slightly warmer tone
 OLLAMA_SEED = 42
 EMBED_BATCH = 32
 QDRANT_URL = "http://localhost:6333"

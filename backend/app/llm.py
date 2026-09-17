@@ -47,7 +47,13 @@ def embed(texts):
     return out
 
 
-def ollama_chat(messages, *, format=None, timeout=OLLAMA_CHAT_TIMEOUT):
+def ollama_chat(
+    messages,
+    *,
+    format=None,
+    timeout=OLLAMA_CHAT_TIMEOUT,
+    temperature=OLLAMA_TEMPERATURE,
+):
     """Call Ollama /api/chat with retries; think=False avoids qwen thinking overhead."""
     payload = {
         "model": OLLAMA_MODEL,
@@ -55,7 +61,7 @@ def ollama_chat(messages, *, format=None, timeout=OLLAMA_CHAT_TIMEOUT):
         "stream": False,
         "think": False,
         "options": {
-            "temperature": OLLAMA_TEMPERATURE,
+            "temperature": temperature,
             "seed": OLLAMA_SEED,
         },
     }

@@ -5,6 +5,7 @@ import re
 
 from config import (
     ANSWER_SYSTEM,
+    ANSWER_TEMPERATURE,
     NO_HIT_NOW_REPLY,
     NO_HIT_REPLY,
     PREPROBE_MIN_CONFIDENCE,
@@ -193,7 +194,8 @@ def answer(prompt: str) -> str:
         [
             {"role": "system", "content": ANSWER_SYSTEM},
             {"role": "user", "content": prompt},
-        ]
+        ],
+        temperature=ANSWER_TEMPERATURE,
     )
     if STIFF_REFUSAL_RE.match(raw.strip()):
         return STIFF_REFUSAL_REPLY
