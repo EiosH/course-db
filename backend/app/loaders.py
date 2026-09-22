@@ -5,13 +5,12 @@ from pathlib import Path
 
 from config import (
     CUE_RE,
-    DOC_PATH,
+    LECTURES_DIR,
     QUERY_PATH,
     SCREEN_BOILERPLATE_RE,
     SCREEN_LABEL_RE,
     TRANSCRIPT_MAX_CHARS,
     TRANSCRIPT_MAX_GAP_SEC,
-    TRANSCRIPT_PATH,
 )
 from time_utils import ts_to_sec
 
@@ -34,8 +33,8 @@ def clean_screenshot_text(body: str) -> str:
     return text or body.strip()
 
 
-def load_screenshots(path: str | Path | None = None):
-    path = Path(path) if path else DOC_PATH
+def load_screenshots(path: str | Path, *, lecture_id: str = ""):
+    path = Path(path)
     raw = open(path, encoding="utf-8").read()
     parts = re.split(r"=+\n时间戳: (\d{2}:\d{2}:\d{2}).*?\n=+\n", raw)
     chunks = []
@@ -52,13 +51,15 @@ def load_screenshots(path: str | Path | None = None):
                     "end_sec": sec,
                     "text": body,
                     "type": "screen_shot",
+                    "lecture_id": lecture_id,
+                    "source_file": path.name,
                 }
             )
     return chunks
 
 
-def load_transcript(path: str | Path | None = None):
-    path = Path(path) if path else TRANSCRIPT_PATH
+def load_transcript(path: str | Path, *, lecture_id: str = ""):
+    path = Path(path)
     try:
         raw = open(path, encoding="utf-8").read().strip()
     except FileNotFoundError:
@@ -84,6 +85,8 @@ def load_transcript(path: str | Path | None = None):
                     "end_sec": ts_to_sec(end),
                     "text": " ".join(buf),
                     "type": "transcript",
+                    "lecture_id": lecture_id,
+                    "source_file": path.name,
                 }
             )
         buf, start, end, n = [], None, None, 0
@@ -101,4 +104,42 @@ def load_transcript(path: str | Path | None = None):
         end = c["end"]
         n += len(c["text"]) + 1
     flush()
+    return chunks
+
+
+def iter_lecture_dirs(lectures_dir: str | Path | None = None) -> list[Path]:
+    """Subdirs of data/lectures/ that contain doc.txt and/or transcript.vtt."""
+    root = Path(lectures_dir) if lectures_dir else LECTURES_DIR
+    if not root.is_dir():
+        return []
+    found = []
+    for d in sorted(root.iterdir()):
+        if not d.is_dir():
+            continue
+        if (d / "doc.txt").exists() or (d / "transcript.vtt").exists():
+            found.append(d)
+    return found
+
+
+def load_all_lecture_chunks(lectures_dir: str | Path | None = None) -> list[dict]:
+    """Load every lecture folder under data/lectures/."""
+    chunks = []
+    dirs = iter_lecture_dirs(lectures_dir)
+    if not dirs:
+        print(f"warning: no lecture folders under {lectures_dir or LECTURES_DIR}")
+        return chunks
+    for d in dirs:
+        lecture_id = d.name
+        doc = d / "doc.txt"
+        vtt = d / "transcript.vtt"
+        n_ss = n_tr = 0
+        if doc.exists():
+            ss = load_screenshots(doc, lecture_id=lecture_id)
+            chunks.extend(ss)
+            n_ss = len(ss)
+        if vtt.exists():
+            tr = load_transcript(vtt, lecture_id=lecture_id)
+            chunks.extend(tr)
+            n_tr = len(tr)
+        print(f"lecture {lecture_id}: screen_shot={n_ss} transcript={n_tr}")
     return chunks

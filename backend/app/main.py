@@ -19,17 +19,15 @@ from config import (
     BM25_MODEL,
     COLLECTION_NAME,
     COURSE_ID,
-    DOC_PATH,
     LECTURER,
     QDRANT_URL,
     QUARTER,
-    TRANSCRIPT_PATH,
     UPSERT_BATCH,
 )
 from eval import default_reporters, run_batch
 from eval.reporters import ConsoleReporter, ExcelReporter, TxtReporter
 from llm import embed
-from loaders import load_screenshots, load_transcript
+from loaders import load_all_lecture_chunks
 
 
 def parse_args():
@@ -101,9 +99,11 @@ def backfill_bm25_phrases(client):
 
 
 def ingest_docs(client):
-    chunks = load_screenshots(DOC_PATH) + load_transcript(TRANSCRIPT_PATH)
+    chunks = load_all_lecture_chunks()
+    if not chunks:
+        raise SystemExit("no lecture chunks to ingest (check data/lectures/*/)")
     print(
-        f"screen_shot {sum(c['type']=='screen_shot' for c in chunks)} 段, "
+        f"total screen_shot {sum(c['type']=='screen_shot' for c in chunks)} 段, "
         f"transcript {sum(c['type']=='transcript' for c in chunks)} 段"
     )
 
@@ -121,7 +121,7 @@ def ingest_docs(client):
             "bm25": SparseVectorParams(modifier=Modifier.IDF),
         },
     )
-    for field in ("course_id", "quarter", "lecturer", "type", "timestamp"):
+    for field in ("course_id", "quarter", "lecturer", "type", "timestamp", "lecture_id"):
         client.create_payload_index(
             COLLECTION_NAME, field, field_schema=PayloadSchemaType.KEYWORD
         )
@@ -151,6 +151,8 @@ def ingest_docs(client):
                         "start_sec": c["start_sec"],
                         "end_sec": c["end_sec"],
                         "type": c["type"],
+                        "lecture_id": c.get("lecture_id") or "",
+                        "source_file": c.get("source_file") or "",
                         "course_id": COURSE_ID,
                         "quarter": QUARTER,
                         "lecturer": LECTURER,

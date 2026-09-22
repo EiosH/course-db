@@ -15,8 +15,7 @@ load_dotenv(APP_DIR / ".env")  # optional local override
 
 DATA_DIR = APP_DIR / "data"
 OUTPUT_DIR = DATA_DIR / "out"
-DOC_PATH = DATA_DIR / "doc.txt"
-TRANSCRIPT_PATH = DATA_DIR / "transcript.vtt"
+LECTURES_DIR = DATA_DIR / "lectures"  # each subdir: optional doc.txt + transcript.vtt
 QUERY_PATH = DATA_DIR / "query.txt"
 
 OLLAMA_URL = "http://127.0.0.1:11434"
