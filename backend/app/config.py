@@ -4,9 +4,15 @@ import os
 import re
 from pathlib import Path
 
+from dotenv import load_dotenv
 from qdrant_client.models import FieldCondition, MatchValue
 
 APP_DIR = Path(__file__).resolve().parent
+REPO_ROOT = APP_DIR.parent.parent
+# Load repo-root .env so LANGFUSE_* work without manual export.
+load_dotenv(REPO_ROOT / ".env")
+load_dotenv(APP_DIR / ".env")  # optional local override
+
 DATA_DIR = APP_DIR / "data"
 OUTPUT_DIR = DATA_DIR / "out"
 DOC_PATH = DATA_DIR / "doc.txt"
@@ -29,8 +35,8 @@ QDRANT_URL = "http://localhost:6333"
 COLLECTION_NAME = "docs"
 UPSERT_BATCH = 64
 
-# Langfuse: set LANGFUSE_ENABLED=true and LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY
-# (optional LANGFUSE_HOST). Off by default — no behavior change without keys.
+# Langfuse: keys / base URL from .env (LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY,
+# LANGFUSE_BASE_URL). Set LANGFUSE_ENABLED=true to turn tracing on.
 LANGFUSE_ENABLED = os.getenv("LANGFUSE_ENABLED", "").lower() in ("1", "true", "yes")
 
 # mock 预过滤
