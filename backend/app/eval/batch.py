@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from loaders import load_queries
 from pipeline import answer_query
+from tracing import flush as langfuse_flush
 
 from .reporters import Reporter, default_reporters
 
@@ -21,10 +22,12 @@ def run_batch(client, queries: list[str] | None = None, reporters: list[Reporter
     for r in reporters:
         r.start()
 
-    for i, query in enumerate(queries, 1):
-        result = answer_query(client, query)
+    try:
+        for i, query in enumerate(queries, 1):
+            result = answer_query(client, query)
+            for r in reporters:
+                r.record(i, result)
+    finally:
         for r in reporters:
-            r.record(i, result)
-
-    for r in reporters:
-        r.finish()
+            r.finish()
+        langfuse_flush()

@@ -32,6 +32,7 @@ from time_utils import (
     timestamp_constraint_value,
     ts_to_sec,
 )
+from tracing import langchain_callbacks, observation
 
 
 @dataclass
@@ -257,4 +258,31 @@ _CHAIN = (
 
 def answer_query(client, query: str) -> QueryResult:
     """Public entry: same contract as before for eval / callers."""
-    return _CHAIN.invoke({"client": client, "query": query})
+    invoke_kwargs = {}
+    callbacks = langchain_callbacks()
+    if callbacks:
+        invoke_kwargs["config"] = {"callbacks": callbacks}
+
+    with observation(
+        name="answer_query",
+        as_type="chain",
+        input={"query": query},
+    ) as span:
+        result = _CHAIN.invoke({"client": client, "query": query}, **invoke_kwargs)
+        if span is not None:
+            plan = (result.preprobe or {}).get("plan") or {}
+            span.update(
+                output={"answer": result.answer_text},
+                metadata={
+                    "time_mode": result.time_mode,
+                    "ts_value": result.ts_value,
+                    "resolve": plan.get("resolve"),
+                    "time_preprobe_only": bool(plan.get("time_preprobe_only")),
+                    "course_general": bool(
+                        result.rewritten.get("course_general_knowledge")
+                    ),
+                    "final_hits": len(result.final_hits),
+                    "search_query": result.search_query,
+                },
+            )
+        return result

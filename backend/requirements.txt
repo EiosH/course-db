@@ -3,3 +3,4 @@ requests
 openpyxl
 sentence-transformers
 langchain-core
+langfuse

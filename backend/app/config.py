@@ -1,5 +1,6 @@
 """Constants, prompts, and shared regex patterns."""
 
+import os
 import re
 from pathlib import Path
 
@@ -27,6 +28,10 @@ EMBED_BATCH = 32
 QDRANT_URL = "http://localhost:6333"
 COLLECTION_NAME = "docs"
 UPSERT_BATCH = 64
+
+# Langfuse: set LANGFUSE_ENABLED=true and LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY
+# (optional LANGFUSE_HOST). Off by default — no behavior change without keys.
+LANGFUSE_ENABLED = os.getenv("LANGFUSE_ENABLED", "").lower() in ("1", "true", "yes")
 
 # mock 预过滤
 COURSE_ID = "CSC447"

@@ -15,6 +15,7 @@ from config import (
     OLLAMA_URL,
     RERANK_MODEL,
 )
+from tracing import observation
 
 _reranker = None
 
@@ -68,26 +69,46 @@ def ollama_chat(
     if format is not None:
         payload["format"] = format
 
-    last_err = None
-    for attempt in range(1, OLLAMA_CHAT_RETRIES + 1):
-        try:
-            r = requests.post(
-                f"{OLLAMA_URL}/api/chat",
-                json=payload,
-                timeout=timeout,
-            )
-            r.raise_for_status()
-            return r.json()["message"]["content"].strip()
-        except (
-            requests.exceptions.ReadTimeout,
-            requests.exceptions.ConnectionError,
-        ) as e:
-            last_err = e
-            if attempt < OLLAMA_CHAT_RETRIES:
-                wait = 5 * attempt
-                print(
-                    f"ollama chat timeout/error (attempt {attempt}/{OLLAMA_CHAT_RETRIES}), "
-                    f"retry in {wait}s..."
+    with observation(
+        name="ollama_chat",
+        as_type="generation",
+        model=OLLAMA_MODEL,
+        input=messages,
+        model_parameters={
+            "temperature": temperature,
+            "seed": OLLAMA_SEED,
+            "format": format,
+        },
+    ) as gen:
+        last_err = None
+        for attempt in range(1, OLLAMA_CHAT_RETRIES + 1):
+            try:
+                r = requests.post(
+                    f"{OLLAMA_URL}/api/chat",
+                    json=payload,
+                    timeout=timeout,
                 )
-                time.sleep(wait)
-    raise last_err
+                r.raise_for_status()
+                content = r.json()["message"]["content"].strip()
+                if gen is not None:
+                    gen.update(output=content)
+                return content
+            except (
+                requests.exceptions.ReadTimeout,
+                requests.exceptions.ConnectionError,
+            ) as e:
+                last_err = e
+                if attempt < OLLAMA_CHAT_RETRIES:
+                    wait = 5 * attempt
+                    print(
+                        f"ollama chat timeout/error "
+                        f"(attempt {attempt}/{OLLAMA_CHAT_RETRIES}), "
+                        f"retry in {wait}s..."
+                    )
+                    time.sleep(wait)
+        if gen is not None:
+            gen.update(
+                level="ERROR",
+                status_message=str(last_err),
+            )
+        raise last_err
