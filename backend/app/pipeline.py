@@ -32,7 +32,7 @@ from time_utils import (
     timestamp_constraint_value,
     ts_to_sec,
 )
-from tracing import langchain_callbacks, observation
+from tracing import observation
 
 
 @dataclass
@@ -258,17 +258,14 @@ _CHAIN = (
 
 def answer_query(client, query: str) -> QueryResult:
     """Public entry: same contract as before for eval / callers."""
-    invoke_kwargs = {}
-    callbacks = langchain_callbacks()
-    if callbacks:
-        invoke_kwargs["config"] = {"callbacks": callbacks}
-
+    # One Langfuse trace per question. Nested ollama_chat generations attach here.
+    # (LangChain CallbackHandler is intentionally NOT used: it opens a second root.)
     with observation(
         name="answer_query",
         as_type="chain",
         input={"query": query},
     ) as span:
-        result = _CHAIN.invoke({"client": client, "query": query}, **invoke_kwargs)
+        result = _CHAIN.invoke({"client": client, "query": query})
         if span is not None:
             plan = (result.preprobe or {}).get("plan") or {}
             span.update(

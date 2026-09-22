@@ -52,17 +52,6 @@ def observation(
         yield obs
 
 
-def langchain_callbacks() -> list:
-    """LCEL callbacks for pipeline stages; empty when tracing is off."""
-    if not enabled():
-        return []
-    try:
-        from langfuse.langchain import CallbackHandler
-    except ImportError:
-        return []
-    return [CallbackHandler()]
-
-
 def flush() -> None:
     client = _get_client()
     if client is not None:
