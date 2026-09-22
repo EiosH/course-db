@@ -18,10 +18,7 @@ from anchors import bm25_index_text
 from config import (
     BM25_MODEL,
     COLLECTION_NAME,
-    COURSE_ID,
-    LECTURER,
     QDRANT_URL,
-    QUARTER,
     UPSERT_BATCH,
 )
 from eval import default_reporters, run_batch
@@ -153,9 +150,10 @@ def ingest_docs(client):
                         "type": c["type"],
                         "lecture_id": c.get("lecture_id") or "",
                         "source_file": c.get("source_file") or "",
-                        "course_id": COURSE_ID,
-                        "quarter": QUARTER,
-                        "lecturer": LECTURER,
+                        # per-lecture meta from data/lectures/<id>/meta.json
+                        "course_id": c["course_id"],
+                        "quarter": c["quarter"],
+                        "lecturer": c["lecturer"],
                     },
                 )
                 for j, c in enumerate(batch)

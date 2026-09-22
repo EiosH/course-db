@@ -9,11 +9,11 @@ from config import (
     NO_HIT_NOW_REPLY,
     NO_HIT_REPLY,
     PREPROBE_MIN_CONFIDENCE,
-    QUERY_PLAN_SYSTEM,
     RESOLVE_EXTRACT_SYSTEM,
-    REWRITE_SYSTEM,
     STIFF_REFUSAL_RE,
     STIFF_REFUSAL_REPLY,
+    query_plan_system,
+    rewrite_system,
 )
 from llm import ollama_chat
 from time_utils import normalize_rewrite_timestamps
@@ -36,11 +36,11 @@ def plan_resolve(plan: dict | None) -> str | None:
     return None
 
 
-def plan_query(query: str) -> dict:
+def plan_query(query: str, course_ctx: dict) -> dict:
     """Time + optional resolve + course_general_knowledge."""
     raw = ollama_chat(
         [
-            {"role": "system", "content": QUERY_PLAN_SYSTEM},
+            {"role": "system", "content": query_plan_system(course_ctx)},
             {"role": "user", "content": query},
         ],
         format="json",
@@ -53,16 +53,26 @@ def plan_query(query: str) -> dict:
     else:
         resolve = None
 
+    max_ts = course_ctx.get("lecture_max_ts")
     planned = normalize_rewrite_timestamps(
         {
             "time_mode": data.get("time_mode", "none"),
             "hard_constraints": data.get("hard_constraints", []),
-        }
+        },
+        lecture_max_ts=max_ts,
     )
+    probe_planned = normalize_rewrite_timestamps(
+        {"hard_constraints": data.get("probe_hard_constraints", [])},
+        lecture_max_ts=max_ts,
+    )
+    probe_constraints = list(probe_planned.get("hard_constraints") or [])
+    if not resolve:
+        probe_constraints = []
+
     return {
         "time_mode": planned.get("time_mode", "none"),
         "hard_constraints": planned.get("hard_constraints", []),
-        "time_preprobe_only": bool(data.get("time_preprobe_only")) and bool(resolve),
+        "probe_hard_constraints": probe_constraints,
         "course_general_knowledge": bool(data.get("course_general_knowledge")),
         "resolve": resolve,
         "reason": str(data.get("reason") or "").strip(),
@@ -126,7 +136,7 @@ def _rewrite_user_message(
             {
                 "time_mode": plan.get("time_mode"),
                 "hard_constraints": plan.get("hard_constraints", []),
-                "time_preprobe_only": bool(plan.get("time_preprobe_only")),
+                "probe_hard_constraints": plan.get("probe_hard_constraints", []),
                 "course_general_knowledge": bool(plan.get("course_general_knowledge")),
                 "resolve": plan.get("resolve"),
             },
@@ -142,12 +152,13 @@ def _rewrite_user_message(
 def rewrite(
     query: str,
     plan: dict,
+    course_ctx: dict,
     resolved_name: str | None = None,
 ) -> dict:
     """Build rewritten_query. Time / course_general_knowledge come from plan."""
     raw = ollama_chat(
         [
-            {"role": "system", "content": REWRITE_SYSTEM},
+            {"role": "system", "content": rewrite_system(course_ctx)},
             {
                 "role": "user",
                 "content": _rewrite_user_message(query, plan, resolved_name),

@@ -20,7 +20,6 @@ from anchors import (
 from config import (
     ANCHOR_EXPAND_CHARS,
     ANCHOR_LIMIT,
-    BASE_MUST,
     BM25_LIMIT,
     BM25_MODEL,
     COLLECTION_NAME,
@@ -37,10 +36,63 @@ from llm import embed, get_reranker
 from time_utils import time_distance, timestamp_constraint_value, ts_to_sec
 
 
+def course_must(course_ctx: dict) -> list:
+    """Qdrant must-clauses for the routed course (lecture_id via hard_constraints)."""
+    return [
+        FieldCondition(
+            key="course_id", match=MatchValue(value=course_ctx["course_id"])
+        ),
+        FieldCondition(key="quarter", match=MatchValue(value=course_ctx["quarter"])),
+        FieldCondition(
+            key="lecturer", match=MatchValue(value=course_ctx["lecturer"])
+        ),
+    ]
+
+
+def lecture_id_constraint(course_ctx: dict) -> dict:
+    return {
+        "field": "lecture_id",
+        "operator": "eq",
+        "value": course_ctx["lecture_id"],
+    }
+
+
+def with_lecture_constraint(constraints, course_ctx: dict) -> list:
+    """Ensure hard_constraints always pin the routed lecture_id."""
+    out = [
+        c
+        for c in (constraints or [])
+        if c.get("field") != "lecture_id"
+    ]
+    if course_ctx.get("lecture_id"):
+        out.append(lecture_id_constraint(course_ctx))
+    return out
+
+
+def _eq_constraint_must(constraints) -> list:
+    """Non-timestamp hard_constraints → Qdrant MatchValue filters."""
+    must = []
+    for c in constraints or []:
+        field = c.get("field")
+        if not field or field == "timestamp":
+            continue
+        value = c.get("value")
+        if value is None or value == "":
+            continue
+        must.append(FieldCondition(key=field, match=MatchValue(value=value)))
+    return must
+
+
 def _scroll_time_filter(
-    center: float, ts_value: str, doc_type: str | None, *, use_range: bool
+    center: float,
+    ts_value: str,
+    doc_type: str | None,
+    course_ctx: dict,
+    constraints,
+    *,
+    use_range: bool,
 ):
-    must = list(BASE_MUST)
+    must = course_must(course_ctx) + _eq_constraint_must(constraints)
     if doc_type:
         must.append(FieldCondition(key="type", match=MatchValue(value=doc_type)))
     if use_range:
@@ -80,23 +132,31 @@ def _scroll_all(client, scroll_filter: Filter, page_size: int = 256):
 
 
 def search_time_window(
-    client, constraints, doc_type: str | None = None, limit=TIME_NEAR_TOP_K
+    client,
+    constraints,
+    course_ctx: dict,
+    doc_type: str | None = None,
+    limit=TIME_NEAR_TOP_K,
 ):
     """Filter-only recall: chunks nearest to the playback timestamp (no semantic search)."""
-    ts_value = timestamp_constraint_value(constraints)
+    ts_value = timestamp_constraint_value(constraints, course_ctx=course_ctx)
     if ts_value is None:
         return []
 
-    center = ts_to_sec(ts_value)
+    center = ts_to_sec(ts_value, lecture_max_ts=course_ctx.get("lecture_max_ts"))
     points = _scroll_all(
         client,
-        _scroll_time_filter(center, ts_value, doc_type, use_range=True),
+        _scroll_time_filter(
+            center, ts_value, doc_type, course_ctx, constraints, use_range=True
+        ),
     )
     if not points:
         # 兼容旧索引：仅有 timestamp 精确字段、无 start_sec/end_sec
         points = _scroll_all(
             client,
-            _scroll_time_filter(center, ts_value, doc_type, use_range=False),
+            _scroll_time_filter(
+                center, ts_value, doc_type, course_ctx, constraints, use_range=False
+            ),
         )
 
     ranked = sorted(points, key=lambda p: time_distance(center, p.payload))
@@ -108,13 +168,17 @@ def search_time_window(
     return kept
 
 
-def build_filter(doc_type: str, constraints) -> Filter:
-    must = BASE_MUST + [FieldCondition(key="type", match=MatchValue(value=doc_type))]
-    ts_value = timestamp_constraint_value(constraints)
+def build_filter(doc_type: str, constraints, course_ctx: dict) -> Filter:
+    must = (
+        course_must(course_ctx)
+        + _eq_constraint_must(constraints)
+        + [FieldCondition(key="type", match=MatchValue(value=doc_type))]
+    )
+    ts_value = timestamp_constraint_value(constraints, course_ctx=course_ctx)
     if ts_value is not None:
         # 时间范围重叠：chunk.start <= center+W AND chunk.end >= center-W
         # transcript 存的是区间，不能再用 timestamp KEYWORD eq
-        center = ts_to_sec(ts_value)
+        center = ts_to_sec(ts_value, lecture_max_ts=course_ctx.get("lecture_max_ts"))
         must.append(
             FieldCondition(
                 key="start_sec",
@@ -130,8 +194,8 @@ def build_filter(doc_type: str, constraints) -> Filter:
     return Filter(must=must)
 
 
-def search_dense(client, q, doc_type, constraints, limit=DENSE_LIMIT):
-    flt = build_filter(doc_type, constraints)
+def search_dense(client, q, doc_type, constraints, course_ctx, limit=DENSE_LIMIT):
+    flt = build_filter(doc_type, constraints, course_ctx)
     return client.query_points(
         collection_name=COLLECTION_NAME,
         query=embed([q])[0],
@@ -141,8 +205,8 @@ def search_dense(client, q, doc_type, constraints, limit=DENSE_LIMIT):
     ).points
 
 
-def search_bm25(client, q, doc_type, constraints, limit=BM25_LIMIT):
-    flt = build_filter(doc_type, constraints)
+def search_bm25(client, q, doc_type, constraints, course_ctx, limit=BM25_LIMIT):
+    flt = build_filter(doc_type, constraints, course_ctx)
     return client.query_points(
         collection_name=COLLECTION_NAME,
         query=Document(text=q, model=BM25_MODEL),
@@ -153,11 +217,18 @@ def search_bm25(client, q, doc_type, constraints, limit=BM25_LIMIT):
 
 
 def search_phrase_bm25(
-    client, phrase: str, doc_type: str, constraints, limit=ANCHOR_LIMIT
+    client,
+    phrase: str,
+    doc_type: str,
+    constraints,
+    course_ctx,
+    limit=ANCHOR_LIMIT,
 ):
     """BM25 with the glued phrase token (needs ingest/backfill that wrote those tokens)."""
     token = phrase_token(phrase)
-    hits = search_bm25(client, token, doc_type, constraints, limit=limit)
+    hits = search_bm25(
+        client, token, doc_type, constraints, course_ctx, limit=limit
+    )
     kept = [h for h in hits if text_has_phrase(h.payload.get("text", ""), phrase)]
     return kept or hits
 
@@ -223,6 +294,7 @@ def rerank_and_filter(query: str, hits, top_k=RERANK_TOP_K, min_score=RERANK_MIN
 def search_preprobe(
     client,
     phrase: str,
+    course_ctx: dict,
     constraints=None,
     top_k=PREPROBE_TOP_K,
 ):
@@ -233,10 +305,38 @@ def search_preprobe(
     constraints = constraints or []
     q = phrase
     hits = merge_unique_hits(
-        search_dense(client, q, "screen_shot", constraints, limit=PREPROBE_DENSE_LIMIT),
-        search_dense(client, q, "transcript", constraints, limit=PREPROBE_DENSE_LIMIT),
-        search_bm25(client, q, "screen_shot", constraints, limit=PREPROBE_BM25_LIMIT),
-        search_bm25(client, q, "transcript", constraints, limit=PREPROBE_BM25_LIMIT),
+        search_dense(
+            client,
+            q,
+            "screen_shot",
+            constraints,
+            course_ctx,
+            limit=PREPROBE_DENSE_LIMIT,
+        ),
+        search_dense(
+            client,
+            q,
+            "transcript",
+            constraints,
+            course_ctx,
+            limit=PREPROBE_DENSE_LIMIT,
+        ),
+        search_bm25(
+            client,
+            q,
+            "screen_shot",
+            constraints,
+            course_ctx,
+            limit=PREPROBE_BM25_LIMIT,
+        ),
+        search_bm25(
+            client,
+            q,
+            "transcript",
+            constraints,
+            course_ctx,
+            limit=PREPROBE_BM25_LIMIT,
+        ),
     )
     # Prefer higher native score when present; keep order stable otherwise
     ranked = sorted(
@@ -251,7 +351,9 @@ def search_preprobe(
     return ranked[: max(1, min(top_k, PREPROBE_TOP_K))], q
 
 
-def expand_query_with_anchors(client, query: str, rewritten_q: str, constraints):
+def expand_query_with_anchors(
+    client, query: str, rewritten_q: str, constraints, course_ctx: dict
+):
     """
     Query-side phrase expansion (generic):
     - detect any Label+number locator in the user question
@@ -269,13 +371,19 @@ def expand_query_with_anchors(client, query: str, rewritten_q: str, constraints)
     for phrase in phrases:
         raw_hits = merge_unique_hits(
             search_phrase_bm25(
-                client, phrase, "screen_shot", constraints, limit=ANCHOR_LIMIT
+                client,
+                phrase,
+                "screen_shot",
+                constraints,
+                course_ctx,
+                limit=ANCHOR_LIMIT,
             ),
             search_phrase_bm25(
                 client,
                 phrase,
                 "transcript",
                 constraints,
+                course_ctx,
                 limit=max(3, ANCHOR_LIMIT // 2),
             ),
         )

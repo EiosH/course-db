@@ -12,7 +12,7 @@ from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
 
 from answering import format_hits, plan_resolve
-from config import COURSE_ID, LECTURER, OUTPUT_DIR, QUARTER
+from config import OUTPUT_DIR
 from pipeline import QueryResult
 
 ANSWER_HEADERS = [
@@ -67,7 +67,7 @@ def format_query_plan(preprobe: dict | None) -> str:
         {
             "time_mode": plan.get("time_mode"),
             "hard_constraints": plan.get("hard_constraints") or [],
-            "time_preprobe_only": bool(plan.get("time_preprobe_only")),
+            "probe_hard_constraints": plan.get("probe_hard_constraints") or [],
             "course_general_knowledge": bool(plan.get("course_general_knowledge")),
             "resolve": plan_resolve(plan),
             "reason": plan.get("reason") or "",
@@ -198,9 +198,9 @@ class ExcelReporter:
             json.dumps(
                 result.rewritten.get("hard_constraints", []), ensure_ascii=False
             ),
-            COURSE_ID,
-            QUARTER,
-            LECTURER,
+            (result.course_ctx or {}).get("course_id", ""),
+            (result.course_ctx or {}).get("quarter", ""),
+            (result.course_ctx or {}).get("lecturer", ""),
             format_hits(result.ss_dense, channel),
             format_hits(result.ss_bm25, "keyword"),
             format_hits(result.tr_dense, channel),
@@ -275,6 +275,12 @@ class ConsoleReporter:
 
     def record(self, index: int, result: QueryResult) -> None:
         print(f"\nquery:    {result.query}")
+        ctx = result.course_ctx or {}
+        if ctx:
+            print(
+                f"course:   {ctx.get('course_id')} / {ctx.get('quarter')} / "
+                f"{ctx.get('lecturer')} (lecture_id={ctx.get('lecture_id')})"
+            )
         print("query_plan:")
         print(format_query_plan(result.preprobe) or "(none)")
         print("preprobe:")

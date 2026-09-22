@@ -16,6 +16,7 @@ from answering import (
     rewrite,
 )
 from config import TIME_NEAR_TOP_K
+from course_route import route_course
 from search import (
     expand_query_with_anchors,
     merge_unique_hits,
@@ -25,6 +26,7 @@ from search import (
     search_dense,
     search_preprobe,
     search_time_window,
+    with_lecture_constraint,
 )
 from time_utils import (
     resolve_time_mode,
@@ -52,6 +54,7 @@ class QueryResult:
     prompt: str = ""
     answer_text: str = ""
     preprobe: dict = field(default_factory=dict)
+    course_ctx: dict = field(default_factory=dict)
 
 
 def _empty_preprobe() -> dict:
@@ -63,20 +66,48 @@ def _empty_preprobe() -> dict:
     }
 
 
-def _plan(state: dict) -> dict:
-    """Stage 0a: unified plan (time + optional resolve + course_general)."""
+def _route(state: dict) -> dict:
+    """Stage 0: pick enrolled course → course_ctx for filters / prompts."""
     with observation(
-        name="plan",
+        name="course_route",
         as_type="span",
         require_parent=True,
         input={"query": state["query"]},
     ) as obs:
-        plan = plan_query(state["query"])
+        course_ctx = route_course(state["query"])
+        print(
+            f"course_route: {course_ctx['course_id']} / {course_ctx['quarter']} / "
+            f"{course_ctx['lecturer']!r} lecture_id={course_ctx['lecture_id']} "
+            f"({course_ctx.get('reason')})"
+        )
+        if obs is not None:
+            obs.update(output=course_ctx)
+        return {**state, "course_ctx": course_ctx}
+
+
+def _plan(state: dict) -> dict:
+    """Stage 0a: unified plan (time + optional resolve + course_general)."""
+    course_ctx = state["course_ctx"]
+    with observation(
+        name="plan",
+        as_type="span",
+        require_parent=True,
+        input={"query": state["query"], "course_id": course_ctx.get("course_id")},
+    ) as obs:
+        plan = plan_query(state["query"], course_ctx)
+        plan = {
+            **plan,
+            "hard_constraints": with_lecture_constraint(
+                plan.get("hard_constraints"), course_ctx
+            ),
+            # probe list stays as planned; lecture_id pinned when probe runs
+            "probe_hard_constraints": list(plan.get("probe_hard_constraints") or []),
+        }
         print(
             f"plan: time_mode={plan.get('time_mode')} "
             f"course_general={bool(plan.get('course_general_knowledge'))} "
             f"resolve={plan.get('resolve')!r} "
-            f"time_preprobe_only={bool(plan.get('time_preprobe_only'))} "
+            f"probe_cs={plan.get('probe_hard_constraints')} "
             f"({plan.get('reason')})"
         )
         if obs is not None:
@@ -99,7 +130,14 @@ def _preprobe(state: dict) -> dict:
         print(f"preprobe: skip ({plan.get('reason') or 'no resolve'})")
         return {**state, "preprobe": info}
 
-    constraints = list(plan.get("hard_constraints") or [])
+    # Probe-only constraints if set; otherwise reuse main hard_constraints.
+    probe_cs = list(plan.get("probe_hard_constraints") or [])
+    main_cs = list(plan.get("hard_constraints") or [])
+    constraints = (
+        with_lecture_constraint(probe_cs, state["course_ctx"])
+        if probe_cs
+        else main_cs
+    )
     print(f"preprobe: resolve={target!r} constraints={constraints}")
 
     with observation(
@@ -111,6 +149,7 @@ def _preprobe(state: dict) -> dict:
         hits, pre_q = search_preprobe(
             state["client"],
             target,
+            state["course_ctx"],
             constraints=constraints,
         )
         info["query"] = pre_q
@@ -159,27 +198,29 @@ def _prepare(state: dict) -> dict:
         input={
             "query": query,
             "resolved_name": resolved_name,
-            "time_preprobe_only": bool(plan.get("time_preprobe_only")),
+            "probe_hard_constraints": plan.get("probe_hard_constraints"),
         },
     ) as obs:
-        # Time comes from plan; rewrite only builds a grounded rewritten_query.
-        # time_preprobe_only: timestamp locates the resolve phrase; main search
-        # then runs without time (related content elsewhere in the lecture).
-        rewritten = rewrite(query, plan, resolved_name)
-        if plan_resolve(plan) and plan.get("time_preprobe_only"):
-            rewritten = {
-                **rewritten,
-                "time_mode": "none",
-                "hard_constraints": [],
-            }
+        # Time / filters come from plan.hard_constraints (main retrieval).
+        rewritten = rewrite(query, plan, state["course_ctx"], resolved_name)
+        rewritten = {
+            **rewritten,
+            "hard_constraints": with_lecture_constraint(
+                rewritten.get("hard_constraints"), state["course_ctx"]
+            ),
+        }
         out = {
             **state,
             "preprobe": preprobe,
             "rewritten": rewritten,
             "q": rewritten["rewritten_query"],
             "constraints": rewritten["hard_constraints"],
-            "time_mode": resolve_time_mode(rewritten),
-            "ts_value": timestamp_constraint_value(rewritten["hard_constraints"]),
+            "time_mode": resolve_time_mode(
+                rewritten, course_ctx=state["course_ctx"]
+            ),
+            "ts_value": timestamp_constraint_value(
+                rewritten["hard_constraints"], course_ctx=state["course_ctx"]
+            ),
             "ss_dense": [],
             "ss_bm25": [],
             "tr_dense": [],
@@ -209,13 +250,16 @@ def _retrieve_now(state: dict) -> dict:
         },
     ) as obs:
         client, constraints = state["client"], state["constraints"]
+        course_ctx = state["course_ctx"]
         ss = search_time_window(
-            client, constraints, "screen_shot", limit=TIME_NEAR_TOP_K
+            client, constraints, course_ctx, "screen_shot", limit=TIME_NEAR_TOP_K
         )
         tr = search_time_window(
-            client, constraints, "transcript", limit=TIME_NEAR_TOP_K
+            client, constraints, course_ctx, "transcript", limit=TIME_NEAR_TOP_K
         )
-        center = ts_to_sec(state["ts_value"])
+        center = ts_to_sec(
+            state["ts_value"], lecture_max_ts=course_ctx.get("lecture_max_ts")
+        )
         final = pick_by_type_quota(merge_unique_hits(ss, tr), TIME_NEAR_TOP_K)
         final = sorted(final, key=lambda h: time_distance(center, h.payload))
         out = {**state, "ss_dense": ss, "tr_dense": tr, "final_hits": final}
@@ -243,13 +287,22 @@ def _hybrid_recall(state: dict) -> dict:
     ) as obs:
         client, query, q_short = state["client"], state["query"], state["q"]
         constraints = state["constraints"]
+        course_ctx = state["course_ctx"]
         q_expand, anchors = expand_query_with_anchors(
-            client, query, q_short, constraints
+            client, query, q_short, constraints, course_ctx
         )
-        ss_dense = search_dense(client, q_short, "screen_shot", constraints)
-        ss_bm25 = search_bm25(client, q_expand, "screen_shot", constraints)
-        tr_dense = search_dense(client, q_short, "transcript", constraints)
-        tr_bm25 = search_bm25(client, q_expand, "transcript", constraints)
+        ss_dense = search_dense(
+            client, q_short, "screen_shot", constraints, course_ctx
+        )
+        ss_bm25 = search_bm25(
+            client, q_expand, "screen_shot", constraints, course_ctx
+        )
+        tr_dense = search_dense(
+            client, q_short, "transcript", constraints, course_ctx
+        )
+        tr_bm25 = search_bm25(
+            client, q_expand, "transcript", constraints, course_ctx
+        )
         out = {
             **state,
             "q": q_expand,
@@ -280,7 +333,10 @@ def _finalize_time(state: dict) -> dict:
         require_parent=True,
         input={"ts_value": state.get("ts_value")},
     ) as obs:
-        center = ts_to_sec(state["ts_value"])
+        center = ts_to_sec(
+            state["ts_value"],
+            lecture_max_ts=(state.get("course_ctx") or {}).get("lecture_max_ts"),
+        )
         tw_ss = merge_unique_hits(
             state["anchors"], state["ss_dense"], state["ss_bm25"]
         )
@@ -362,12 +418,14 @@ def _to_result(state: dict) -> QueryResult:
         prompt=state["prompt"],
         answer_text=state["answer_text"],
         preprobe=state.get("preprobe") or _empty_preprobe(),
+        course_ctx=state.get("course_ctx") or {},
     )
 
 
-# plan → optional resolve search → grounded rewrite → branch(retrieve) → answer → QueryResult
+# route course → plan → optional resolve → rewrite → branch(retrieve) → answer
 _CHAIN = (
-    RunnableLambda(_plan)
+    RunnableLambda(_route)
+    | RunnableLambda(_plan)
     | RunnableLambda(_preprobe)
     | RunnableLambda(_prepare)
     | RunnableBranch(
@@ -395,13 +453,17 @@ def answer_query(client, query: str) -> QueryResult:
         result = _CHAIN.invoke({"client": client, "query": query})
         if span is not None:
             plan = (result.preprobe or {}).get("plan") or {}
+            ctx = result.course_ctx or {}
             span.update(
                 output={"answer": result.answer_text},
                 metadata={
                     "time_mode": result.time_mode,
                     "ts_value": result.ts_value,
+                    "course_id": ctx.get("course_id"),
+                    "quarter": ctx.get("quarter"),
+                    "lecture_id": ctx.get("lecture_id"),
                     "resolve": plan.get("resolve"),
-                    "time_preprobe_only": bool(plan.get("time_preprobe_only")),
+                    "probe_hard_constraints": plan.get("probe_hard_constraints"),
                     "course_general": bool(
                         result.rewritten.get("course_general_knowledge")
                     ),

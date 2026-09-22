@@ -1,5 +1,6 @@
 """Load queries, screenshot OCR dumps, and VTT transcript chunks."""
 
+import json
 import re
 from pathlib import Path
 
@@ -25,6 +26,24 @@ def load_queries(path: str | Path | None = None):
     return queries
 
 
+def load_lecture_meta(lecture_dir: str | Path) -> dict:
+    """Per-course mock metadata written into Qdrant payloads."""
+    lecture_dir = Path(lecture_dir)
+    path = lecture_dir / "meta.json"
+    if not path.exists():
+        raise FileNotFoundError(f"missing {path}")
+    meta = json.loads(path.read_text(encoding="utf-8"))
+    for key in ("course_id", "quarter", "lecturer"):
+        if key not in meta or not meta[key]:
+            raise ValueError(f"{path} missing required field {key!r}")
+    return {
+        "course_id": meta["course_id"],
+        "quarter": meta["quarter"],
+        "lecturer": meta["lecturer"],
+        "lecture_max_ts": meta.get("lecture_max_ts", "03:30:00"),
+    }
+
+
 def clean_screenshot_text(body: str) -> str:
     """Strip OCR layout labels / UI chrome that pollute BM25 keyword recall."""
     text = SCREEN_LABEL_RE.sub("", body)
@@ -33,8 +52,9 @@ def clean_screenshot_text(body: str) -> str:
     return text or body.strip()
 
 
-def load_screenshots(path: str | Path, *, lecture_id: str = ""):
+def load_screenshots(path: str | Path, *, lecture_id: str = "", meta: dict | None = None):
     path = Path(path)
+    meta = meta or {}
     raw = open(path, encoding="utf-8").read()
     parts = re.split(r"=+\n时间戳: (\d{2}:\d{2}:\d{2}).*?\n=+\n", raw)
     chunks = []
@@ -53,13 +73,17 @@ def load_screenshots(path: str | Path, *, lecture_id: str = ""):
                     "type": "screen_shot",
                     "lecture_id": lecture_id,
                     "source_file": path.name,
+                    "course_id": meta.get("course_id", ""),
+                    "quarter": meta.get("quarter", ""),
+                    "lecturer": meta.get("lecturer", ""),
                 }
             )
     return chunks
 
 
-def load_transcript(path: str | Path, *, lecture_id: str = ""):
+def load_transcript(path: str | Path, *, lecture_id: str = "", meta: dict | None = None):
     path = Path(path)
+    meta = meta or {}
     try:
         raw = open(path, encoding="utf-8").read().strip()
     except FileNotFoundError:
@@ -87,6 +111,9 @@ def load_transcript(path: str | Path, *, lecture_id: str = ""):
                     "type": "transcript",
                     "lecture_id": lecture_id,
                     "source_file": path.name,
+                    "course_id": meta.get("course_id", ""),
+                    "quarter": meta.get("quarter", ""),
+                    "lecturer": meta.get("lecturer", ""),
                 }
             )
         buf, start, end, n = [], None, None, 0
@@ -122,7 +149,7 @@ def iter_lecture_dirs(lectures_dir: str | Path | None = None) -> list[Path]:
 
 
 def load_all_lecture_chunks(lectures_dir: str | Path | None = None) -> list[dict]:
-    """Load every lecture folder under data/lectures/."""
+    """Load every lecture folder under data/lectures/ (each with its own meta)."""
     chunks = []
     dirs = iter_lecture_dirs(lectures_dir)
     if not dirs:
@@ -130,16 +157,22 @@ def load_all_lecture_chunks(lectures_dir: str | Path | None = None) -> list[dict
         return chunks
     for d in dirs:
         lecture_id = d.name
+        meta = load_lecture_meta(d)
         doc = d / "doc.txt"
         vtt = d / "transcript.vtt"
         n_ss = n_tr = 0
         if doc.exists():
-            ss = load_screenshots(doc, lecture_id=lecture_id)
+            ss = load_screenshots(doc, lecture_id=lecture_id, meta=meta)
             chunks.extend(ss)
             n_ss = len(ss)
         if vtt.exists():
-            tr = load_transcript(vtt, lecture_id=lecture_id)
+            tr = load_transcript(vtt, lecture_id=lecture_id, meta=meta)
             chunks.extend(tr)
             n_tr = len(tr)
-        print(f"lecture {lecture_id}: screen_shot={n_ss} transcript={n_tr}")
+        print(
+            f"lecture {lecture_id}: "
+            f"course={meta['course_id']} quarter={meta['quarter']} "
+            f"lecturer={meta['lecturer']!r} "
+            f"screen_shot={n_ss} transcript={n_tr}"
+        )
     return chunks
