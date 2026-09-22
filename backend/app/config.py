@@ -52,9 +52,9 @@ BASE_MUST = [
     FieldCondition(key="lecturer", match=MatchValue(value=LECTURER)),
 ]
 
-# 每路召回候选数 → rerank 后保留
-DENSE_LIMIT = 10
-BM25_LIMIT = 10
+# 每路召回候选数 → rerank 后保留（略降以减轻 CrossEncoder 负担）
+DENSE_LIMIT = 5
+BM25_LIMIT = 5
 TIME_NEAR_TOP_K = 4  # 时间类问题：最终保留条数（screen_shot / transcript 各半）
 RERANK_TOP_K = 4
 RERANK_MIN_SCORE = 0.0  # Qwen3-Reranker: yes/no logit diff，>0 表示相关
