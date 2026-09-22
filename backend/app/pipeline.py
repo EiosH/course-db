@@ -32,7 +32,7 @@ from time_utils import (
     timestamp_constraint_value,
     ts_to_sec,
 )
-from tracing import observation
+from tracing import hits_preview, observation
 
 
 @dataclass
@@ -65,15 +65,23 @@ def _empty_preprobe() -> dict:
 
 def _plan(state: dict) -> dict:
     """Stage 0a: unified plan (time + optional resolve + course_general)."""
-    plan = plan_query(state["query"])
-    print(
-        f"plan: time_mode={plan.get('time_mode')} "
-        f"course_general={bool(plan.get('course_general_knowledge'))} "
-        f"resolve={plan.get('resolve')!r} "
-        f"time_preprobe_only={bool(plan.get('time_preprobe_only'))} "
-        f"({plan.get('reason')})"
-    )
-    return {**state, "plan": plan}
+    with observation(
+        name="plan",
+        as_type="span",
+        require_parent=True,
+        input={"query": state["query"]},
+    ) as obs:
+        plan = plan_query(state["query"])
+        print(
+            f"plan: time_mode={plan.get('time_mode')} "
+            f"course_general={bool(plan.get('course_general_knowledge'))} "
+            f"resolve={plan.get('resolve')!r} "
+            f"time_preprobe_only={bool(plan.get('time_preprobe_only'))} "
+            f"({plan.get('reason')})"
+        )
+        if obs is not None:
+            obs.update(output=plan)
+        return {**state, "plan": plan}
 
 
 def _preprobe(state: dict) -> dict:
@@ -93,31 +101,48 @@ def _preprobe(state: dict) -> dict:
 
     constraints = list(plan.get("hard_constraints") or [])
     print(f"preprobe: resolve={target!r} constraints={constraints}")
-    hits, pre_q = search_preprobe(
-        state["client"],
-        target,
-        constraints=constraints,
-    )
-    info["query"] = pre_q
-    info["hits"] = hits
 
-    if not hits:
-        info["resolved"] = {
-            "phrase": target,
-            "name": "",
-            "confidence": 0.0,
-            "found": False,
-        }
-        print(f"preprobe: empty recall for {target!r}; continue main retrieval")
+    with observation(
+        name="resolve_retrieve",
+        as_type="retriever",
+        require_parent=True,
+        input={"resolve": target, "constraints": constraints},
+    ) as obs:
+        hits, pre_q = search_preprobe(
+            state["client"],
+            target,
+            constraints=constraints,
+        )
+        info["query"] = pre_q
+        info["hits"] = hits
+
+        if not hits:
+            info["resolved"] = {
+                "phrase": target,
+                "name": "",
+                "confidence": 0.0,
+                "found": False,
+            }
+            print(f"preprobe: empty recall for {target!r}; continue main retrieval")
+            if obs is not None:
+                obs.update(output={"query": pre_q, **hits_preview(hits)})
+            return {**state, "preprobe": info}
+
+        resolved = extract_resolved_name(target, hits)
+        info["resolved"] = resolved
+        print(
+            f"preprobe: hits={len(hits)} found={resolved.get('found')} "
+            f"confidence={resolved.get('confidence')} name={resolved.get('name')!r}"
+        )
+        if obs is not None:
+            obs.update(
+                output={
+                    "query": pre_q,
+                    "resolved": resolved,
+                    **hits_preview(hits),
+                }
+            )
         return {**state, "preprobe": info}
-
-    resolved = extract_resolved_name(target, hits)
-    info["resolved"] = resolved
-    print(
-        f"preprobe: hits={len(hits)} found={resolved.get('found')} "
-        f"confidence={resolved.get('confidence')} name={resolved.get('name')!r}"
-    )
-    return {**state, "preprobe": info}
 
 
 def _prepare(state: dict) -> dict:
@@ -127,97 +152,199 @@ def _prepare(state: dict) -> dict:
     resolved = preprobe.get("resolved") or {}
     resolved_name = resolved.get("name") if resolved.get("found") else None
 
-    # Time comes from plan; rewrite only builds a grounded rewritten_query.
-    # time_preprobe_only: timestamp locates the resolve phrase; main search
-    # then runs without time (related content elsewhere in the lecture).
-    rewritten = rewrite(query, plan, resolved_name)
-    if plan_resolve(plan) and plan.get("time_preprobe_only"):
-        rewritten = {
-            **rewritten,
-            "time_mode": "none",
-            "hard_constraints": [],
+    with observation(
+        name="rewrite",
+        as_type="span",
+        require_parent=True,
+        input={
+            "query": query,
+            "resolved_name": resolved_name,
+            "time_preprobe_only": bool(plan.get("time_preprobe_only")),
+        },
+    ) as obs:
+        # Time comes from plan; rewrite only builds a grounded rewritten_query.
+        # time_preprobe_only: timestamp locates the resolve phrase; main search
+        # then runs without time (related content elsewhere in the lecture).
+        rewritten = rewrite(query, plan, resolved_name)
+        if plan_resolve(plan) and plan.get("time_preprobe_only"):
+            rewritten = {
+                **rewritten,
+                "time_mode": "none",
+                "hard_constraints": [],
+            }
+        out = {
+            **state,
+            "preprobe": preprobe,
+            "rewritten": rewritten,
+            "q": rewritten["rewritten_query"],
+            "constraints": rewritten["hard_constraints"],
+            "time_mode": resolve_time_mode(rewritten),
+            "ts_value": timestamp_constraint_value(rewritten["hard_constraints"]),
+            "ss_dense": [],
+            "ss_bm25": [],
+            "tr_dense": [],
+            "tr_bm25": [],
+            "final_hits": [],
         }
-    return {
-        **state,
-        "preprobe": preprobe,
-        "rewritten": rewritten,
-        "q": rewritten["rewritten_query"],
-        "constraints": rewritten["hard_constraints"],
-        "time_mode": resolve_time_mode(rewritten),
-        "ts_value": timestamp_constraint_value(rewritten["hard_constraints"]),
-        "ss_dense": [],
-        "ss_bm25": [],
-        "tr_dense": [],
-        "tr_bm25": [],
-        "final_hits": [],
-    }
+        if obs is not None:
+            obs.update(
+                output={
+                    "rewritten_query": rewritten.get("rewritten_query"),
+                    "time_mode": out["time_mode"],
+                    "ts_value": out["ts_value"],
+                    "constraints": out["constraints"],
+                }
+            )
+        return out
 
 
 def _retrieve_now(state: dict) -> dict:
-    client, constraints = state["client"], state["constraints"]
-    ss = search_time_window(client, constraints, "screen_shot", limit=TIME_NEAR_TOP_K)
-    tr = search_time_window(client, constraints, "transcript", limit=TIME_NEAR_TOP_K)
-    center = ts_to_sec(state["ts_value"])
-    final = pick_by_type_quota(merge_unique_hits(ss, tr), TIME_NEAR_TOP_K)
-    final = sorted(final, key=lambda h: time_distance(center, h.payload))
-    return {**state, "ss_dense": ss, "tr_dense": tr, "final_hits": final}
+    with observation(
+        name="retrieve_now",
+        as_type="retriever",
+        require_parent=True,
+        input={
+            "ts_value": state.get("ts_value"),
+            "constraints": state.get("constraints"),
+        },
+    ) as obs:
+        client, constraints = state["client"], state["constraints"]
+        ss = search_time_window(
+            client, constraints, "screen_shot", limit=TIME_NEAR_TOP_K
+        )
+        tr = search_time_window(
+            client, constraints, "transcript", limit=TIME_NEAR_TOP_K
+        )
+        center = ts_to_sec(state["ts_value"])
+        final = pick_by_type_quota(merge_unique_hits(ss, tr), TIME_NEAR_TOP_K)
+        final = sorted(final, key=lambda h: time_distance(center, h.payload))
+        out = {**state, "ss_dense": ss, "tr_dense": tr, "final_hits": final}
+        if obs is not None:
+            obs.update(
+                output={
+                    "ss": len(ss),
+                    "tr": len(tr),
+                    **hits_preview(final),
+                }
+            )
+        return out
 
 
 def _hybrid_recall(state: dict) -> dict:
     """Dense(short) + BM25(expanded) + anchor hits for both doc types."""
-    client, query, q_short = state["client"], state["query"], state["q"]
-    constraints = state["constraints"]
-    q_expand, anchors = expand_query_with_anchors(client, query, q_short, constraints)
-    ss_dense = search_dense(client, q_short, "screen_shot", constraints)
-    ss_bm25 = search_bm25(client, q_expand, "screen_shot", constraints)
-    tr_dense = search_dense(client, q_short, "transcript", constraints)
-    tr_bm25 = search_bm25(client, q_expand, "transcript", constraints)
-    return {
-        **state,
-        "q": q_expand,
-        "ss_dense": ss_dense,
-        "ss_bm25": ss_bm25,
-        "tr_dense": tr_dense,
-        "tr_bm25": tr_bm25,
-        "anchors": anchors,
-    }
+    with observation(
+        name="hybrid_recall",
+        as_type="retriever",
+        require_parent=True,
+        input={
+            "q": state.get("q"),
+            "constraints": state.get("constraints"),
+        },
+    ) as obs:
+        client, query, q_short = state["client"], state["query"], state["q"]
+        constraints = state["constraints"]
+        q_expand, anchors = expand_query_with_anchors(
+            client, query, q_short, constraints
+        )
+        ss_dense = search_dense(client, q_short, "screen_shot", constraints)
+        ss_bm25 = search_bm25(client, q_expand, "screen_shot", constraints)
+        tr_dense = search_dense(client, q_short, "transcript", constraints)
+        tr_bm25 = search_bm25(client, q_expand, "transcript", constraints)
+        out = {
+            **state,
+            "q": q_expand,
+            "ss_dense": ss_dense,
+            "ss_bm25": ss_bm25,
+            "tr_dense": tr_dense,
+            "tr_bm25": tr_bm25,
+            "anchors": anchors,
+        }
+        if obs is not None:
+            obs.update(
+                output={
+                    "q_expand": q_expand,
+                    "anchors": len(anchors),
+                    "ss_dense": len(ss_dense),
+                    "ss_bm25": len(ss_bm25),
+                    "tr_dense": len(tr_dense),
+                    "tr_bm25": len(tr_bm25),
+                }
+            )
+        return out
 
 
 def _finalize_time(state: dict) -> dict:
-    center = ts_to_sec(state["ts_value"])
-    tw_ss = merge_unique_hits(state["anchors"], state["ss_dense"], state["ss_bm25"])
-    tw_tr = merge_unique_hits(state["tr_dense"], state["tr_bm25"])
-    final = pick_by_type_quota(merge_unique_hits(tw_ss, tw_tr), TIME_NEAR_TOP_K)
-    final = sorted(final, key=lambda h: time_distance(center, h.payload))
-    return {**state, "final_hits": final}
+    with observation(
+        name="finalize_time",
+        as_type="retriever",
+        require_parent=True,
+        input={"ts_value": state.get("ts_value")},
+    ) as obs:
+        center = ts_to_sec(state["ts_value"])
+        tw_ss = merge_unique_hits(
+            state["anchors"], state["ss_dense"], state["ss_bm25"]
+        )
+        tw_tr = merge_unique_hits(state["tr_dense"], state["tr_bm25"])
+        final = pick_by_type_quota(merge_unique_hits(tw_ss, tw_tr), TIME_NEAR_TOP_K)
+        final = sorted(final, key=lambda h: time_distance(center, h.payload))
+        if obs is not None:
+            obs.update(output=hits_preview(final))
+        return {**state, "final_hits": final}
 
 
 def _finalize_rerank(state: dict) -> dict:
-    candidates = merge_unique_hits(
-        state["anchors"],
-        state["ss_dense"],
-        state["ss_bm25"],
-        state["tr_dense"],
-        state["tr_bm25"],
-    )
-    final = rerank_and_filter(f"{state['query']}\n{state['q']}", candidates)
-    return {**state, "final_hits": final}
+    with observation(
+        name="finalize_rerank",
+        as_type="retriever",
+        require_parent=True,
+        input={"query": state.get("query"), "q": state.get("q")},
+    ) as obs:
+        candidates = merge_unique_hits(
+            state["anchors"],
+            state["ss_dense"],
+            state["ss_bm25"],
+            state["tr_dense"],
+            state["tr_bm25"],
+        )
+        final = rerank_and_filter(f"{state['query']}\n{state['q']}", candidates)
+        if obs is not None:
+            obs.update(
+                output={
+                    "candidates": len(candidates),
+                    **hits_preview(final),
+                }
+            )
+        return {**state, "final_hits": final}
 
 
 def _answer(state: dict) -> dict:
-    rewritten = state["rewritten"]
-    hits = state["final_hits"]
-    course_general = bool(rewritten.get("course_general_knowledge"))
-    prompt = build_prompt(
-        state["query"],
-        hits,
-        course_general=course_general,
-    )
-    if hits or course_general:
-        text = answer(prompt)
-    else:
-        text = no_hit_reply(now=state["time_mode"] == "now")
-    return {**state, "prompt": prompt, "answer_text": text}
+    with observation(
+        name="answer",
+        as_type="span",
+        require_parent=True,
+        input={
+            "query": state.get("query"),
+            "hits": len(state.get("final_hits") or []),
+            "course_general": bool(
+                (state.get("rewritten") or {}).get("course_general_knowledge")
+            ),
+        },
+    ) as obs:
+        rewritten = state["rewritten"]
+        hits = state["final_hits"]
+        course_general = bool(rewritten.get("course_general_knowledge"))
+        prompt = build_prompt(
+            state["query"],
+            hits,
+            course_general=course_general,
+        )
+        if hits or course_general:
+            text = answer(prompt)
+        else:
+            text = no_hit_reply(now=state["time_mode"] == "now")
+        if obs is not None:
+            obs.update(output={"answer": text})
+        return {**state, "prompt": prompt, "answer_text": text}
 
 
 def _to_result(state: dict) -> QueryResult:
@@ -282,4 +409,5 @@ def answer_query(client, query: str) -> QueryResult:
                     "search_query": result.search_query,
                 },
             )
+            print(f"langfuse: trace_id={span.trace_id}")
         return result

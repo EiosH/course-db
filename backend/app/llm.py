@@ -54,6 +54,7 @@ def ollama_chat(
     format=None,
     timeout=OLLAMA_CHAT_TIMEOUT,
     temperature=OLLAMA_TEMPERATURE,
+    name: str = "llm",
 ):
     """Call Ollama /api/chat with retries; think=False avoids qwen thinking overhead."""
     payload = {
@@ -69,9 +70,11 @@ def ollama_chat(
     if format is not None:
         payload["format"] = format
 
+    # require_parent=True: never open a standalone root trace for an LLM call.
     with observation(
-        name="ollama_chat",
+        name=name,
         as_type="generation",
+        require_parent=True,
         model=OLLAMA_MODEL,
         input=messages,
         model_parameters={

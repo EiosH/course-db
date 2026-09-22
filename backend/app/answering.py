@@ -44,6 +44,7 @@ def plan_query(query: str) -> dict:
             {"role": "user", "content": query},
         ],
         format="json",
+        name="llm.plan",
     )
     data = _parse_json_content(raw)
     resolve = data.get("resolve")
@@ -94,6 +95,7 @@ def extract_resolved_name(phrase: str, hits) -> dict:
             },
         ],
         format="json",
+        name="llm.resolve",
     )
     data = _parse_json_content(raw)
     name = str(data.get("name") or "").strip()
@@ -152,6 +154,7 @@ def rewrite(
             },
         ],
         format="json",
+        name="llm.rewrite",
     )
     data = _parse_json_content(raw)
     rewritten_query = str(data.get("rewritten_query") or "").strip() or query
@@ -196,6 +199,7 @@ def answer(prompt: str) -> str:
             {"role": "user", "content": prompt},
         ],
         temperature=ANSWER_TEMPERATURE,
+        name="llm.answer",
     )
     if STIFF_REFUSAL_RE.match(raw.strip()):
         return STIFF_REFUSAL_REPLY
