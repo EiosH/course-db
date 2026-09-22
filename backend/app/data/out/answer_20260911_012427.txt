@@ -1,0 +1,298 @@
+1. 原问题: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question is a self-contained type inference problem for a provided code snippet and does not rely on any opaque course-specific terminology or unclear deictic referents."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala type inference function g with Nil and cons pattern match type parameters ?1 ?2 ?3 list recursive function signature",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Hmm, I couldn't find anything useful in the lecture notes for that — sorry, I'm not sure. Want to try asking another way?
+
+============================================================
+
+2. 原问题: Is there a simpler example for this concept?
+entity_judge:
+{
+  "needs_preprobe": true,
+  "unknown_entity": "this concept",
+  "referent_unclear": true,
+  "reason": "The question uses the vague deictic phrase 'this concept' without naming the specific technical idea, making the referent unclear."
+}
+
+preprobe:
+entity=this concept
+referent_unclear=True
+query=What concept or topic is being discussed (this concept)
+hits=3
+entity_not_found=False
+gloss_found=True
+confidence=0.60
+definition=Functional programming operations used to transform, select, and aggregate data within a list, often combined in processing pipelines.
+
+preprobe hits:
+[00:02:26.659 --> 00:04:24.300] score=16.7828 channel=preprobe
+please send me a message and I will, I might forget because I'm getting busy with traveling so just send me a message. I'm not trying to ignore you. I've just got too many things going on. So that's that. If you got an email from me today, if you're in section 941, you need to go, the email was about scheduling the exam. I do ask that everybody taking the exam in the classroom registers in the intranet for that. Now that doesn't apply to you if you are in section 901, because in Section 901, you are taking the exam here by default. There is no way for you to schedule through the proctoring system. So for 941 only, make sure you're registering for the exam if you haven't already. We do have limited slots in the classroom, so get your registrations in now. We will also plan on week six to have lecture for the second half. So we'll be next week and into week six, we'll be diving into new material for the second half of the course. So be aware of that. Any questions about any of those housekeeping items? Okay. Good. Plan for today. We've got some review stuff. I'm going to go over the quiz as kind of a warm-up and any homework questions you may have. We're going to go back through and do some examples with map, filter, and fold. Then what I've decided I'm going to do, I have done this a little bit differently before, but I think this is going to work better if I do the new slide discussions of the new topics here. And then whatever time is left, it might be 45 minutes, it might be an hour, it might be more than an hour.
+
+---
+
+[01:23:44.420 --> 01:25:32.779] score=10.7277 channel=preprobe
+If we did binary search, it would be more efficient. Right? We're not doing that for this discussion. We're going to walk through the list and we're going to find the element. So this is our old school iteration. This is what it looks like. You start with a key. You're trying to find the index where that key exists, and then you use this loop control, this i, and then you use this while loop. I have this special condition here to if I get a minus one. Oh, I'm sorry. I have to be before the end of the list, and as long as I haven't found the result, then I wanna keep executing. Otherwise, I'm gonna exit the loop early. That's what I wanna do. If you can imagine why I would do this, I might have a really, really, really long list. And if I'm looking for a number that occurs early in the list, in this case, these are not sordid. They are shuffled, but they could be shuffled. And if they're shuffled, we don't know where the result lives. So in this case, I'm gonna find this seven pretty quick, right, because it's in the beginning. But if I shuffled the list and it was really, really huge that I had pulled in off network or something like that. Well, I might have to go through this whole list and I might want to stop early. So this is me saying, I want to stop early if I found it. That's all. So what we see down here is just the finding like if I were to execute it in the REPL for you and it would find the element, sorry, I jumped ahead. it would find the element at 8 because we're 0 indexed, so it would find 7. Again, contrived, because I'm not shuffling the data,
+
+---
+
+[01:06:37.159 --> 01:08:45.340] score=6.2910 channel=preprobe
+So we have a don't care whatever pattern, we have a don't care whatever pattern but notice x arrow x if we just replace with a single underscore, that's syntactic sugar for this. So so far we're the same, right? Yeah. And then here we have a fold, we have this, Z element, which is the single string with a comma, and then we have this, which is syntactic sugar for that. So these two are actually semantically the exact same. Does everybody see that? This here is we have an X and a Y, and we combine them by doing this plus, which in this case is going to be string concatenation, or should be. Okay. And so here, this is like a shorthand for saying this. That's why I call it syntactic trigger. It's just, I guess, a little bit less junking on the screen for you to look at. So I think the answer here is going to be six and seven. So you can see that by noticing that the first step is this filtering. So that gets you halfway there. Then you have to just sort of process through in your mind what happens here. But if you do that for each of these, since they are the same, you just have to do it once. Okay, so that was our little one. That was fun, wasn't it? We're gonna start this topic. this is my pride and joy so I gave a talk at the Chicago area Scala meetup but it was 2022 they haven't had a meetup in a long time and this that talk turned into this so there's still a video on the webpage of the website of a different set of slides that I completely lost and I don't I don't know how I did that. I should check if Andy still has that.
+
+rewrite:
+{
+  "rewritten_query": "simpler example higher order functions map filter fold list transformation pipeline functional programming",
+  "time_mode": "now",
+  "course_general_knowledge": false,
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "01:22:09"
+    }
+  ]
+}
+
+prompt:
+Student question: Is there a simpler example for this concept?
+
+Entity glossary (from pre-probe; use only as term definition):
+- this concept (confidence=0.60): Functional programming operations used to transform, select, and aggregate data within a list, often combined in processing pipelines.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (01:22:09)
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+- var
+- while
+- This is glorified iteration, implemented directly in Scala.
+
+[Instructor said] (01:21:49.960 --> 01:23:44.420)
+have two loops so it's even worse. So here's why so we have fars we have while this is glorified iteration and it's implemented directly in Scala so in the language in the library it's right there it's not even at them at the machine code language. Now ultimately in the virtual machine, it is doing looping, right? It is, there's jumps and there's all these things and I don't care about that. Like, I'm working in a higher level language. I would like my, since we have support for things in Scala, I would like support for functional programming in Scala. I would like this to be more purely functional and it's not. And one thing that really stuck with me when I was like first learning about folds I have friends who were like Eric you gotta learn folds they're the most awesome things like 10 years and I was like I'm not sold because folds and Scala don't allow me to abort my processing early. I have a really big collection there's no way to avoid iterating over every element with the way we have defined folds with these iterations here. So every time we execute a fold, that particular piece of code executes in linear time in terms of the length of the list. And then this other thing, fold write, we have vars, we have while times two with the reverse call, and it's just more glorified iteration over every element. So my friends were like, learn folds. And I said, why? This is not giving me much. So here's an illustration of what happens when I try to do find and find is, this is like I'm finding a particular element. And this is linear find, this is not binary. Right?
+
+[On slide] (01:22:08)
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+- var
+- while
+- This is glorified iteration, implemented directly in Scala.
+
+[Instructor said] (01:20:15.220 --> 01:21:49.960)
+Those are called type bounds and this is called variance, but we'll do that in much later lecture, so don't worry about that. But you'll see fold left here and notice what it's doing. It's using a var and it's using a while loop. So we just got through talking about how these are sort of higher order functions. This is higher order programming. We're doing functional programming. And yet under the covers the Scala language here is doing this looping with a var. Over here with the fold right, it's even more interesting. We have, first we reverse, and then we're looping with a var. And if we call, look at reverse, this is what reverse looks like. And again, this may be a slightly older version of Scala than if you were to do this on your own today. You might see something different. But ultimately, you're gonna see this kind of thing. You're gonna have vars and while loops. You're calling reverse, so you're calling this whole thing. You're iterating through all the elements once and then you're iterating through all the elements again. If you have a lot of elements, it's not really desirable. So what I did here is I put these little comments, this is an expression, American slang, lipstick on a pig. It's like when you have something that's like ugly and you're trying to make it better, but it's still to me as a programmer, this is not intellectually satisfying because I'm not really doing a fold in the way that we would like to be we're just doing looping. And then over here I said lipstick on a pig airbrush because we
+
+答案:
+Actually, the lecture uses a specific example to illustrate *why* these implementations are problematic, rather than providing a simpler alternative.
+
+The instructor uses a **linear `find`** operation (searching for a specific element in a list) to show the downside of the `var`/`while` loop implementations. They explain that because the underlying fold uses loops, you can't abort early—even if you find the element immediately, the code is defined in a way that iterates over every element, forcing linear time complexity.
+
+The instructor’s point was that these implementations are "glorified iteration" (or "lipstick on a pig") that prevents purely functional benefits like early termination. So, rather than offering a simpler example of the fold itself, the lecture used `find` to demonstrate the limitations of the standard Scala implementation shown on the slide.
+
+============================================================
+
+3. 原问题: Could you find the example the instructor mentioned around 2h24min, and locate the questions about this concept?
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "This is a navigation and timestamp-based lookup request to find content based on a specific lecture time and the instructor's mention, not a question requiring a definition lookup for an unfamiliar entity."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "instructor example at 2h24min related concept questions homework assignment problem",
+  "time_mode": "anchor",
+  "course_general_knowledge": false,
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "02:24:00"
+    }
+  ]
+}
+
+prompt:
+Student question: Could you find the example the instructor mentioned around 2h24min, and locate the questions about this concept?
+
+Lecture content (use only what is needed to answer the question above):
+
+[Instructor said] (02:23:50.600 --> 02:26:03.520)
+So if you think about just plain old Java or Scala, you're doing like 5 plus 3. We're doing add, so I should probably keep it to add. I'll do 5 times 3 in here. So if I do that, I'm trying to do an add rule. This is an expression, and this is an expression. So this is my E1, and this is my E2, right? So just by way of example, that's what this is. So what needs to be true? Well, E1 is going to evaluate to some value. That's why we see V1 here. And E2 is going to evaluate to some value. Oh, what it's doing is it's filling it in sort of like weird. So if I start with E1, this is where I was. And what it just did was it filled in Xi0. So this is our variable store. And then I say, E1, this double arrow is saying E1 evaluates to value V1. And in the process of doing that evaluation, I may have changed the variables. You can think about that logically. Like if you're executing a program, it might actually do that. So here I have E2, same idea. This has to evaluate to something, and I might change the variable store. So here, one thing to note is we evaluate E1 first, we get V1, we may have changed the variable store to get xi1. Now we have xi1 here, we are evaluating E2, we're going to get V2, and we're going to get xi2, because we may be changing the variable store yet again. So if we have that much, and if we see this, then we can reason about what should be here in this. And this is actually just showing you what the rule is, but I'm developing the rule. So if I have E1 that evaluates to D1 and E2 that evaluates to B2, what goes here? It's a good guess.
+
+[Instructor said] (02:21:57.180 --> 02:23:50.600)
+that I'm gonna do that first and that quantity times 4. So the semantic domain of this language is integer arithmetic. The value V is, I didn't mean to press that, is the meaning of an expression. So for example, 2 plus 3 times 4, with you know, 2 plus 3 quantity times 4 means 20. And we can reason about that, because if We do this in our head, we get 5 times 4. We do this first, and we multiply 5 times 4, and we get 20. So that's why it means 20. Numbers are always going to evaluate to their value. So this is the first rule. So if I have a number, just a plain old number 5, that's going to evaluate to the value 5. That's what this is saying. So this part over here is the rule num. It's called num. And this line here just means that there's no premises that need to be satisfied for this to be true. So it isn't conditional on these premises being satisfied, it's just a number always evaluates to itself. So if I look at this rule, this is just like before I'm using this little notation here. This is, I'm doing an addition, right? So this is my expression. I have expression one plus expression two, so this is a whole expression. Earlier on that earlier slide, it was called PRG, right? So that's just another way to say expression. This is an expression. And I have this xi zero. So xi again is my map of variables. And I have these two question marks. Well, okay. So what goes in on the right side? And before we can do that, we have to know what the premises are. So we have to see something about E1 and something about E2, right?
+
+[On slide] (02:22:19)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+[On slide] (02:22:15)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+答案:
+The instructor used the expression **5 * 3** (or 5 times 3) as the example around that time to explain how the evaluation rule works.
+
+They broke it down into two sub-expressions:
+*   **E1**: The first number (5), which evaluates to **V1** (5).
+*   **E2**: The second number (3), which evaluates to **V2** (3).
+
+The instructor explained that E1 is evaluated first, potentially updating the variable store (from $\xi_0$ to $\xi_1$), and then E2 is evaluated (from $\xi_1$ to $\xi_2$) to get its value. This specific example was used to demonstrate the "add" (or in this case, multiply) rule where both sides must evaluate to values before the final operation can be performed.
+
+============================================================
+

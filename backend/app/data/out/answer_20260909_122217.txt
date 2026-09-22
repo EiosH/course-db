@@ -1,0 +1,331 @@
+1. 原问题: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question is a pure code-trace task involving standard, clearly named Scala collection methods (map, filter) with no opaque entities or unclear referents."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "evaluate Scala List map filter x*2 x%2==0 code example result",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (02:08:35)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = "01234"
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold("0")((x,y) => x.toString+y)
+
+[On slide] (02:08:36)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = "01234"
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold("0")((x,y) => x.toString+y)
+
+[On slide] (02:08:31)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = "01234"
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold("0")((x,y) => x.toString+y)
+
+[Instructor said] (00:43:29.019 --> 00:45:30.179)
+So you're going to get a list of 2, 3, 4, 5 when you call this. And when it compares to YS, it's going to see that they're equal. So it's actually constructing a whole new list when you call mapping, and then comparing that listing in splas. What about the second one? I guess it's also correct. That's also going to return true. Okay. What's different about this one? It's the same. The semantics are the same. Yeah. It means the same. But the syntax is different obviously, right? Because it looks different on the screen, right? But what this is, is our don't care whatever. We're going to use the parameter once. And so this is the equivalent of saying x arrow x plus one. The compiler compiles that to the same thing. So those two will return true. What about this one? What does this next one do? What does this return? I mean, we would imagine that it takes the volumes and header set in excess of the list and anything that doesn't meet that requirement is taken out of the list, but everything else stays. So it divides by one, and then, if it doesn't equal zero, that's not added into the new list. Divide by two, it does equal, or the remainder is zero, so there's nothing else left over. So then that gets added to this so it only returns two and four. Okay. So just to make it really, your head is in the right space. To make it really clear, remember a filter is going to construct you a new list. And this is a function, again. And this function is returning Boolean. And we call this a predicate. That's a pretty standard term for it. So called the random lecture last week.
+
+答案:
+The result is **`List(2, 4, 6, 8, 10)`**.
+
+Here is the step-by-step breakdown:
+
+1.  **Start:** `List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)`
+2.  **`.map((x:Int) => x*2)`:** Multiplies every element by 2.
+    *   Result: `List(2, 4, 6, 8, 10, 12, 14, 16, 18, 20)`
+3.  **`.filter((x:Int) => (x%2) == 0)`:** Keeps only elements where the remainder of division by 2 is 0 (i.e., even numbers).
+    *   Since all numbers in the list produced by `map` (2, 4, 6, ..., 20) are even, **all** of them pass the filter.
+
+Therefore, the final list contains all the doubled values: **`List(2, 4, 6, 8, 10, 12, 14, 16, 18, 20)`**.
+
+============================================================
+
+2. 原问题: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question provides the full code snippet and explicitly names the placeholders to resolve, making it a self-contained type inference problem without opaque entities or unclear referents."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala type inference function signature with List, polymorphic parameters, pattern matching Nil and cons, higher-order function f, tail recursion or recursive list processing, replacing type variables ?1 ?2 ?3 in def g[X,Y]",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (01:08:16)
+webpage
+
+Schedule
+Table:
+| Week | Days | Date     | Lecture Topic / Slides                          | Lecture Notes         | Worksheets           | Reading (CPL)       | Reading (PS)        | Assignment                  |
+|------|------|----------|-------------------------------------------------|------------------------|-----------------------|---------------------|---------------------|------------------------------|
+| 1    | Tue  | Mar 31   | Overview [pdf]<br>Scala Introduction [pdf]<br>Scala Pragmatics [pdf] | Scala 3 Book<br>Scala  | Java and C<br>Scala   | Ch 1               | Ch 1,2,4           | Homework 1 (due Apr 06)<br>Midterm Study Guide (due May 04) |
+| 2    | Tue  | Apr 07   | Contracts [pdf]<br>Pattern Matching [pdf]<br>Scala Classes [pdf]<br>Algebraic Data Types [pdf]<br>Statements and Expressions [pdf] | Algebraic Data Types<br>Expressions | Algebraic Data Types | Ch 9.1,9.2         | Ch 3,13,19,24      | Homework 2 (due Apr 13)<br>Midterm Study Guide (due May 04) |
+| 3    | Tue  | Apr 14   | Strict and Nonstrict Evaluation [pdf]<br>Functions on Lists [pdf]<br>Methods and Functions [pdf]<br>Folds [pdf] | Functional Programming | Functional Programming | Ch 4               | Ch 5,7             | Homework 3 (due Apr 20)<br>Midterm Study Guide (due May 04) |
+| 4    | Tue  | Apr 21   | Examples: Map, Filter, and Fold [pdf]<br>More Functional Folds [pdf]<br>Formal Semantics [pdf] | -                      | Language Interpreter  | Ch 3.4,7,5,6       | Ch 9, 14, 15       | Homework 4 (due Apr 27)<br>Midterm Study Guide (due May 04) |
+| 5    | Tue  | Apr 28   | Tail Recursion [pdf]<br>Static/Dynamic Types [pdf]<br>Undefined Behavior [pdf] | Tail Recursion<br>Static and Dynamic Types | Tail Recursion        | Ch 6               | Ch 8.10            | Midterm Study Guide (due May 04) |
+|      |      |          | Midterm Exam                                   |                        |                       |                     |                     | Homework 5                 |
+
+[On slide] (00:40:26)
+webpage
+
+Schedule
+Table:
+| Week | Days | Date     | Lecture Topic / Slides                          | Lecture Notes         | Worksheets           | Reading (CPL)       | Reading (PS)        | Assignment                  |
+|------|------|----------|-------------------------------------------------|------------------------|-----------------------|---------------------|---------------------|------------------------------|
+| 1    | Tue  | Mar 31   | Overview [pdf]<br>Scala Introduction [pdf]<br>Scala Pragmatics [pdf] | Scala 3 Book<br>Scala  | Java and C<br>Scala   | Ch 1               | Ch 1,2,4           | Homework 1 (due Apr 06)<br>Midterm Study Guide (due May 04) |
+| 2    | Tue  | Apr 07   | Contracts [pdf]<br>Pattern Matching [pdf]<br>Scala Classes [pdf]<br>Algebraic Data Types [pdf]<br>Statements and Expressions [pdf] | Algebraic Data Types<br>Expressions | Algebraic Data Types | Ch 9.1,9.2         | Ch 3,13,19,24      | Homework 2 (due Apr 13)<br>Midterm Study Guide (due May 04) |
+| 3    | Tue  | Apr 14   | Strict and Nonstrict Evaluation [pdf]<br>Functions on Lists [pdf]<br>Methods and Functions [pdf]<br>Folds [pdf] | Functional Programming | Functional Programming | Ch 4               | Ch 5,7             | Homework 3 (due Apr 20)<br>Midterm Study Guide (due May 04) |
+| 4    | Tue  | Apr 21   | Examples: Map, Filter, and Fold [pdf]<br>More Functional Folds [pdf]<br>Formal Semantics [pdf] | -                      | Language Interpreter  | Ch 3.4,7,5,6       | Ch 9, 14, 15       | Homework 4 (due Apr 27)<br>Midterm Study Guide (due May 04) |
+| 5    | Tue  | Apr 28   | Tail Recursion [pdf]<br>Static/Dynamic Types [pdf]<br>Undefined Behavior [pdf] | Tail Recursion<br>Static and Dynamic Types | Tail Recursion        | Ch 6               | Ch 8.10            | Midterm Study Guide (due May 04) |
+|      |      |          | Midterm Exam                                   |                        |                       |                     |                     | Homework 5                 |
+
+[On slide] (01:08:17)
+webpage
+
+Schedule
+Table:
+| Week | Days | Date     | Lecture Topic / Slides                          | Lecture Notes         | Worksheets           | Reading (CPL)       | Reading (PS)        | Assignment                  |
+|------|------|----------|-------------------------------------------------|------------------------|-----------------------|---------------------|---------------------|------------------------------|
+| 1    | Tue  | Mar 31   | Overview [pdf]<br>Scala Introduction [pdf]<br>Scala Pragmatics [pdf] | Scala 3 Book<br>Scala  | Java and C<br>Scala   | Ch 1               | Ch 1,2,4           | Homework 1 (due Apr 06)<br>Midterm Study Guide (due May 04) |
+| 2    | Tue  | Apr 07   | Contracts [pdf]<br>Pattern Matching [pdf]<br>Scala Classes [pdf]<br>Algebraic Data Types [pdf]<br>Statements and Expressions [pdf] | Algebraic Data Types<br>Expressions | Algebraic Data Types | Ch 9.1,9.2         | Ch 3,13,19,24      | Homework 2 (due Apr 13)<br>Midterm Study Guide (due May 04) |
+| 3    | Tue  | Apr 14   | Strict and Nonstrict Evaluation [pdf]<br>Functions on Lists [pdf]<br>Methods and Functions [pdf]<br>Folds [pdf] | Functional Programming | Functional Programming | Ch 4               | Ch 5,7             | Homework 3 (due Apr 20)<br>Midterm Study Guide (due May 04) |
+| 4    | Tue  | Apr 21   | Examples: Map, Filter, and Fold [pdf]<br>More Functional Folds [pdf]<br>Formal Semantics [pdf] | -                      | Language Interpreter  | Ch 3.4,7,5,6       | Ch 9, 14, 15       | Homework 4 (due Apr 27)<br>Midterm Study Guide (due May 04) |
+| 5    | Tue  | Apr 28   | Tail Recursion [pdf]<br>Static/Dynamic Types [pdf]<br>Undefined Behavior [pdf] | Tail Recursion<br>Static and Dynamic Types | Tail Recursion        | Ch 6               | Ch 8.10            | Midterm Study Guide (due May 04) |
+|      |      |          | Midterm Exam                                   |                        |                       |                     |                     | Homework 5                 |
+
+答案:
+I looked through the notes but nothing on that specific type inference question popped up. Want to try rephrasing?
+
+============================================================
+
+3. 原问题: Is there a simpler example for this concept?
+entity_judge:
+{
+  "needs_preprobe": true,
+  "unknown_entity": "this concept",
+  "referent_unclear": true,
+  "reason": "The question uses deictic 'this concept' without naming the specific technical term, making the referent unclear."
+}
+
+preprobe:
+entity=this concept
+referent_unclear=True
+query=What concept or topic is being discussed (this concept)
+hits=3
+entity_not_found=True
+gloss_found=False
+confidence=0.10
+definition=
+
+preprobe hits:
+[00:02:26.659 --> 00:04:24.300] score=16.7828 channel=preprobe
+please send me a message and I will, I might forget because I'm getting busy with traveling so just send me a message. I'm not trying to ignore you. I've just got too many things going on. So that's that. If you got an email from me today, if you're in section 941, you need to go, the email was about scheduling the exam. I do ask that everybody taking the exam in the classroom registers in the intranet for that. Now that doesn't apply to you if you are in section 901, because in Section 901, you are taking the exam here by default. There is no way for you to schedule through the proctoring system. So for 941 only, make sure you're registering for the exam if you haven't already. We do have limited slots in the classroom, so get your registrations in now. We will also plan on week six to have lecture for the second half. So we'll be next week and into week six, we'll be diving into new material for the second half of the course. So be aware of that. Any questions about any of those housekeeping items? Okay. Good. Plan for today. We've got some review stuff. I'm going to go over the quiz as kind of a warm-up and any homework questions you may have. We're going to go back through and do some examples with map, filter, and fold. Then what I've decided I'm going to do, I have done this a little bit differently before, but I think this is going to work better if I do the new slide discussions of the new topics here. And then whatever time is left, it might be 45 minutes, it might be an hour, it might be more than an hour.
+
+---
+
+[01:23:44.420 --> 01:25:32.779] score=10.7277 channel=preprobe
+If we did binary search, it would be more efficient. Right? We're not doing that for this discussion. We're going to walk through the list and we're going to find the element. So this is our old school iteration. This is what it looks like. You start with a key. You're trying to find the index where that key exists, and then you use this loop control, this i, and then you use this while loop. I have this special condition here to if I get a minus one. Oh, I'm sorry. I have to be before the end of the list, and as long as I haven't found the result, then I wanna keep executing. Otherwise, I'm gonna exit the loop early. That's what I wanna do. If you can imagine why I would do this, I might have a really, really, really long list. And if I'm looking for a number that occurs early in the list, in this case, these are not sordid. They are shuffled, but they could be shuffled. And if they're shuffled, we don't know where the result lives. So in this case, I'm gonna find this seven pretty quick, right, because it's in the beginning. But if I shuffled the list and it was really, really huge that I had pulled in off network or something like that. Well, I might have to go through this whole list and I might want to stop early. So this is me saying, I want to stop early if I found it. That's all. So what we see down here is just the finding like if I were to execute it in the REPL for you and it would find the element, sorry, I jumped ahead. it would find the element at 8 because we're 0 indexed, so it would find 7. Again, contrived, because I'm not shuffling the data,
+
+---
+
+[01:06:37.159 --> 01:08:45.340] score=6.2910 channel=preprobe
+So we have a don't care whatever pattern, we have a don't care whatever pattern but notice x arrow x if we just replace with a single underscore, that's syntactic sugar for this. So so far we're the same, right? Yeah. And then here we have a fold, we have this, Z element, which is the single string with a comma, and then we have this, which is syntactic sugar for that. So these two are actually semantically the exact same. Does everybody see that? This here is we have an X and a Y, and we combine them by doing this plus, which in this case is going to be string concatenation, or should be. Okay. And so here, this is like a shorthand for saying this. That's why I call it syntactic trigger. It's just, I guess, a little bit less junking on the screen for you to look at. So I think the answer here is going to be six and seven. So you can see that by noticing that the first step is this filtering. So that gets you halfway there. Then you have to just sort of process through in your mind what happens here. But if you do that for each of these, since they are the same, you just have to do it once. Okay, so that was our little one. That was fun, wasn't it? We're gonna start this topic. this is my pride and joy so I gave a talk at the Chicago area Scala meetup but it was 2022 they haven't had a meetup in a long time and this that talk turned into this so there's still a video on the webpage of the website of a different set of slides that I completely lost and I don't I don't know how I did that. I should check if Andy still has that.
+
+rewrite:
+{
+  "rewritten_query": "current concept example simplification walkthrough",
+  "time_mode": "now",
+  "course_general_knowledge": false,
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "01:22:09"
+    }
+  ]
+}
+
+prompt:
+Student question: Is there a simpler example for this concept?
+
+Entity pre-probe note: No related entity definition was found in the lecture materials for 'this concept'. Answer using lecture content below; do not invent a definition.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (01:22:09)
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+- var
+- while
+- This is glorified iteration, implemented directly in Scala.
+
+[Instructor said] (01:21:49.960 --> 01:23:44.420)
+have two loops so it's even worse. So here's why so we have fars we have while this is glorified iteration and it's implemented directly in Scala so in the language in the library it's right there it's not even at them at the machine code language. Now ultimately in the virtual machine, it is doing looping, right? It is, there's jumps and there's all these things and I don't care about that. Like, I'm working in a higher level language. I would like my, since we have support for things in Scala, I would like support for functional programming in Scala. I would like this to be more purely functional and it's not. And one thing that really stuck with me when I was like first learning about folds I have friends who were like Eric you gotta learn folds they're the most awesome things like 10 years and I was like I'm not sold because folds and Scala don't allow me to abort my processing early. I have a really big collection there's no way to avoid iterating over every element with the way we have defined folds with these iterations here. So every time we execute a fold, that particular piece of code executes in linear time in terms of the length of the list. And then this other thing, fold write, we have vars, we have while times two with the reverse call, and it's just more glorified iteration over every element. So my friends were like, learn folds. And I said, why? This is not giving me much. So here's an illustration of what happens when I try to do find and find is, this is like I'm finding a particular element. And this is linear find, this is not binary. Right?
+
+[On slide] (01:22:08)
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+- var
+- while
+- This is glorified iteration, implemented directly in Scala.
+
+[Instructor said] (01:20:15.220 --> 01:21:49.960)
+Those are called type bounds and this is called variance, but we'll do that in much later lecture, so don't worry about that. But you'll see fold left here and notice what it's doing. It's using a var and it's using a while loop. So we just got through talking about how these are sort of higher order functions. This is higher order programming. We're doing functional programming. And yet under the covers the Scala language here is doing this looping with a var. Over here with the fold right, it's even more interesting. We have, first we reverse, and then we're looping with a var. And if we call, look at reverse, this is what reverse looks like. And again, this may be a slightly older version of Scala than if you were to do this on your own today. You might see something different. But ultimately, you're gonna see this kind of thing. You're gonna have vars and while loops. You're calling reverse, so you're calling this whole thing. You're iterating through all the elements once and then you're iterating through all the elements again. If you have a lot of elements, it's not really desirable. So what I did here is I put these little comments, this is an expression, American slang, lipstick on a pig. It's like when you have something that's like ugly and you're trying to make it better, but it's still to me as a programmer, this is not intellectually satisfying because I'm not really doing a fold in the way that we would like to be we're just doing looping. And then over here I said lipstick on a pig airbrush because we
+
+答案:
+I looked through the notes but nothing on that popped up. The lecture focused on the specific implementation of `foldLeft` and `foldRight` in Scala, highlighting how they rely on `var` and `while` loops rather than showing a simpler, alternative example.
+
+============================================================
+

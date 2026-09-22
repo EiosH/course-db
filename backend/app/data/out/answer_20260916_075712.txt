@@ -1,0 +1,1144 @@
+1. 原问题: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => y::(y::(f (ys)))   end match end f If this function is executed on a list of length N, what is the length of the resulting list?
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "referents": [
+    "this function"
+  ],
+  "entities": [],
+  "preprobe": "this function",
+  "reason": "The question asks about the behavior of a specific code snippet provided in the prompt, so the referent 'this function' must be resolved using the provided context, but there are no opaque domain-specific entities requiring external definition."
+}
+
+preprobe:
+preprobe=this function
+is_referent=True
+query=What is being referred to by 'this function'
+hits=3
+gloss_found=True
+confidence=0.90
+definition=A function that takes an expression and a variable store, evaluates the expression according to formal semantics, and returns an integer result and a new variable store.
+
+preprobe hits:
+[03:00:03.180 --> 03:02:30.899] score=12.7881 channel=preprobe
+So what this does is it's just some scholar syntax for saying, all right, I'm matching this case, so the thing I have is a while, and I want to refer to it typed as a while. So remember, we have the expr is the super type, right? So this is saying, well, I'm going to be able to refer to that. whatever I'm matching, E, as a w of this type now. Because when I match, I asserted that this was the actual type of this thing to make this case evaluate to true. Okay, so what happened? So let's look at the while first. So I evaluate e1 passing the variable store. I get back s1 and my value is v1. If v1 equals zero, then the whole result of the whole expression is zero, false, and whatever's left is s1. Otherwise, I'm going to evaluate this sequence here. So this is just translating that rule into this code, okay? And then we added the greater than or equal to. So this time it's strict, right? So it has to evaluate e1 and e2 both, so it does that. E1, get a value V1, new variable store, pass it in. Passing E2 as well, get back the new variable store in V2. And then we do this math dot max thing to determine whether it's greater or equal to. And this is just a way to get the low level computer to do that. That seems like it's the same as before. So this is our example if we're going to actually go through the rules. So we have E1 plus E2. It's going to give us v1 minus v2. this slide is broken. This slide looks broken. Something isn't right. Let me check. It's also 847, so maybe I have a bug in this slide. I wonder why that says v1 minus v2. V2. This is the absolute value example.
+
+---
+
+[02:35:54.899 --> 02:37:53.500] score=10.8496 channel=preprobe
+You're all like, what's x? We don't know yet. This is just an expression that we have to evaluate. So now we're going to implement the interpreter for this language, following our formal semantics. So remember when you saw that xi, and it was like, why is it with this random brief letter showing up? Well, it's nothing more than a map. And in this map, we have, as our keys, we have single characters. That's because those come from the identifiers. You'll see how that works out. And then our values are all gonna be impagers. So we'll now define the interpreter signature, which is gonna follow from, this is some fancy language, shape of the judgements, right? So this is a judgment and you have the arrow. This yields that whole thing is referred to as a judgment. So I'm evaluating an expression. So I'm given an expression and a variable store. And I'm going to get back some integer result and some new variable store. So you can click here to get back to the slide. I think it's this one, yeah, this set of slides that will take you back to. as I can it's popping up in my screen there, back to slide four. These are the reduction rules for integer expression. So again, we have our numerical rules, we have our addition, etc. We did that before and we have our parentheses. We did that before. So if we apply these over here, what happens? So if we're implementing this, we look at this. So if I have an expression and I have a, so if I, I can just use pattern matching here. So if I say if I have a number, then the result is just the number and
+
+---
+
+[02:33:54.980 --> 02:35:54.899] score=10.4092 channel=preprobe
+expression, and these are going to be the options we have. We have a a number. We have a plus, where we take the left and the right, which are each expressions, and we add them together. We have a minus, where we take the left, and then we subtract the right. And then we have a times, where we take the left and multiply by the right. So these are two expressions here. We're also going to have in our language, identifiers. So if we have an identifier, this is like setting x equal, or a equal, or b equal. In our case, we're going to have a single character identifier for our little language that we're defining here and then we're gonna also allow for parenthesized expressions so putting in parentheses around so what this is is a way to model the constructs of the language in Scala and we often refer to this as a domain specific language because we have a specific domain, it's arithmetic expressions which are limited right now to literal numbers addition, subtraction, multiplication. We're also going to allow for, as I said, defining variables and then we're gonna allow for parentheses in our whole language. So if I want to I would evaluate, or if I want to represent, sorry, represent an integer expression as an abstract syntax tree. So if I have two plus three times x, I could represent that by saying, I have, on the outside we have two plus this thing, right? So we have a plus on the outside. And we have the number two, and then we have this times in here, so now we're kind of unwrapping this thing. We have the number three times x. So x came from nowhere.
+
+rewrite:
+{
+  "rewritten_query": "Scala function f [X] (xs:List[X]) pattern match Nil y::ys y::(y::(f(ys))) length N resulting list length",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => y::(y::(f (ys)))   end match end f If this function is executed on a list of length N, what is the length of the resulting list?
+
+Entity glossary (from pre-probe; use only as term definition):
+- interpreter function (confidence=0.90): A function that takes an expression and a variable store, evaluates the expression according to formal semantics, and returns an integer result and a new variable store.
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Great question! Let's trace through the logic.
+
+The function `f` takes a list and does this:
+- If the list is empty (`Nil`), it returns an empty list (length 0).
+- If the list has a head `y` and a tail `ys`, it returns `y :: y :: f(ys)`.
+  - This means it adds **two** copies of the head element `y`, followed by the result of recursively processing the rest of the list `ys`.
+
+So, for every element in the original list, the resulting list gets **two** elements.
+
+Let $L(N)$ be the length of the resulting list when the input list has length $N$.
+
+- Base case: $N = 0$ → $L(0) = 0$
+- Recursive case: $L(N) = 2 + L(N-1)$
+
+This recurrence solves to:
+$$
+L(N) = 2N
+$$
+
+So, the length of the resulting list is **$2N$**.
+
+**Answer: $2N$**
+
+============================================================
+
+2. 原问题: Consider the following Scala function definition. def f [X] (xs:List[X], ys:List[X]) : List[X] =   xs match     case Nil   => ys     case z::zs => z::(f (zs, ys))   end match end f If this function is executed on two lists of length M and N respectively, what is the length of the resulting list?
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "referents": [],
+  "entities": [],
+  "preprobe": null,
+  "reason": "The question presents a self-contained code snippet and asks for a logical deduction regarding list lengths without referencing specific lecture timestamps, external entities, or prior context."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala function definition list concatenation match Nil length M N resulting list length",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Consider the following Scala function definition. def f [X] (xs:List[X], ys:List[X]) : List[X] =   xs match     case Nil   => ys     case z::zs => z::(f (zs, ys))   end match end f If this function is executed on two lists of length M and N respectively, what is the length of the resulting list?
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+That function is a standard **append** (or `++`) implementation.
+
+Let's trace what it does:
+1.  **Base case:** If the first list `xs` is empty (`Nil`), it returns the second list `ys` immediately.
+2.  **Recursive case:** If `xs` has a head element `z` and a tail `zs`, it conses `z` onto the result of recursively appending `zs` and `ys`.
+
+Essentially, it walks through every element of the first list (`xs`, length M) and prepends it to the second list (`ys`, length N). It never removes or duplicates elements; it just chains the two lists together.
+
+Therefore, the length of the resulting list is simply the sum of the lengths of the input lists:
+
+**M + N**
+
+============================================================
+
+3. 原问题: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => f (ys) ::: List (y)   end match end f What is the result of evaluating the following Scala code? val myList: List[(Int,Int)] = List( (1,2), (3,4), (5,6) ) f (myList)
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "referents": [],
+  "entities": [
+    "Scala",
+    "List"
+  ],
+  "preprobe": "Scala",
+  "reason": "The question is a self-contained code evaluation problem asking to trace the execution of a specific function, requiring no lecture context or pre-probe."
+}
+
+preprobe:
+preprobe=Scala
+is_referent=False
+query=What is Scala
+hits=3
+gloss_found=False
+confidence=0.10
+definition=
+
+preprobe hits:
+[01:19:26] score=1.4944 channel=preprobe
+code, application
+
+- File tabs: README.md, fp2tests.scala, hw3-fp2.scala, Main.scala, List.scala, LinearSeq.scala
+- Search bar with "foldLeft" query and 0 results.
+- Reader Mode toggle.
+
+Code (List.scala):
+```scala
+@SerialVersionUID(3L)
+sealed abstract class List[+A]
+extends AbstractSeq[A]
+with LinearSeq[A]
+```
+
+Run output stack trace:
+```
+at Main$.sinit$$anonfun$1(Main.scala:4)
+at scala.runtime.java8.JFunction2$mcIII$sp.apply(JFunction2$mcIII$sp.scala:17)
+at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+at scala.collection.immutable.List.foldLeft(List.scala:79)
+at scala.collection.IterableOnceOps.fold(IterableOnce.scala:792)
+at scala.collection.IterableOnceOps.fold$(IterableOnce.scala:792)
+at scala.collection.AbstractIterable.fold(Iterable.scala:935)
+```
+
+Labels:
+- Line numbers 78, 79, 80, 81 visible in the editor.
+- "See also: \"Scala's Collection Library overview\" section on Lists for more information." text.
+
+---
+
+[01:18:47] score=1.4875 channel=preprobe
+code
+
+Code: 
+```scala
+@SerialVersionUID(3L)
+sealed abstract class List[A]
+  extends AbstractSeq[A]
+  with LinearSeq[A]
+  with LinearSeqOps[A, List, List[A]]
+  with StrictOptimizedLinearSeqOps[A, List, List[A]]
+```
+
+`at Main$.sinit$$anonfun$1(Main.scala:4)
+at scala.runtime.java8.JFunction2$mcIII$sp.apply(JFunction2$mcIII$sp.scala:17)
+at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+at scala.collection.LinearSeqOps.foldLeft$(LinearSeq.scala:179)
+at scala.collection.immutable.List.foldLeft(List.scala:79)
+at scala.collection.IterableOnceOps.fold(IterableOnce.scala:792)
+at scala.collection.IterableOnceOps.fold$(IterableOnce.scala:792)
+at scala.collection.AbstractIterable.fold(Iterable.scala:935)`
+`<2 folded frames>`
+
+---
+
+[01:17:52] score=1.4873 channel=preprobe
+code
+
+Code: 
+```scala
+object Main extends App {
+  val xs: List[Int] = (0 to 10).toList
+  xs.fold(0) { (x, y) =>
+    throw new Exception()
+  }
+}
+```
+
+```
+at Main.main(Main.scala)
+Caused by: java.lang.Exception
+at Main$.sinit$$anonfun$1(Main.scala:4)
+at scala.runtime.java8.JFunction2$mcII$sp.apply(JFunction2$mcII$sp.scala:17)
+at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:183)
+at scala.collection.LinearSeqOps.foldLeft(LinearSeq.scala:179)
+at scala.collection.immutable.List.foldLeft(List.scala:79)
+at scala.collection.IterableOnceOps.fold(IterableOnce.scala:792)
+at scala.collection.IterableOnceOps.fold$(IterableOnce.scala:792)
+at scala.collection.AbstractIterable.fold(Iterable.scala:935)
+<2 folded frames>
+```
+
+rewrite:
+{
+  "rewritten_query": "Scala function def f [X] (xs:List[X]) : List[X] = xs match case Nil => Nil case y::ys => f (ys) ::: List (y) result of evaluating f (myList) where myList is List( (1,2), (3,4), (5,6) )",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => f (ys) ::: List (y)   end match end f What is the result of evaluating the following Scala code? val myList: List[(Int,Int)] = List( (1,2), (3,4), (5,6) ) f (myList)
+
+Entity pre-probe note: No related entity definition was found in the lecture materials for 'Scala'. Answer using lecture content below; do not invent a definition.
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Here is the step-by-step evaluation of `f(myList)`:
+
+**1. Understand what `f` does:**
+The function `f` is a recursive implementation of **list reversal**.
+*   **Base case:** If the list is `Nil`, it returns `Nil`.
+*   **Recursive case:** If the list is `y::ys`, it recursively reverses the tail `ys`, and then *appends* the head `y` to the end of that reversed tail.
+*   So, `f(List(a, b, c))` effectively computes `f(List(b, c)) ++ List(a)`, which results in `List(c, b, a)`.
+
+**2. Evaluate `f(myList)` where `myList = List((1,2), (3,4), (5,6))`:**
+
+*   **Call 1:** `f(List((1,2), (3,4), (5,6)))`
+    *   Matches `y::ys` where `y = (1,2)` and `ys = List((3,4), (5,6))`.
+    *   Returns `f(List((3,4), (5,6))) ++ List((1,2))`.
+
+*   **Call 2:** `f(List((3,4), (5,6)))`
+    *   Matches `y::ys` where `y = (3,4)` and `ys = List((5,6))`.
+    *   Returns `f(List((5,6))) ++ List((3,4))`.
+
+*   **Call 3:** `f(List((5,6)))`
+    *   Matches `y::ys` where `y = (5,6)` and `ys = Nil`.
+    *   Returns `f(Nil) ++ List((5,6))`.
+
+*   **Call 4:** `f(Nil)`
+    *   Matches `Nil`.
+    *   Returns `Nil`.
+
+**3. Unwind the recursion:**
+
+*   From Call 3: `Nil ++ List((5,6))` = `List((5,6))`
+*   From Call 2: `List((5,6)) ++ List((3,4))` = `List((5,6), (3,4))`
+*   From Call 1: `List((5,6), (3,4)) ++ List((1,2))` = `List((5,6), (3,4), (1,2))`
+
+**Final Result:**
+```scala
+List((5,6), (3,4), (1,2))
+```
+
+============================================================
+
+4. 原问题: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   filter ((x:Int) => (x%2) == 0).   map ((x:Int) => x*2)
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "referents": [],
+  "entities": [
+    "filter",
+    "map"
+  ],
+  "preprobe": "filter map",
+  "reason": "The question is a standalone code evaluation asking for the result of applying `filter` and `map` to a List."
+}
+
+preprobe:
+preprobe=filter map
+is_referent=False
+query=What is filter map
+hits=3
+gloss_found=True
+confidence=0.60
+definition=A sequence of operations where filter selects elements matching a predicate and map transforms the remaining elements.
+
+preprobe hits:
+[01:08:04] score=7.1710 channel=preprobe
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = ",2,4,"
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold("")( (x,y) => x.toString+y)
+6. ys == xs.filter(_ % 2 == 0).map(x => x.toString + ",").fold(",")((x,y) => x+y)
+7. ys == xs.filter(_ % 2 == 0).map(_.toString + ",").fold(",")(_ + _)
+
+• Snippets 6 and 7
+
+---
+
+[01:08:03] score=7.1710 channel=preprobe
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = ",2,4,"
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold("")( (x,y) => x.toString+y)
+6. ys == xs.filter(_ % 2 == 0).map(x => x.toString + ",").fold(",")((x,y) => x+y)
+7. ys == xs.filter(_ % 2 == 0).map(_.toString + ",").fold(",")(_ + _)
+
+• Snippets 6 and 7
+
+---
+
+[01:08:05] score=7.1710 channel=preprobe
+slide, code
+
+Exercise: Process a List of Numbers
+
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = ",2,4,"
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(",")((x,y) => x.toString+y)
+6. ys == xs.filter(_ % 2 == 0).map(x => x.toString + ",").fold(",")((x,y) => x+y)
+7. ys == xs.filter(_ % 2 == 0).map(_.toString + ",").fold(",")(_ + _)
+
+• Snippets 6 and 7
+
+rewrite:
+{
+  "rewritten_query": "Scala code evaluation List (1 to 10) filter predicate even numbers x%2==0 map transform x*2",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   filter ((x:Int) => (x%2) == 0).   map ((x:Int) => x*2)
+
+Entity glossary (from pre-probe; use only as term definition):
+- filter map (confidence=0.60): A sequence of operations where filter selects elements matching a predicate and map transforms the remaining elements.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (01:03:19)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Jadyn Proulx is the host now.
+
+[On slide] (01:03:15)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Jadyn Proulx is the host now.
+
+[On slide] (01:03:18)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Jadyn Proulx is the host now.
+
+[On slide] (01:03:12)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Jadyn Proulx is the host now.
+
+答案:
+To evaluate the code:
+
+`List (1,2,3,4,5,6,7,8,9,10). filter ((x:Int) => (x%2) == 0). map ((x:Int) => x*2)`
+
+We break it down into two steps, as shown in the lecture's "filter map" concept:
+
+1.  **Filter**: Keep only even numbers (`x % 2 == 0`).
+    *   Input: `List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)`
+    *   Result: `List(2, 4, 6, 8, 10)`
+
+2.  **Map**: Multiply each remaining number by 2 (`x * 2`).
+    *   Input: `List(2, 4, 6, 8, 10)`
+    *   Result: `List(4, 8, 12, 16, 20)`
+
+The final result is **`List(4, 8, 12, 16, 20)`**.
+
+============================================================
+
+5. 原问题: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "referents": [
+    "the following Scala code"
+  ],
+  "entities": [
+    "Scala",
+    "List",
+    "map",
+    "filter"
+  ],
+  "preprobe": "Scala list operations map filter",
+  "reason": "The question is a specific computation problem using named Scala collection methods without any lecture timestamp references."
+}
+
+preprobe:
+preprobe=Scala list operations map filter
+is_referent=False
+query=What is Scala list operations map filter
+hits=3
+gloss_found=True
+confidence=0.90
+definition=Higher-order functions in Scala for transforming list elements (map) and selecting elements based on a condition (filter).
+
+preprobe hits:
+[01:08:04] score=8.8920 channel=preprobe
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = ",2,4,"
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold("")( (x,y) => x.toString+y)
+6. ys == xs.filter(_ % 2 == 0).map(x => x.toString + ",").fold(",")((x,y) => x+y)
+7. ys == xs.filter(_ % 2 == 0).map(_.toString + ",").fold(",")(_ + _)
+
+• Snippets 6 and 7
+
+---
+
+[01:08:03] score=8.8920 channel=preprobe
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = ",2,4,"
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold("")( (x,y) => x.toString+y)
+6. ys == xs.filter(_ % 2 == 0).map(x => x.toString + ",").fold(",")((x,y) => x+y)
+7. ys == xs.filter(_ % 2 == 0).map(_.toString + ",").fold(",")(_ + _)
+
+• Snippets 6 and 7
+
+---
+
+[01:08:05] score=8.8920 channel=preprobe
+slide, code
+
+Exercise: Process a List of Numbers
+
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = ",2,4,"
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(",")((x,y) => x.toString+y)
+6. ys == xs.filter(_ % 2 == 0).map(x => x.toString + ",").fold(",")((x,y) => x+y)
+7. ys == xs.filter(_ % 2 == 0).map(_.toString + ",").fold(",")(_ + _)
+
+• Snippets 6 and 7
+
+rewrite:
+{
+  "rewritten_query": "Scala code evaluation result list 1 to 10 map x times 2 filter x mod 2 equals 0",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+
+Entity glossary (from pre-probe; use only as term definition):
+- Scala list operations map filter (confidence=0.90): Higher-order functions in Scala for transforming list elements (map) and selecting elements based on a condition (filter).
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (00:55:09)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+[On slide] (00:52:46)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+[Instructor said] (02:41:45.719 --> 02:43:51.559)
+have is X, this is an identifier. What that's going to mean, the value for X is It's going to be xi of x. So this is like calling get on a map. Calling get and the identifier is x, so you're saying giving the value that's stored for x. And just doing the lookup, by the way, doesn't change the variable stored, that's why there's no subscripts here. If we do an assignment, we're going to evaluate an expression and then we're going to update the state. So what is this rule going to look like? So in order for us to have a rule in the first place, we have to be able to take this e expression and evaluate it. And we've seen this kind of thing before. If we have an expression e, we're going to evaluate it and get a value. We may be, in the process, updating the variable store. So if we do that, what happens on the right? Well we're going to say that doing this assignment is going to yield this value v. This is like we have in C when you do an assignment. This is why in C by the way, if you do, just to make it clear, if you say int x equals y equals 0, you're actually first doing this, And that evaluates to zero in C, which is why x will also get zero. So this is the same idea as that, in case you're familiar with that, and that helps. Okay. So, the notation we use is this thing here. So, given this truth here that expression e evaluates to value e, and it may change the variables to learn. Then if I have this assignment, this is the rule for assignment, my final result of this expression will be value.
+
+[Instructor said] (02:43:51.559 --> 02:46:23.739)
+But the interesting thing is that xi changed and we call it xi1 just like we did before and then we add a little illustration of what changed. So that's all this is saying. By doing this assignment, I've now said that x contains the value of v. So not only does x contain the value of v, but the whole expression evaluates to v. That's that thing in C. So I have a sequence of expressions. So here you can see I have E1 and E2 separated by the semicolon. Well, what has to be true? I have to be able to evaluate expression E1, and I have to be able to evaluate expression E2. So that's why these pop up here. We have these two premises. So what do we think's gonna go here? Any guess? Are we still awake? V1. You were right on, you were there. You were there. So V1 and then E2 is gonna get V2, and it's going fast but maybe, I don't know. I will explain it all. So V1 evaluates to V1, And in the process, it may change the variable store. That happens first, then E2 is evaluated second. And in the process, it may change the variable store. And the result will be this V2 value. And then, so what will the result of this be? We're used to this, we've seen this in Scala, remember how I said the last expression in a method definition, for example, is the value of the whole expression. And that's because of the sequential idea. So the result here should be, take a guess. What do we think? What are the options? So, if I have a block of code in Scala, I'm going to use the braces because it's just, it works.
+
+答案:
+Let's break down the code step-by-step:
+
+1.  **`List (1,2,3,4,5,6,7,8,9,10)`**: This creates the initial list of integers from 1 to 10.
+2.  **`.map ((x:Int) => x*2)`**: The `map` function transforms every element in the list. Each number `x` is multiplied by 2.
+    *   1 becomes 2
+    *   2 becomes 4
+    *   3 becomes 6
+    *   4 becomes 8
+    *   5 becomes 10
+    *   6 becomes 12
+    *   7 becomes 14
+    *   8 becomes 16
+    *   9 becomes 18
+    *   10 becomes 20
+    *   The list after this step is: `List(2, 4, 6, 8, 10, 12, 14, 16, 18, 20)`.
+3.  **`.filter ((x:Int) => (x%2) == 0)`**: The `filter` function keeps only the elements that satisfy the condition. The condition is that `x` modulo 2 equals 0 (i.e., `x` is even).
+    *   2 is even -> Keep
+    *   4 is even -> Keep
+    *   6 is even -> Keep
+    *   8 is even -> Keep
+    *   10 is even -> Keep
+    *   12 is even -> Keep
+    *   14 is even -> Keep
+    *   16 is even -> Keep
+    *   18 is even -> Keep
+    *   20 is even -> Keep
+    *   Since all numbers generated by multiplying 1-10 by 2 are even, all elements remain.
+
+**Result:**
+`List(2, 4, 6, 8, 10, 12, 14, 16, 18, 20)`
+
+============================================================
+
+6. 原问题: Which types should replace ?1 and ?2 in the following Scala function? def f [X] (xss:?1) : ?2 = for (xs <- xss; x <- xs) yield x
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "referents": [],
+  "entities": [],
+  "preprobe": null,
+  "reason": "This is a static type-inference question about a self-contained Scala code snippet, with no lecture-specific anchor, referent, or jargon to resolve."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala function type inference ?1 ?2 def f [X] (xss:?1) : ?2 = for (xs <- xss; x <- xs) yield x",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1 and ?2 in the following Scala function? def f [X] (xss:?1) : ?2 = for (xs <- xss; x <- xs) yield x
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Hmm, I couldn't find anything useful in the lecture notes for that — sorry, I'm not sure. Want to try asking another way?
+
+============================================================
+
+7. 原问题: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "referents": [],
+  "entities": [
+    "Scala type inference",
+    "pattern matching"
+  ],
+  "preprobe": "Scala type inference",
+  "reason": "The question asks for static type resolution of a specific self-contained Scala code snippet, not for lecture-specific content or context."
+}
+
+preprobe:
+preprobe=Scala type inference
+is_referent=False
+query=What is Scala type inference
+hits=3
+gloss_found=False
+confidence=0.00
+definition=
+
+preprobe hits:
+[01:15:36] score=7.7262 channel=preprobe
+code
+
+Code: 
+```scala
+import contracts.*
+
+object adt:
+
+// An algebraic data type ...
+// You will use this algebraic data type in the subclasses of class Expr.
+
+// With this data type, and at the inner nodes. For ...
+
+*   / \
+  + 4
+    / \
+    2 3
+
+enum ArithTree:
+// A leaf with a number.
+```
+
+Dialog: New Scala Class/File
+Options:
+- Class
+- Trait
+- Case Class
+- Enum
+- Object
+- File
+
+---
+
+[01:15:37] score=7.6761 channel=preprobe
+code
+
+Code: 
+```scala
+import contracts.*
+
+object adt:
+
+// An algebraic data type ...
+// You will use this algebraic data type in the subclasses of class Expr.
+
+// With this data type, an expression tree is built at the inner nodes. For example,
+//     *
+//    / \
+//   +   4
+//  / \
+// 2   3
+
+enum ArithTree:
+// A leaf with a number.
+```
+
+Dialog: New Scala Class/File
+- Name: [empty]
+- Options: Class, Trait, Case Class, Enum, Object, File
+
+---
+
+[01:15:38] score=7.6751 channel=preprobe
+code
+
+Code: 
+import contracts.*
+
+object adt:
+
+// An algebraic data type
+// You will use this algebraic data type in the subclasses
+// of class Expr.
+
+// With this data type, arithmetic expressions are represented
+// at the inner nodes. For example, 2 + 3 is represented as a binary tree.
+//
+//     *
+//    / \
+//   +   4
+//  / \
+// 2   3
+
+enum ArithTree:
+// A leaf with a number.
+
+- Project structure showing directories: hw3-solution, src/main/scala, test/scala
+- File tree includes README.md, build.sbt, and Scala files like fp2tests.scala and hw3-fp2.scala
+
+- Code editor displaying Scala code for an algebraic data type (ArithTree)
+- A modal dialog titled "New Scala Class/File" with options: Class, Trait, Case Class, Enum, Object, File
+- The cursor is positioned in the input field of the dialog, ready to name a new file
+
+- Status bar showing: Highlighting: Instantiating compiler... | [T] 76:12 LF UTF-8 2 spaces
+- Taskbar with system time (7:00 PM) and date (4/21/2026)
+- File path: hw3-solution > src > main > scala
+
+rewrite:
+{
+  "rewritten_query": "Scala function def g [X,Y] (xs:?1, f:?2) : ?3 with pattern matching case Nil => Nil case y::ys => f(y) :: g(ys, f), types ?1 ?2 ?3 type inference",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+
+Entity pre-probe note: No related entity definition was found in the lecture materials for 'Scala type inference'. Answer using lecture content below; do not invent a definition.
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Hmm, I couldn't find anything useful in the lecture notes for that — sorry, I'm not sure. Want to try asking another way?
+
+============================================================
+
+8. 原问题: Is there a simpler example for this concept?
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "referents": [
+    "this concept"
+  ],
+  "entities": [],
+  "preprobe": "this concept",
+  "reason": "The question lacks a time anchor but relies on the anaphoric phrase 'this concept', so the pre-probe must resolve that referent first."
+}
+
+preprobe:
+preprobe=this concept
+is_referent=True
+query=What is being referred to by 'this concept'
+hits=3
+gloss_found=True
+confidence=0.85
+definition=A function that takes an expression and a variable store, evaluates the expression according to reduction rules, and returns an integer result along with an updated variable store.
+
+preprobe hits:
+[03:00:03.180 --> 03:02:30.899] score=12.7881 channel=preprobe
+So what this does is it's just some scholar syntax for saying, all right, I'm matching this case, so the thing I have is a while, and I want to refer to it typed as a while. So remember, we have the expr is the super type, right? So this is saying, well, I'm going to be able to refer to that. whatever I'm matching, E, as a w of this type now. Because when I match, I asserted that this was the actual type of this thing to make this case evaluate to true. Okay, so what happened? So let's look at the while first. So I evaluate e1 passing the variable store. I get back s1 and my value is v1. If v1 equals zero, then the whole result of the whole expression is zero, false, and whatever's left is s1. Otherwise, I'm going to evaluate this sequence here. So this is just translating that rule into this code, okay? And then we added the greater than or equal to. So this time it's strict, right? So it has to evaluate e1 and e2 both, so it does that. E1, get a value V1, new variable store, pass it in. Passing E2 as well, get back the new variable store in V2. And then we do this math dot max thing to determine whether it's greater or equal to. And this is just a way to get the low level computer to do that. That seems like it's the same as before. So this is our example if we're going to actually go through the rules. So we have E1 plus E2. It's going to give us v1 minus v2. this slide is broken. This slide looks broken. Something isn't right. Let me check. It's also 847, so maybe I have a bug in this slide. I wonder why that says v1 minus v2. V2. This is the absolute value example.
+
+---
+
+[02:35:54.899 --> 02:37:53.500] score=10.8496 channel=preprobe
+You're all like, what's x? We don't know yet. This is just an expression that we have to evaluate. So now we're going to implement the interpreter for this language, following our formal semantics. So remember when you saw that xi, and it was like, why is it with this random brief letter showing up? Well, it's nothing more than a map. And in this map, we have, as our keys, we have single characters. That's because those come from the identifiers. You'll see how that works out. And then our values are all gonna be impagers. So we'll now define the interpreter signature, which is gonna follow from, this is some fancy language, shape of the judgements, right? So this is a judgment and you have the arrow. This yields that whole thing is referred to as a judgment. So I'm evaluating an expression. So I'm given an expression and a variable store. And I'm going to get back some integer result and some new variable store. So you can click here to get back to the slide. I think it's this one, yeah, this set of slides that will take you back to. as I can it's popping up in my screen there, back to slide four. These are the reduction rules for integer expression. So again, we have our numerical rules, we have our addition, etc. We did that before and we have our parentheses. We did that before. So if we apply these over here, what happens? So if we're implementing this, we look at this. So if I have an expression and I have a, so if I, I can just use pattern matching here. So if I say if I have a number, then the result is just the number and
+
+---
+
+[02:33:54.980 --> 02:35:54.899] score=10.4092 channel=preprobe
+expression, and these are going to be the options we have. We have a a number. We have a plus, where we take the left and the right, which are each expressions, and we add them together. We have a minus, where we take the left, and then we subtract the right. And then we have a times, where we take the left and multiply by the right. So these are two expressions here. We're also going to have in our language, identifiers. So if we have an identifier, this is like setting x equal, or a equal, or b equal. In our case, we're going to have a single character identifier for our little language that we're defining here and then we're gonna also allow for parenthesized expressions so putting in parentheses around so what this is is a way to model the constructs of the language in Scala and we often refer to this as a domain specific language because we have a specific domain, it's arithmetic expressions which are limited right now to literal numbers addition, subtraction, multiplication. We're also going to allow for, as I said, defining variables and then we're gonna allow for parentheses in our whole language. So if I want to I would evaluate, or if I want to represent, sorry, represent an integer expression as an abstract syntax tree. So if I have two plus three times x, I could represent that by saying, I have, on the outside we have two plus this thing, right? So we have a plus on the outside. And we have the number two, and then we have this times in here, so now we're kind of unwrapping this thing. We have the number three times x. So x came from nowhere.
+
+rewrite:
+{
+  "rewritten_query": "simpler example for interpreter for the integer expression language",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Is there a simpler example for this concept?
+
+Entity glossary (from pre-probe; use only as term definition):
+- interpreter for the integer expression language (confidence=0.85): A function that takes an expression and a variable store, evaluates the expression according to reduction rules, and returns an integer result along with an updated variable store.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (02:27:18)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+Expr ::= Number
+     | Expr '+' Expr
+     | Expr '-' Expr
+     | Expr '*' Expr
+     | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   ○ For example, (2 + 3) * 4 means 20
+• Numbers evaluate to their value
+   ⟨n,ξ⟩↓⟨n,ξ⟩^(Num)
+• Operations map to integer operations
+   ⟨e₁+e₂,ξ₀⟩↓⟨?,?⟩^(Add)
+
+Bottom right: Page number 5
+
+[On slide] (02:27:14)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+Expr ::= Number
+     | Expr '+' Expr
+     | Expr '-' Expr
+     | Expr '*' Expr
+     | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   ○ For example, (2 + 3) * 4 means 20
+• Numbers evaluate to their value
+   ⟨n,ξ⟩↓⟨n,ξ⟩^(Num)
+• Operations map to integer operations
+   ⟨e₁+e₂,ξ₀⟩↓⟨?,?⟩^(Add)
+
+Bottom right: Page number 5
+
+[Instructor said] (02:35:54.899 --> 02:37:53.500)
+You're all like, what's x? We don't know yet. This is just an expression that we have to evaluate. So now we're going to implement the interpreter for this language, following our formal semantics. So remember when you saw that xi, and it was like, why is it with this random brief letter showing up? Well, it's nothing more than a map. And in this map, we have, as our keys, we have single characters. That's because those come from the identifiers. You'll see how that works out. And then our values are all gonna be impagers. So we'll now define the interpreter signature, which is gonna follow from, this is some fancy language, shape of the judgements, right? So this is a judgment and you have the arrow. This yields that whole thing is referred to as a judgment. So I'm evaluating an expression. So I'm given an expression and a variable store. And I'm going to get back some integer result and some new variable store. So you can click here to get back to the slide. I think it's this one, yeah, this set of slides that will take you back to. as I can it's popping up in my screen there, back to slide four. These are the reduction rules for integer expression. So again, we have our numerical rules, we have our addition, etc. We did that before and we have our parentheses. We did that before. So if we apply these over here, what happens? So if we're implementing this, we look at this. So if I have an expression and I have a, so if I, I can just use pattern matching here. So if I say if I have a number, then the result is just the number and
+
+[Instructor said] (02:20:02.220 --> 02:21:57.179)
+that's what this down arrow means. value v and new state, new set of variables and values, new map of variables and values, psi prime. So then we're going to have, so those are judgments, then we're going to also have this idea of a reduction rule. So in our reduction rule, we're going to have a series of premises, premise 1, 2, 3, n, up to n, whatever n is, And we're gonna have this line and then underneath the line, we're gonna have the conclusion. So this will be what the meaning of this is. This is like saying these little gray bars tell you what this means. So the conclusion follows from all the premises being satisfied. Okay. So if we have the language of integer expressions, so here's our syntax. An expression can be, this is, I can't remember for sure, but there's a formal name for this, I think it's called Bacchusnauer form. I can't remember if this is exactly that or not. But, this is a way to define a language, that's what we're doing here. So, we're saying that an expression is either a number, this little pipe character means or. Or, it's an expression plus an expression, so this would be addition. Or, it's an expression minus an expression. that would be subtraction, or it's an expression times an expression, that would be multiplication, or it's got this parenthesis idea, which you can group things. Or I could have an open paren, an expression, and a closed paren. So here's an example of an expression in my, or a couple different expressions in my language. So I have this expression here, 2 plus 3 times 4. Here I have the group 2 plus 3.
+
+答案:
+Actually, the examples provided on the slide are about as simple as it gets for this concept! The instructor explicitly uses **`2+3*4`** and **`(2+3) * 4`** to demonstrate the syntax and semantics.
+
+There isn't a simpler non-trivial example in the lecture because:
+1.  **Single numbers** (like `5`) are the base case, but they don't show how the language *works* with operations.
+2.  **Binary operations** (like `2+3`) are the next simplest, but the instructor used the 3-number examples to clearly show how **parentheses change the meaning** (order of operations), which is the key point of the semantics discussion (e.g., `(2+3)*4` means 20, not 14).
+
+So, `2+3` would be a simpler *arithmetic* example, but the instructor chose `2+3*4` vs `(2+3)*4` specifically to highlight the **structural difference** that the interpreter needs to handle. You're already working with the most straightforward examples the lecture offers.
+
+============================================================
+
+9. 原问题: Could you find the example the instructor mentioned around 2h24min, and locate the questions about this concept?
+query_plan:
+{
+  "time_mode": "anchor",
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "02:24:00"
+    }
+  ],
+  "time_preprobe_only": true,
+  "referents": [
+    "the example",
+    "this concept"
+  ],
+  "entities": [],
+  "preprobe": "the example",
+  "reason": "The question anchors a local example at 2h24min but also requests broader context about the associated concept, requiring a pre-probe to resolve the referent before retrieving related questions."
+}
+
+preprobe:
+preprobe=the example
+is_referent=True
+query=What is being referred to by 'the example'
+hits=3
+gloss_found=True
+confidence=0.90
+definition=A concrete instance of an integer expression, such as 2+3*4 or (2+3) * 4, used to illustrate the syntax and semantics of integer arithmetic.
+
+preprobe hits:
+[02:22:12] score=3.3869 channel=preprobe
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+---
+
+[02:22:11] score=3.3869 channel=preprobe
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+---
+
+[02:22:14] score=3.3869 channel=preprobe
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+rewrite:
+{
+  "rewritten_query": "example integer expression syntax semantics 2+3*4 (2+3) * 4 around 02:24:00 questions about this concept",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Could you find the example the instructor mentioned around 2h24min, and locate the questions about this concept?
+
+Entity glossary (from pre-probe; use only as term definition):
+- the example of an integer expression (confidence=0.90): A concrete instance of an integer expression, such as 2+3*4 or (2+3) * 4, used to illustrate the syntax and semantics of integer arithmetic.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (02:22:18)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+[On slide] (02:22:15)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+[Instructor said] (02:21:57.180 --> 02:23:50.600)
+that I'm gonna do that first and that quantity times 4. So the semantic domain of this language is integer arithmetic. The value V is, I didn't mean to press that, is the meaning of an expression. So for example, 2 plus 3 times 4, with you know, 2 plus 3 quantity times 4 means 20. And we can reason about that, because if We do this in our head, we get 5 times 4. We do this first, and we multiply 5 times 4, and we get 20. So that's why it means 20. Numbers are always going to evaluate to their value. So this is the first rule. So if I have a number, just a plain old number 5, that's going to evaluate to the value 5. That's what this is saying. So this part over here is the rule num. It's called num. And this line here just means that there's no premises that need to be satisfied for this to be true. So it isn't conditional on these premises being satisfied, it's just a number always evaluates to itself. So if I look at this rule, this is just like before I'm using this little notation here. This is, I'm doing an addition, right? So this is my expression. I have expression one plus expression two, so this is a whole expression. Earlier on that earlier slide, it was called PRG, right? So that's just another way to say expression. This is an expression. And I have this xi zero. So xi again is my map of variables. And I have these two question marks. Well, okay. So what goes in on the right side? And before we can do that, we have to know what the premises are. So we have to see something about E1 and something about E2, right?
+
+[Instructor said] (02:32:01.819 --> 02:33:54.980)
+2 plus 3 times 4, we gotta figure out what goes here, we gotta figure out what goes above. What did we need to know, what had to be true, is the way to ask yourself this question. So, 2 plus 3, we have to have a rule for this part, and So we have to have, see, this expression has two parts, it has this two plus three, then it has a times four, right? So we have to know about two plus three, and we have to know about four. This is like breaking it down into minutiae, which I have found very tedious in my life as a student. So you get used to it. So this part here, the two plus three becoming five, this is everything we did on the previous slide. So this part here, you can look back at that and see how we got there. Now the 4, this should be pretty simple. The 4 evaluates to what? Itself, 4. And it's not going to change the psi either. And now, what goes in on the right down there is 20, right? Because if we take, this is the part you know. 2 plus 3 times 4 is 5 times 4 is 20, right? So this is the part where the program is actually executing, and you can do that like in your head because you're looking at it, and it makes sense. So all this is really saying is, if this is my program and this is, you can reason about what the result is, what did I need to know about the parts of the program to get to that result? It's breaking the logic down. logic down. Okay, so now we're going to implement a grammar to represent an abstract syntax tree as an algebraic data type. So we've done algebraic data types before. So we're going to have an enumeration called, we're going to call it
+
+答案:
+The instructor used the expression **`(2 + 3) * 4`** to illustrate integer expressions around that time. They explained that since `2 + 3` evaluates to `5`, and `5 * 4` is `20`, the whole expression means **20**.
+
+The "questions" or reasoning steps involved in this concept were:
+1.  **What does the left part evaluate to?** (Here, `2 + 3` becomes `5`)
+2.  **What does the right part evaluate to?** (Here, `4` stays `4`)
+3.  **What is the result of the operation?** (Here, `5 * 4` becomes `20`)
+
+The instructor described this process as breaking the logic down into smaller parts to determine the final value.
+
+============================================================
+

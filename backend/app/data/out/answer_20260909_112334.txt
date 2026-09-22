@@ -1,0 +1,82 @@
+1. 原问题: Is there a simpler example for this concept?
+entity_judge:
+{
+  "needs_preprobe": true,
+  "unknown_entity": "this concept",
+  "referent_unclear": true,
+  "reason": "The question uses the deictic phrase 'this concept' without specifying which technical term or idea is being referenced, making the referent unclear."
+}
+
+preprobe:
+entity=this concept
+referent_unclear=True
+query=What concept or topic is being discussed (this concept)
+hits=3
+entity_not_found=False
+gloss_found=True
+confidence=0.40
+definition=Higher-order functions used to transform, select, and reduce elements in a collection, often demonstrated with examples and syntactic sugar in programming contexts.
+
+preprobe hits:
+[00:02:26.659 --> 00:04:24.300] score=16.7828 channel=preprobe
+please send me a message and I will, I might forget because I'm getting busy with traveling so just send me a message. I'm not trying to ignore you. I've just got too many things going on. So that's that. If you got an email from me today, if you're in section 941, you need to go, the email was about scheduling the exam. I do ask that everybody taking the exam in the classroom registers in the intranet for that. Now that doesn't apply to you if you are in section 901, because in Section 901, you are taking the exam here by default. There is no way for you to schedule through the proctoring system. So for 941 only, make sure you're registering for the exam if you haven't already. We do have limited slots in the classroom, so get your registrations in now. We will also plan on week six to have lecture for the second half. So we'll be next week and into week six, we'll be diving into new material for the second half of the course. So be aware of that. Any questions about any of those housekeeping items? Okay. Good. Plan for today. We've got some review stuff. I'm going to go over the quiz as kind of a warm-up and any homework questions you may have. We're going to go back through and do some examples with map, filter, and fold. Then what I've decided I'm going to do, I have done this a little bit differently before, but I think this is going to work better if I do the new slide discussions of the new topics here. And then whatever time is left, it might be 45 minutes, it might be an hour, it might be more than an hour.
+
+---
+
+[01:23:44.420 --> 01:25:32.779] score=10.7277 channel=preprobe
+If we did binary search, it would be more efficient. Right? We're not doing that for this discussion. We're going to walk through the list and we're going to find the element. So this is our old school iteration. This is what it looks like. You start with a key. You're trying to find the index where that key exists, and then you use this loop control, this i, and then you use this while loop. I have this special condition here to if I get a minus one. Oh, I'm sorry. I have to be before the end of the list, and as long as I haven't found the result, then I wanna keep executing. Otherwise, I'm gonna exit the loop early. That's what I wanna do. If you can imagine why I would do this, I might have a really, really, really long list. And if I'm looking for a number that occurs early in the list, in this case, these are not sordid. They are shuffled, but they could be shuffled. And if they're shuffled, we don't know where the result lives. So in this case, I'm gonna find this seven pretty quick, right, because it's in the beginning. But if I shuffled the list and it was really, really huge that I had pulled in off network or something like that. Well, I might have to go through this whole list and I might want to stop early. So this is me saying, I want to stop early if I found it. That's all. So what we see down here is just the finding like if I were to execute it in the REPL for you and it would find the element, sorry, I jumped ahead. it would find the element at 8 because we're 0 indexed, so it would find 7. Again, contrived, because I'm not shuffling the data,
+
+---
+
+[01:06:37.159 --> 01:08:45.340] score=6.2910 channel=preprobe
+So we have a don't care whatever pattern, we have a don't care whatever pattern but notice x arrow x if we just replace with a single underscore, that's syntactic sugar for this. So so far we're the same, right? Yeah. And then here we have a fold, we have this, Z element, which is the single string with a comma, and then we have this, which is syntactic sugar for that. So these two are actually semantically the exact same. Does everybody see that? This here is we have an X and a Y, and we combine them by doing this plus, which in this case is going to be string concatenation, or should be. Okay. And so here, this is like a shorthand for saying this. That's why I call it syntactic trigger. It's just, I guess, a little bit less junking on the screen for you to look at. So I think the answer here is going to be six and seven. So you can see that by noticing that the first step is this filtering. So that gets you halfway there. Then you have to just sort of process through in your mind what happens here. But if you do that for each of these, since they are the same, you just have to do it once. Okay, so that was our little one. That was fun, wasn't it? We're gonna start this topic. this is my pride and joy so I gave a talk at the Chicago area Scala meetup but it was 2022 they haven't had a meetup in a long time and this that talk turned into this so there's still a video on the webpage of the website of a different set of slides that I completely lost and I don't I don't know how I did that. I should check if Andy still has that.
+
+rewrite:
+{
+  "rewritten_query": "simpler example for higher-order functions collection transformation selection reduction",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Is there a simpler example for this concept?
+
+Entity glossary (from pre-probe; use only as term definition):
+- this concept (confidence=0.40): Higher-order functions used to transform, select, and reduce elements in a collection, often demonstrated with examples and syntactic sugar in programming contexts.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (03:04:53)
+slide, diagram
+
+Program Reduction Example: Factorial
+
+Diagram (formal semantics reduction):
+⟨-5, {}⟩ ↓ ⟨-5, {}⟩   (Num)
+  ⟨n := -5, {}⟩ ↓ ⟨-5, {n ↦ -5}⟩   (: =)
+
+Middle:
+Lemma if...fi
+⟨f := 1; while...od, {n ↦ -5, i ↦ 5}⟩ ↓ ⟨0, {n ↦ -5, i ↦ 0, f ↦ 120}⟩   ( ; )
+
+Lemma f := 1
+Lemma while...od(5)
+⟨if...fi; f := 1; while...od, {n ↦ -5}⟩ ↓ ⟨0, {n ↦ -5, i ↦ 0, f ↦ 120}⟩   ( ; )
+
+⟨n := -5; if...od, {}⟩ ↓ ⟨0, {n ↦ -5, i ↦ 0, f ↦ 120}⟩
+
+[Instructor said] (01:10:49.699 --> 01:13:02.900)
+So this idea does relate to that kind of conceptually. So we'll talk about that. And then we have more purely functional folds. So there's a language out there called Haskell, which I was learning about four years ago. I kind of stopped because I focused a little more on Scala. But Haskell has a different way of defining folds. And we're going to look at that. And then we're going to talk about delegating execution control to a fold without sacrificing efficiency or program termination. This was the big aha for me. And I'll talk you through kind of my whole thought process of how I got here. We'll take a very simple example. We have this list of integers. And I'm going to just do this 0 to 10,000 and call toList on it. And if I want to sum those, then this is my old school. like if I'm in Java, if I'm in C, I use mutability. That's what this var is. So I iterate through the integers, and I just keep adding to my accumulator. And so if you do this with that list, you get this value here. So we've been talking about folds, So if we have a list of events, we can call fold on it. We can use zero as our zero element, we can use this underscore, plus underscore, to do that addition. So we're passing this as a function, this is just shorthand for a function, that x, comma, y, and a two arrow and then x plus y. So we can do it functionally this way. So if we have a fold left, we can actually, instead of calling fold, we can call fold left. In this case, I just did 0 to 10. So sum l, I'm going to do this fold from the left and get 55.
+
+答案:
+Yes, the instructor gave a very simple example right in the lecture. They used a list of integers from **0 to 10** (not the huge list up to 10,000 they mentioned earlier for performance contexts).
+
+To calculate the sum of that small list, they showed:
+*   **The simple/functional way:** Using `foldLeft` with a starting value of `0` and a function that just adds the numbers together (`_ + _`).
+*   **The result:** The fold produces the number **55**.
+
+This is the "very simple example" the instructor walked through to show how you can replace a standard `for`-loop with an accumulator by delegating the iteration logic to the fold.
+
+============================================================
+

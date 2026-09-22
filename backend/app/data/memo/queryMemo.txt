@@ -1,0 +1,11 @@
+8. Is there a simpler example for this concept?
+9. Could you find the example the instructor mentioned around 2h24min, and locate the questions about this concept?
+10. What is the example at 48min, and where else is this idea used?
+11. Explain the example at 1h47min
+1. Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => y::(y::(f (ys)))   end match end f If this function is executed on a list of length N, what is the length of the resulting list?
+2. Consider the following Scala function definition. def f [X] (xs:List[X], ys:List[X]) : List[X] =   xs match     case Nil   => ys     case z::zs => z::(f (zs, ys))   end match end f If this function is executed on two lists of length M and N respectively, what is the length of the resulting list?
+3. Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => f (ys) ::: List (y)   end match end f What is the result of evaluating the following Scala code? val myList: List[(Int,Int)] = List( (1,2), (3,4), (5,6) ) f (myList)
+4. What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   filter ((x:Int) => (x%2) == 0).   map ((x:Int) => x*2)
+5. What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+6. Which types should replace ?1 and ?2 in the following Scala function? def f [X] (xss:?1) : ?2 = for (xs <- xss; x <- xs) yield x
+7. Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g

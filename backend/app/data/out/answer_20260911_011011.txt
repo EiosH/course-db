@@ -1,0 +1,376 @@
+1. 原问题: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question contains self-contained code that can be evaluated directly without needing to resolve an unfamiliar term or vague referent."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala List map filter example evaluating (x*2) then (x%2)==0 on List 1 to 10",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (01:03:12)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Jadyn Proulx is the host now.
+
+[On slide] (00:52:11)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Jadyn Proulx is the host now.
+
+[On slide] (00:52:09)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Jadyn Proulx is the host now.
+
+[On slide] (01:03:21)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Jadyn Proulx is the host now.
+
+答案:
+Hmm, the lecture materials only show a different example using `List(1,2,3,4)`. I don't see the specific result for the code `List(1,2,3,4,5,6,7,8,9,10).map(...).filter(...)` in the notes provided.
+
+However, since this is standard Scala list processing (which the lecture covers conceptually with `map` and `filter`), here is how it works:
+1.  **`.map(x => x*2)`** doubles every number: `[2, 4, 6, 8, 10, 12, 14, 16, 18, 20]`
+2.  **`.filter(x => (x%2) == 0)`** keeps only even numbers. Since all even numbers *are* even, this step keeps every item.
+
+So the result is: **List(2, 4, 6, 8, 10, 12, 14, 16, 18, 20)**
+
+============================================================
+
+2. 原问题: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question is a self-contained type-inference exercise based on provided code with no opaque external entities or vague referents."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala type inference problem: determine types ?1 ?2 ?3 for function g with list pattern matching Nil y::ys, generic parameters X Y, higher-order function f, recursive list processing",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Hmm, I couldn't find anything useful in the lecture notes for that — sorry, I'm not sure. Want to try asking another way?
+
+============================================================
+
+3. 原问题: Is there a simpler example for this concept?
+entity_judge:
+{
+  "needs_preprobe": true,
+  "unknown_entity": "this concept",
+  "referent_unclear": true,
+  "reason": "The question relies on the deictic phrase 'this concept' without naming the specific topic, so the referent must be resolved before retrieval."
+}
+
+preprobe:
+entity=this concept
+referent_unclear=True
+query=What concept or topic is being discussed (this concept)
+hits=3
+entity_not_found=False
+gloss_found=True
+confidence=0.90
+definition=A set of higher-order list processing functions where map transforms each element, filter selects elements based on a predicate, and fold (or reduce) aggregates the list into a single value using an accumulator.
+
+preprobe hits:
+[00:02:26.659 --> 00:04:24.300] score=16.7828 channel=preprobe
+please send me a message and I will, I might forget because I'm getting busy with traveling so just send me a message. I'm not trying to ignore you. I've just got too many things going on. So that's that. If you got an email from me today, if you're in section 941, you need to go, the email was about scheduling the exam. I do ask that everybody taking the exam in the classroom registers in the intranet for that. Now that doesn't apply to you if you are in section 901, because in Section 901, you are taking the exam here by default. There is no way for you to schedule through the proctoring system. So for 941 only, make sure you're registering for the exam if you haven't already. We do have limited slots in the classroom, so get your registrations in now. We will also plan on week six to have lecture for the second half. So we'll be next week and into week six, we'll be diving into new material for the second half of the course. So be aware of that. Any questions about any of those housekeeping items? Okay. Good. Plan for today. We've got some review stuff. I'm going to go over the quiz as kind of a warm-up and any homework questions you may have. We're going to go back through and do some examples with map, filter, and fold. Then what I've decided I'm going to do, I have done this a little bit differently before, but I think this is going to work better if I do the new slide discussions of the new topics here. And then whatever time is left, it might be 45 minutes, it might be an hour, it might be more than an hour.
+
+---
+
+[01:23:44.420 --> 01:25:32.779] score=10.7277 channel=preprobe
+If we did binary search, it would be more efficient. Right? We're not doing that for this discussion. We're going to walk through the list and we're going to find the element. So this is our old school iteration. This is what it looks like. You start with a key. You're trying to find the index where that key exists, and then you use this loop control, this i, and then you use this while loop. I have this special condition here to if I get a minus one. Oh, I'm sorry. I have to be before the end of the list, and as long as I haven't found the result, then I wanna keep executing. Otherwise, I'm gonna exit the loop early. That's what I wanna do. If you can imagine why I would do this, I might have a really, really, really long list. And if I'm looking for a number that occurs early in the list, in this case, these are not sordid. They are shuffled, but they could be shuffled. And if they're shuffled, we don't know where the result lives. So in this case, I'm gonna find this seven pretty quick, right, because it's in the beginning. But if I shuffled the list and it was really, really huge that I had pulled in off network or something like that. Well, I might have to go through this whole list and I might want to stop early. So this is me saying, I want to stop early if I found it. That's all. So what we see down here is just the finding like if I were to execute it in the REPL for you and it would find the element, sorry, I jumped ahead. it would find the element at 8 because we're 0 indexed, so it would find 7. Again, contrived, because I'm not shuffling the data,
+
+---
+
+[01:06:37.159 --> 01:08:45.340] score=6.2910 channel=preprobe
+So we have a don't care whatever pattern, we have a don't care whatever pattern but notice x arrow x if we just replace with a single underscore, that's syntactic sugar for this. So so far we're the same, right? Yeah. And then here we have a fold, we have this, Z element, which is the single string with a comma, and then we have this, which is syntactic sugar for that. So these two are actually semantically the exact same. Does everybody see that? This here is we have an X and a Y, and we combine them by doing this plus, which in this case is going to be string concatenation, or should be. Okay. And so here, this is like a shorthand for saying this. That's why I call it syntactic trigger. It's just, I guess, a little bit less junking on the screen for you to look at. So I think the answer here is going to be six and seven. So you can see that by noticing that the first step is this filtering. So that gets you halfway there. Then you have to just sort of process through in your mind what happens here. But if you do that for each of these, since they are the same, you just have to do it once. Okay, so that was our little one. That was fun, wasn't it? We're gonna start this topic. this is my pride and joy so I gave a talk at the Chicago area Scala meetup but it was 2022 they haven't had a meetup in a long time and this that talk turned into this so there's still a video on the webpage of the website of a different set of slides that I completely lost and I don't I don't know how I did that. I should check if Andy still has that.
+
+rewrite:
+{
+  "rewritten_query": "simpler example higher-order list processing functions map filter fold reduce accumulator",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Is there a simpler example for this concept?
+
+Entity glossary (from pre-probe; use only as term definition):
+- this concept (confidence=0.90): A set of higher-order list processing functions where map transforms each element, filter selects elements based on a predicate, and fold (or reduce) aggregates the list into a single value using an accumulator.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (01:05:32)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = "1,2,3,4,"
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(",")((x,y) => x.toString+y)
+6. ys == xs.map(x => x.toString + ",").fold("")((x,y) => x+y)
+Bullet: Snippet 6
+
+[On slide] (01:05:31)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = "1,2,3,4,"
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(",")((x,y) => x.toString+y)
+6. ys == xs.map(x => x.toString + ",").fold("")((x,y) => x+y)
+Bullet: Snippet 6
+
+[Instructor said] (01:10:49.699 --> 01:13:02.900)
+So this idea does relate to that kind of conceptually. So we'll talk about that. And then we have more purely functional folds. So there's a language out there called Haskell, which I was learning about four years ago. I kind of stopped because I focused a little more on Scala. But Haskell has a different way of defining folds. And we're going to look at that. And then we're going to talk about delegating execution control to a fold without sacrificing efficiency or program termination. This was the big aha for me. And I'll talk you through kind of my whole thought process of how I got here. We'll take a very simple example. We have this list of integers. And I'm going to just do this 0 to 10,000 and call toList on it. And if I want to sum those, then this is my old school. like if I'm in Java, if I'm in C, I use mutability. That's what this var is. So I iterate through the integers, and I just keep adding to my accumulator. And so if you do this with that list, you get this value here. So we've been talking about folds, So if we have a list of events, we can call fold on it. We can use zero as our zero element, we can use this underscore, plus underscore, to do that addition. So we're passing this as a function, this is just shorthand for a function, that x, comma, y, and a two arrow and then x plus y. So we can do it functionally this way. So if we have a fold left, we can actually, instead of calling fold, we can call fold left. In this case, I just did 0 to 10. So sum l, I'm going to do this fold from the left and get 55.
+
+[Instructor said] (00:49:50.539 --> 00:51:49.599)
+Yeah. For number 5, if the lists are in different sizes, what happens? What does the output for x like the x-axis hold thing? Oh, if these two lists? Not necessarily, you already know it's going to return false. But for that specific snippet in the back half, what's the integers that it gets? Well, this is always going to produce one list, not a list. I mean one element, one. It's going to be one int value, and not a list. Well, yeah, but I'm saying. Okay. I was rationalizing in my head that it would essentially, though because it's using the x and y rate, I equated x and y to xs and ys. Yeah, in my head. That's okay. So I assumed it was taking the information from the list and then adding it, but it's just its own separate thing. Now this here is a function on ints, so it's processing the elements. Yeah. Right. So it's taking whatever x and y it has. So usually what's happening is one is going to contain the accumulator in one of these. I think it's the one on the right right here. And x is going to contain the new element that we're processing. Getting from the source list. And so it's going to then do this combination of ints, so it's going to just add ints and produce an int, and then it's going to just roll all the way up and produce an int in the int, so there's no list over here, except for the list we start with that we're processing. OK. Ooh, this time our ys is now a single int with value 10. So, we've already talked through this map. Map is going to give us back a... List. List. Oh, you're going fast. List. List. Filter is going to give me a list.
+
+答案:
+Yeah, the instructor gave a pretty straightforward example of a fold to show the concept clearly.
+
+They took a list of integers from 0 to 10,000 (called `toList`) and wanted to **sum** them.
+
+*   **Old way (like Java/C):** Use a variable (`var`) as an accumulator, loop through the list, and add each number to it.
+*   **Functional way (Fold):** Use `fold` (or `foldLeft`) with:
+    *   An initial value (accumulator start): `0`
+    *   A function that adds: `(x, y) => x + y` (or shorthand `_(+)_`)
+
+So, instead of manually looping and mutating a variable, the fold carries the running total (`0`, then `1`, then `3`, etc.) through the list and returns the final sum. It’s the same "accumulator" idea, but purely functional.
+
+The instructor even used a smaller example (0 to 10) to show `foldLeft` giving 55, which is just the sum of 0+1+...+10.
+
+============================================================
+
+4. 原问题: Could you find the example the instructor mentioned around 2:24, and locate the questions about this concept?
+entity_judge:
+{
+  "needs_preprobe": true,
+  "unknown_entity": "this concept",
+  "referent_unclear": true,
+  "reason": "The question uses the vague deictic phrase 'this concept' without naming the specific topic discussed at the timestamp."
+}
+
+preprobe:
+entity=this concept
+referent_unclear=True
+query=What concept or topic is being discussed (this concept)
+hits=3
+entity_not_found=True
+gloss_found=False
+confidence=0.00
+definition=
+
+preprobe hits:
+[00:02:26.659 --> 00:04:24.300] score=16.7828 channel=preprobe
+please send me a message and I will, I might forget because I'm getting busy with traveling so just send me a message. I'm not trying to ignore you. I've just got too many things going on. So that's that. If you got an email from me today, if you're in section 941, you need to go, the email was about scheduling the exam. I do ask that everybody taking the exam in the classroom registers in the intranet for that. Now that doesn't apply to you if you are in section 901, because in Section 901, you are taking the exam here by default. There is no way for you to schedule through the proctoring system. So for 941 only, make sure you're registering for the exam if you haven't already. We do have limited slots in the classroom, so get your registrations in now. We will also plan on week six to have lecture for the second half. So we'll be next week and into week six, we'll be diving into new material for the second half of the course. So be aware of that. Any questions about any of those housekeeping items? Okay. Good. Plan for today. We've got some review stuff. I'm going to go over the quiz as kind of a warm-up and any homework questions you may have. We're going to go back through and do some examples with map, filter, and fold. Then what I've decided I'm going to do, I have done this a little bit differently before, but I think this is going to work better if I do the new slide discussions of the new topics here. And then whatever time is left, it might be 45 minutes, it might be an hour, it might be more than an hour.
+
+---
+
+[01:23:44.420 --> 01:25:32.779] score=10.7277 channel=preprobe
+If we did binary search, it would be more efficient. Right? We're not doing that for this discussion. We're going to walk through the list and we're going to find the element. So this is our old school iteration. This is what it looks like. You start with a key. You're trying to find the index where that key exists, and then you use this loop control, this i, and then you use this while loop. I have this special condition here to if I get a minus one. Oh, I'm sorry. I have to be before the end of the list, and as long as I haven't found the result, then I wanna keep executing. Otherwise, I'm gonna exit the loop early. That's what I wanna do. If you can imagine why I would do this, I might have a really, really, really long list. And if I'm looking for a number that occurs early in the list, in this case, these are not sordid. They are shuffled, but they could be shuffled. And if they're shuffled, we don't know where the result lives. So in this case, I'm gonna find this seven pretty quick, right, because it's in the beginning. But if I shuffled the list and it was really, really huge that I had pulled in off network or something like that. Well, I might have to go through this whole list and I might want to stop early. So this is me saying, I want to stop early if I found it. That's all. So what we see down here is just the finding like if I were to execute it in the REPL for you and it would find the element, sorry, I jumped ahead. it would find the element at 8 because we're 0 indexed, so it would find 7. Again, contrived, because I'm not shuffling the data,
+
+---
+
+[01:06:37.159 --> 01:08:45.340] score=6.2910 channel=preprobe
+So we have a don't care whatever pattern, we have a don't care whatever pattern but notice x arrow x if we just replace with a single underscore, that's syntactic sugar for this. So so far we're the same, right? Yeah. And then here we have a fold, we have this, Z element, which is the single string with a comma, and then we have this, which is syntactic sugar for that. So these two are actually semantically the exact same. Does everybody see that? This here is we have an X and a Y, and we combine them by doing this plus, which in this case is going to be string concatenation, or should be. Okay. And so here, this is like a shorthand for saying this. That's why I call it syntactic trigger. It's just, I guess, a little bit less junking on the screen for you to look at. So I think the answer here is going to be six and seven. So you can see that by noticing that the first step is this filtering. So that gets you halfway there. Then you have to just sort of process through in your mind what happens here. But if you do that for each of these, since they are the same, you just have to do it once. Okay, so that was our little one. That was fun, wasn't it? We're gonna start this topic. this is my pride and joy so I gave a talk at the Chicago area Scala meetup but it was 2022 they haven't had a meetup in a long time and this that talk turned into this so there's still a video on the webpage of the website of a different set of slides that I completely lost and I don't I don't know how I did that. I should check if Andy still has that.
+
+rewrite:
+{
+  "rewritten_query": "example concept questions 00:02:24",
+  "time_mode": "anchor",
+  "course_general_knowledge": false,
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "00:02:24"
+    }
+  ]
+}
+
+prompt:
+Student question: Could you find the example the instructor mentioned around 2:24, and locate the questions about this concept?
+
+Entity pre-probe note: No related entity definition was found in the lecture materials for 'this concept'. Answer using lecture content below; do not invent a definition.
+
+Lecture content (use only what is needed to answer the question above):
+
+[Instructor said] (00:00:30.000 --> 00:02:26.659)
+All right, well, we'll get started. this is week four so we'll recover tonight will be the last new material for the midterm midterm will be in two weeks so it's at week six so I give you extra like I give you the week to do your homework and then have questions and all that so we'll do some review next week as well we'll do some review tonight probably toward the end I'll talk about the plan for tonight in a I do want to point out I am moving office hours up a little earlier for tomorrow. Normally they're at 730 to 815, but I've got something in the evening, so I'm going to move them up a little bit to a little bit earlier. Nobody's been coming to office hours, so please send me a discord message if you do plan to come and I will fire up the zoom. I will be watching, but if nobody's sending me a message, I'm not going to bother. I've got other work to do, so I'll do it. So that's tomorrow. I will be traveling Thursday through Sunday, so my availability may be limited to respond to questions. I will try to get back to you as soon as I can. I'll be out of town so I will have my phone and I'll be able to read your messages, but usually when you have messages that are substantive I have to get to my laptop and look at the specific problem that's involved with your questions so that I can give you a good answer and if I have a busy weekend like I had last weekend I can't always get back to questions. So just be aware of that and I will try. But if I fail to respond to you within 24 hours during the week
+
+[Instructor said] (00:02:26.659 --> 00:04:24.300)
+please send me a message and I will, I might forget because I'm getting busy with traveling so just send me a message. I'm not trying to ignore you. I've just got too many things going on. So that's that. If you got an email from me today, if you're in section 941, you need to go, the email was about scheduling the exam. I do ask that everybody taking the exam in the classroom registers in the intranet for that. Now that doesn't apply to you if you are in section 901, because in Section 901, you are taking the exam here by default. There is no way for you to schedule through the proctoring system. So for 941 only, make sure you're registering for the exam if you haven't already. We do have limited slots in the classroom, so get your registrations in now. We will also plan on week six to have lecture for the second half. So we'll be next week and into week six, we'll be diving into new material for the second half of the course. So be aware of that. Any questions about any of those housekeeping items? Okay. Good. Plan for today. We've got some review stuff. I'm going to go over the quiz as kind of a warm-up and any homework questions you may have. We're going to go back through and do some examples with map, filter, and fold. Then what I've decided I'm going to do, I have done this a little bit differently before, but I think this is going to work better if I do the new slide discussions of the new topics here. And then whatever time is left, it might be 45 minutes, it might be an hour, it might be more than an hour.
+
+[On slide] (00:00:35)
+webpage
+
+q3 - Statements and Expressions - Preview
+1:44:53 remaining
+Page 1:
+        [1] --   [2] --   [3] --
+        [4] --   [5] --   [6] --
+        [7] --   [8] --   [9] --
+        [10] --
+
+Question 1 (1 point)
+The C programming language uses both statements and expressions.
+    ○ True
+    ○ False
+
+Question 2 (1 point)
+The Java programming language uses both statements and expressions.
+    ○ True
+    ○ False
+
+Question 3 (1 point)
+The Scala programming language uses both statements and expressions.
+    ○ True
+    ○ False
+
+Question 4 (1 point)
+
+[On slide] (00:00:34)
+webpage
+
+q3 - Statements and Expressions - Preview
+1:44:53 remaining
+Page 1:
+        [1] --   [2] --   [3] --
+        [4] --   [5] --   [6] --
+        [7] --   [8] --   [9] --
+        [10] --
+
+Question 1 (1 point)
+The C programming language uses both statements and expressions.
+    ○ True
+    ○ False
+
+Question 2 (1 point)
+The Java programming language uses both statements and expressions.
+    ○ True
+    ○ False
+
+Question 3 (1 point)
+The Scala programming language uses both statements and expressions.
+    ○ True
+    ○ False
+
+Question 4 (1 point)
+
+答案:
+Hmm, I couldn't find a specific example mentioned by the instructor at that exact timestamp in the notes provided. However, looking at the "Plan for today" section in the lecture, the instructor explicitly stated: "We're going to go back through and do some examples with **map, filter, and fold**."
+
+So the concept being discussed at that time is likely **map, filter, and fold**.
+
+Regarding the questions about this concept, the slides provided show a quiz titled **"q3 - Statements and Expressions - Preview"**. The questions visible on the slide are:
+
+*   **Question 1:** The C programming language uses both statements and expressions. (True/False)
+*   **Question 2:** The Java programming language uses both statements and expressions. (True/False)
+*   **Question 3:** The Scala programming language uses both statements and expressions. (True/False)
+
+*Note: These questions are about statements and expressions, not directly about map/filter/fold. If you are looking for specific quiz questions about map/filter/fold, they are not present in the provided lecture content.*
+
+============================================================
+

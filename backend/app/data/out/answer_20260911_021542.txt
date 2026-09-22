@@ -1,0 +1,535 @@
+1. 原问题: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+query_plan:
+{
+  "needs_preprobe": false,
+  "preprobe_target": null,
+  "referent_unclear": false,
+  "unresolved_referents": [],
+  "opaque_entities": [],
+  "time_mode": "none",
+  "hard_constraints": [],
+  "scope_time_to_preprobe_only": false,
+  "reason": "The question provides the complete code snippet and explicitly names the specific type variables to determine, requiring direct logical deduction rather than context retrieval."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Which types should replace ?1, ?2, and ?3 in the Scala function def g [X,Y] (xs:?1, f:?2) : ?3 = xs match case Nil => Nil case y::ys => f(y) :: g(ys, f) end match end g",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (02:08:18)
+slide, code
+
+FP Fold Left
+Subheading: Haskell-style Fold Left
+
+Code Block 1 (Haskell-style foldLeft implementation):
+```scala
+import scala.annotation.tailrec
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+// Translation from Haskell.
+@tailrec
+def foldl[A, B](f: (=> B) => A => B)(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z
+    case x#::xs => foldl(f)(f(z)(x))(xs)
+// #:: is how we pattern match with LazyList
+```
+
+Code Block 2 (findLeft function using foldl):
+```scala
+def findLeft(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(findRest: => Index)(next: (Int, Index)): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldl(check)(NotFound)(indexedInts)
+
+val lazyInts: LazyList[Int] = LazyList.from(0)
+val indexedInts = lazyInts.zipWithIndex.map((n, i) => n -> Index(i))
+findLeft(7)(indexedInts)
+```
+
+Right Side Note:
+// defined object Index
+val NotFound: Index = -1
+
+Bottom Right Corner: 20
+
+[On slide] (02:08:20)
+slide, code
+
+FP Fold Left
+Subheading: Haskell-style Fold Left
+
+Code Block 1 (Haskell-style foldLeft implementation):
+```scala
+import scala.annotation.tailrec
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+// Translation from Haskell.
+@tailrec
+def foldl[A, B](f: (=> B) => A => B)(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z
+    case x#::xs => foldl(f)(f(z)(x))(xs)
+// #:: is how we pattern match with LazyList
+```
+
+Code Block 2 (findLeft function using foldl):
+```scala
+def findLeft(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(findRest: => Index)(next: (Int, Index)): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldl(check)(NotFound)(indexedInts)
+
+val lazyInts: LazyList[Int] = LazyList.from(0)
+val indexedInts = lazyInts.zipWithIndex.map((n, i) => n -> Index(i))
+findLeft(7)(indexedInts)
+```
+
+Right Side Note:
+// defined object Index
+val NotFound: Index = -1
+
+Bottom Right Corner: 20
+
+[On slide] (02:08:21)
+slide, code
+
+FP Fold Left
+Subheading: Haskell-style Fold Left
+
+Code Block 1 (Haskell-style foldLeft implementation):
+```scala
+import scala.annotation.tailrec
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+// Translation from Haskell.
+@tailrec
+def foldl[A, B](f: (=> B) => A => B)(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z
+    case x#::xs => foldl(f)(f(z)(x))(xs)
+// #:: is how we pattern match with LazyList
+```
+
+Code Block 2 (findLeft function using foldl):
+```scala
+def findLeft(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(findRest: => Index)(next: (Int, Index)): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldl(check)(NotFound)(indexedInts)
+
+val lazyInts: LazyList[Int] = LazyList.from(0)
+val indexedInts = lazyInts.zipWithIndex.map((n, i) => n -> Index(i))
+findLeft(7)(indexedInts)
+```
+
+Right Side Note:
+// defined object Index
+val NotFound: Index = -1
+
+Bottom Right Corner: 20
+
+[On slide] (02:08:22)
+slide, code
+
+FP Fold Left
+Subheading: Haskell-style Fold Left
+
+Code Block 1 (Haskell-style foldLeft implementation):
+```scala
+import scala.annotation.tailrec
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+// Translation from Haskell.
+@tailrec
+def foldl[A, B](f: (=> B) => A => B)(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z
+    case x#::xs => foldl(f)(f(z)(x))(xs)
+// #:: is how we pattern match with LazyList
+```
+
+Code Block 2 (findLeft function using foldl):
+```scala
+def findLeft(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(findRest: => Index)(next: (Int, Index)): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldl(check)(NotFound)(indexedInts)
+
+val lazyInts: LazyList[Int] = LazyList.from(0)
+val indexedInts = lazyInts.zipWithIndex.map((n, i) => n -> Index(i))
+findLeft(7)(indexedInts)
+```
+
+Right Side Note:
+// defined object Index
+val NotFound: Index = -1
+
+Bottom Right Corner: 20
+
+答案:
+Hmm, I couldn't find that in this lecture — sorry, I'm not sure.
+
+The slides provided only cover a Haskell-style `foldLeft` implementation using `LazyList` and a `findLeft` function. They do not contain the specific function `g` or the type inference problem you asked about.
+
+============================================================
+
+2. 原问题: Is there a simpler example for this concept?
+query_plan:
+{
+  "needs_preprobe": true,
+  "preprobe_target": "this concept",
+  "referent_unclear": true,
+  "unresolved_referents": [
+    "this concept"
+  ],
+  "opaque_entities": [],
+  "time_mode": "none",
+  "hard_constraints": [],
+  "scope_time_to_preprobe_only": false,
+  "reason": "The phrase 'this concept' is an unresolved referent with no time anchor or explicit label to identify the topic."
+}
+
+preprobe:
+entity=this concept
+referent_unclear=True
+query=What is being referred to by 'this concept'
+hits=3
+gloss_found=True
+confidence=0.95
+definition=A data structure used to model the constructs of a language, representing integer expressions as a hierarchical tree of operators and operands.
+
+preprobe hits:
+[03:00:03.180 --> 03:02:30.899] score=12.7881 channel=preprobe
+So what this does is it's just some scholar syntax for saying, all right, I'm matching this case, so the thing I have is a while, and I want to refer to it typed as a while. So remember, we have the expr is the super type, right? So this is saying, well, I'm going to be able to refer to that. whatever I'm matching, E, as a w of this type now. Because when I match, I asserted that this was the actual type of this thing to make this case evaluate to true. Okay, so what happened? So let's look at the while first. So I evaluate e1 passing the variable store. I get back s1 and my value is v1. If v1 equals zero, then the whole result of the whole expression is zero, false, and whatever's left is s1. Otherwise, I'm going to evaluate this sequence here. So this is just translating that rule into this code, okay? And then we added the greater than or equal to. So this time it's strict, right? So it has to evaluate e1 and e2 both, so it does that. E1, get a value V1, new variable store, pass it in. Passing E2 as well, get back the new variable store in V2. And then we do this math dot max thing to determine whether it's greater or equal to. And this is just a way to get the low level computer to do that. That seems like it's the same as before. So this is our example if we're going to actually go through the rules. So we have E1 plus E2. It's going to give us v1 minus v2. this slide is broken. This slide looks broken. Something isn't right. Let me check. It's also 847, so maybe I have a bug in this slide. I wonder why that says v1 minus v2. V2. This is the absolute value example.
+
+---
+
+[02:35:54.899 --> 02:37:53.500] score=10.8496 channel=preprobe
+You're all like, what's x? We don't know yet. This is just an expression that we have to evaluate. So now we're going to implement the interpreter for this language, following our formal semantics. So remember when you saw that xi, and it was like, why is it with this random brief letter showing up? Well, it's nothing more than a map. And in this map, we have, as our keys, we have single characters. That's because those come from the identifiers. You'll see how that works out. And then our values are all gonna be impagers. So we'll now define the interpreter signature, which is gonna follow from, this is some fancy language, shape of the judgements, right? So this is a judgment and you have the arrow. This yields that whole thing is referred to as a judgment. So I'm evaluating an expression. So I'm given an expression and a variable store. And I'm going to get back some integer result and some new variable store. So you can click here to get back to the slide. I think it's this one, yeah, this set of slides that will take you back to. as I can it's popping up in my screen there, back to slide four. These are the reduction rules for integer expression. So again, we have our numerical rules, we have our addition, etc. We did that before and we have our parentheses. We did that before. So if we apply these over here, what happens? So if we're implementing this, we look at this. So if I have an expression and I have a, so if I, I can just use pattern matching here. So if I say if I have a number, then the result is just the number and
+
+---
+
+[02:33:54.980 --> 02:35:54.899] score=10.4092 channel=preprobe
+expression, and these are going to be the options we have. We have a a number. We have a plus, where we take the left and the right, which are each expressions, and we add them together. We have a minus, where we take the left, and then we subtract the right. And then we have a times, where we take the left and multiply by the right. So these are two expressions here. We're also going to have in our language, identifiers. So if we have an identifier, this is like setting x equal, or a equal, or b equal. In our case, we're going to have a single character identifier for our little language that we're defining here and then we're gonna also allow for parenthesized expressions so putting in parentheses around so what this is is a way to model the constructs of the language in Scala and we often refer to this as a domain specific language because we have a specific domain, it's arithmetic expressions which are limited right now to literal numbers addition, subtraction, multiplication. We're also going to allow for, as I said, defining variables and then we're gonna allow for parentheses in our whole language. So if I want to I would evaluate, or if I want to represent, sorry, represent an integer expression as an abstract syntax tree. So if I have two plus three times x, I could represent that by saying, I have, on the outside we have two plus this thing, right? So we have a plus on the outside. And we have the number two, and then we have this times in here, so now we're kind of unwrapping this thing. We have the number three times x. So x came from nowhere.
+
+rewrite:
+{
+  "rewritten_query": "simpler example abstract syntax tree data structure modeling language constructs integer expressions hierarchical tree operators operands",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Is there a simpler example for this concept?
+
+Entity glossary (from pre-probe; use only as term definition):
+- abstract syntax tree (confidence=0.95): A data structure used to model the constructs of a language, representing integer expressions as a hierarchical tree of operators and operands.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (02:35:20)
+slide, code
+
+Implement a Language in Scala
+
+• Implement grammar to represent abstract syntax tree as an algebraic data type
+
+Code:
+enum Expr:
+  // Arithmetic expressions
+  case Number(n:Int)
+  case Plus(l:Expr, r:Expr)
+  case Minus(l:Expr, r:Expr)
+  case Times(l:Expr, r:Expr)
+
+  // Identifiers a,...,x,y,z
+  case Ident(c:Char)
+
+  // Parenthesized expressions (e)
+  case Par(e:Expr)
+
+• Integer expression as an abstract syntax tree: 2+3*x
+
+Code:
+val expr =
+  Plus(
+    Number(2),
+    Times(Number(3), Ident('x'))
+  )
+
+[On slide] (02:35:25)
+slide, code
+
+Implement a Language in Scala
+
+• Implement grammar to represent abstract syntax tree as an algebraic data type
+
+Code:
+enum Expr:
+  // Arithmetic expressions
+  case Number(n:Int)
+  case Plus(l:Expr, r:Expr)
+  case Minus(l:Expr, r:Expr)
+  case Times(l:Expr, r:Expr)
+
+  // Identifiers a,...,x,y,z
+  case Ident(c:Char)
+
+  // Parenthesized expressions (e)
+  case Par(e:Expr)
+
+• Integer expression as an abstract syntax tree: 2+3*x
+
+Code:
+val expr =
+  Plus(
+    Number(2),
+    Times(Number(3), Ident('x'))
+  )
+
+[Instructor said] (02:33:54.980 --> 02:35:54.899)
+expression, and these are going to be the options we have. We have a a number. We have a plus, where we take the left and the right, which are each expressions, and we add them together. We have a minus, where we take the left, and then we subtract the right. And then we have a times, where we take the left and multiply by the right. So these are two expressions here. We're also going to have in our language, identifiers. So if we have an identifier, this is like setting x equal, or a equal, or b equal. In our case, we're going to have a single character identifier for our little language that we're defining here and then we're gonna also allow for parenthesized expressions so putting in parentheses around so what this is is a way to model the constructs of the language in Scala and we often refer to this as a domain specific language because we have a specific domain, it's arithmetic expressions which are limited right now to literal numbers addition, subtraction, multiplication. We're also going to allow for, as I said, defining variables and then we're gonna allow for parentheses in our whole language. So if I want to I would evaluate, or if I want to represent, sorry, represent an integer expression as an abstract syntax tree. So if I have two plus three times x, I could represent that by saying, I have, on the outside we have two plus this thing, right? So we have a plus on the outside. And we have the number two, and then we have this times in here, so now we're kind of unwrapping this thing. We have the number three times x. So x came from nowhere.
+
+[Instructor said] (02:20:02.220 --> 02:21:57.179)
+that's what this down arrow means. value v and new state, new set of variables and values, new map of variables and values, psi prime. So then we're going to have, so those are judgments, then we're going to also have this idea of a reduction rule. So in our reduction rule, we're going to have a series of premises, premise 1, 2, 3, n, up to n, whatever n is, And we're gonna have this line and then underneath the line, we're gonna have the conclusion. So this will be what the meaning of this is. This is like saying these little gray bars tell you what this means. So the conclusion follows from all the premises being satisfied. Okay. So if we have the language of integer expressions, so here's our syntax. An expression can be, this is, I can't remember for sure, but there's a formal name for this, I think it's called Bacchusnauer form. I can't remember if this is exactly that or not. But, this is a way to define a language, that's what we're doing here. So, we're saying that an expression is either a number, this little pipe character means or. Or, it's an expression plus an expression, so this would be addition. Or, it's an expression minus an expression. that would be subtraction, or it's an expression times an expression, that would be multiplication, or it's got this parenthesis idea, which you can group things. Or I could have an open paren, an expression, and a closed paren. So here's an example of an expression in my, or a couple different expressions in my language. So I have this expression here, 2 plus 3 times 4. Here I have the group 2 plus 3.
+
+答案:
+Yeah, definitely! If the full enum with variables and parentheses feels heavy, think about it with just `Plus` and `Number` first.
+
+Imagine the expression `2 + 3`. Instead of the full syntax `Plus(Number(2), Number(3))`, you can visualize it as a simple binary tree:
+
+```
+  Plus
+ /    \
+2      3
+```
+
+The instructor explained that the top node is the operator (`Plus`), and the branches below are the operands (the `Number` cases). Once that basic "operator on top, children below" structure clicks, adding `Times` or nesting them (like `2 + (3 * 4)`) is just adding more layers to that same tree. Start there, and the more complex examples on the slide become just adding extra branches and leaf types.
+
+============================================================
+
+3. 原问题: Could you find the example the instructor mentioned around 2h24min, and locate the questions about this concept?
+query_plan:
+{
+  "needs_preprobe": true,
+  "preprobe_target": "the example",
+  "referent_unclear": true,
+  "unresolved_referents": [
+    "the example",
+    "this concept"
+  ],
+  "opaque_entities": [],
+  "time_mode": "anchor",
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "02:24:00"
+    }
+  ],
+  "scope_time_to_preprobe_only": true,
+  "reason": "The timestamp identifies when to look for the example, but the specific content of 'the example' and 'this concept' must be resolved from that context before locating related questions."
+}
+
+preprobe:
+entity=the example
+referent_unclear=True
+query=What is being referred to by 'the example'
+hits=3
+gloss_found=True
+confidence=0.85
+definition=An integer expression in the language of integer expressions that evaluates to the value 20.
+
+preprobe hits:
+[02:22:12] score=3.3869 channel=preprobe
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+---
+
+[02:22:11] score=3.3869 channel=preprobe
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+---
+
+[02:22:14] score=3.3869 channel=preprobe
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+rewrite:
+{
+  "rewritten_query": "timestamp 02:24:00 example instructor mentioned expression (2 + 3) * 4 integer expression evaluates to 20 questions about this concept",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Could you find the example the instructor mentioned around 2h24min, and locate the questions about this concept?
+
+Entity glossary (from pre-probe; use only as term definition):
+- the expression (2 + 3) * 4 (confidence=0.85): An integer expression in the language of integer expressions that evaluates to the value 20.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (02:26:13)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+Expr ::= Number
+     | Expr '+' Expr
+     | Expr '-' Expr
+     | Expr '*' Expr
+     | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   ○ For example, (2 + 3) * 4 means 20
+• Numbers evaluate to their value
+   ⟨n,ξ⟩↓⟨n,ξ⟩^(Num)
+• Operations map to integer operations
+   ⟨e₁+e₂,ξ₀⟩↓⟨?,?⟩^(Add)
+
+Bottom right: Page number 5
+
+[On slide] (02:26:14)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+Expr ::= Number
+     | Expr '+' Expr
+     | Expr '-' Expr
+     | Expr '*' Expr
+     | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   ○ For example, (2 + 3) * 4 means 20
+• Numbers evaluate to their value
+   ⟨n,ξ⟩↓⟨n,ξ⟩^(Num)
+• Operations map to integer operations
+   ⟨e₁+e₂,ξ₀⟩↓⟨?,?⟩^(Add)
+
+Bottom right: Page number 5
+
+[Instructor said] (02:32:01.819 --> 02:33:54.980)
+2 plus 3 times 4, we gotta figure out what goes here, we gotta figure out what goes above. What did we need to know, what had to be true, is the way to ask yourself this question. So, 2 plus 3, we have to have a rule for this part, and So we have to have, see, this expression has two parts, it has this two plus three, then it has a times four, right? So we have to know about two plus three, and we have to know about four. This is like breaking it down into minutiae, which I have found very tedious in my life as a student. So you get used to it. So this part here, the two plus three becoming five, this is everything we did on the previous slide. So this part here, you can look back at that and see how we got there. Now the 4, this should be pretty simple. The 4 evaluates to what? Itself, 4. And it's not going to change the psi either. And now, what goes in on the right down there is 20, right? Because if we take, this is the part you know. 2 plus 3 times 4 is 5 times 4 is 20, right? So this is the part where the program is actually executing, and you can do that like in your head because you're looking at it, and it makes sense. So all this is really saying is, if this is my program and this is, you can reason about what the result is, what did I need to know about the parts of the program to get to that result? It's breaking the logic down. logic down. Okay, so now we're going to implement a grammar to represent an abstract syntax tree as an algebraic data type. So we've done algebraic data types before. So we're going to have an enumeration called, we're going to call it
+
+[Instructor said] (02:21:57.180 --> 02:23:50.600)
+that I'm gonna do that first and that quantity times 4. So the semantic domain of this language is integer arithmetic. The value V is, I didn't mean to press that, is the meaning of an expression. So for example, 2 plus 3 times 4, with you know, 2 plus 3 quantity times 4 means 20. And we can reason about that, because if We do this in our head, we get 5 times 4. We do this first, and we multiply 5 times 4, and we get 20. So that's why it means 20. Numbers are always going to evaluate to their value. So this is the first rule. So if I have a number, just a plain old number 5, that's going to evaluate to the value 5. That's what this is saying. So this part over here is the rule num. It's called num. And this line here just means that there's no premises that need to be satisfied for this to be true. So it isn't conditional on these premises being satisfied, it's just a number always evaluates to itself. So if I look at this rule, this is just like before I'm using this little notation here. This is, I'm doing an addition, right? So this is my expression. I have expression one plus expression two, so this is a whole expression. Earlier on that earlier slide, it was called PRG, right? So that's just another way to say expression. This is an expression. And I have this xi zero. So xi again is my map of variables. And I have these two question marks. Well, okay. So what goes in on the right side? And before we can do that, we have to know what the premises are. So we have to see something about E1 and something about E2, right?
+
+答案:
+The example mentioned around that time is **(2 + 3) * 4**. The instructor explains that because of the parentheses, you evaluate "2 + 3" first to get 5, and then multiply that result by 4 to get **20**.
+
+To locate the specific questions or rules about this concept in the lecture, look for:
+1.  **The `Num` rule**: This states that numbers evaluate to their own value (e.g., 4 evaluates to 4).
+2.  **The `Add`/Operation rules**: The instructor explains that for an expression like `e1 + e2`, you must know the values of `e1` (2+3 = 5) and `e2` (4) before you can apply the integer operation to get the final result (20).
+
+The core idea is breaking down the expression into parts (the premises) to determine the final meaning (the conclusion).
+
+============================================================
+

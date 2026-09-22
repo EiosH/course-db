@@ -1,0 +1,1455 @@
+1. 原问题: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => y::(y::(f (ys)))   end match end f If this function is executed on a list of length N, what is the length of the resulting list?
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "course_general_knowledge": true,
+  "resolve": null,
+  "reason": "The question provides the complete function definition and asks for a mathematical result derivable from the code logic alone, independent of the specific lecture recording."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala function definition recursive list processing length calculation case Nil y::ys pattern matching result size",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => y::(y::(f (ys)))   end match end f If this function is executed on a list of length N, what is the length of the resulting list?
+
+Course subject knowledge is allowed. Lecture snippets below are optional support — solve the question even if they are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+
+Lecture content:
+
+[On slide] (01:48:33)
+slide, code
+
+Recursion: Find
+How about recursion?
+Code: 
+val ints: List[Int] = (@ to 99_999).toList
+val key = 42
+import scala.annotation.tailrec
+def find(key: Int, intlist: List[Int]): Int =
+  @tailrec
+  def search(i: Int, remaining: List[Int]): Int =
+    remaining match
+      case Nil => -1
+      case (x :: xs) if x == key => i // Yay, I can stop!
+      case (_ :: xs) => search(i + 1, xs)
+  search(0, intlist)
+
+find(key, ints)
+
+• Now, I can abort the search when I'm done!
+• The compiler can optimize to a loop outside of the Scala language (don't care).
+• But I'm still responsible for execution control ...
+• Is there a way get the best of both (delegated execution control and efficiency)?
+
+[On slide] (01:48:32)
+slide, code
+
+Recursion: Find
+How about recursion?
+Code: 
+val ints: List[Int] = (@ to 99_999).toList
+val key = 42
+import scala.annotation.tailrec
+def find(key: Int, intlist: List[Int]): Int =
+  @tailrec
+  def search(i: Int, remaining: List[Int]): Int =
+    remaining match
+      case Nil => -1
+      case (x :: xs) if x == key => i // Yay, I can stop!
+      case (_ :: xs) => search(i + 1, xs)
+  search(0, intlist)
+
+find(key, ints)
+
+• Now, I can abort the search when I'm done!
+• The compiler can optimize to a loop outside of the Scala language (don't care).
+• But I'm still responsible for execution control ...
+• Is there a way get the best of both (delegated execution control and efficiency)?
+
+[On slide] (01:48:36)
+slide, code
+
+Recursion: Find
+How about recursion?
+Code: 
+val ints: List[Int] = (@ to 99_999).toList
+val key = 42
+import scala.annotation.tailrec
+def find(key: Int, intlist: List[Int]): Int =
+  @tailrec
+  def search(i: Int, remaining: List[Int]): Int =
+    remaining match
+      case Nil => -1
+      case (x :: xs) if x == key => i // Yay, I can stop!
+      case (_ :: xs) => search(i + 1, xs)
+  search(0, intlist)
+
+find(key, ints)
+
+• Now, I can abort the search when I'm done!
+• The compiler can optimize to a loop outside of the Scala language (don't care).
+• But I'm still responsible for execution control ...
+• Is there a way get the best of both (delegated execution control and efficiency)?
+
+[On slide] (01:48:35)
+slide, code
+
+Recursion: Find
+How about recursion?
+Code: 
+val ints: List[Int] = (@ to 99_999).toList
+val key = 42
+import scala.annotation.tailrec
+def find(key: Int, intlist: List[Int]): Int =
+  @tailrec
+  def search(i: Int, remaining: List[Int]): Int =
+    remaining match
+      case Nil => -1
+      case (x :: xs) if x == key => i // Yay, I can stop!
+      case (_ :: xs) => search(i + 1, xs)
+  search(0, intlist)
+
+find(key, ints)
+
+• Now, I can abort the search when I'm done!
+• The compiler can optimize to a loop outside of the Scala language (don't care).
+• But I'm still responsible for execution control ...
+• Is there a way get the best of both (delegated execution control and efficiency)?
+
+答案:
+The length of the resulting list is **2N**.
+
+Here is the breakdown:
+1.  **Base Case:** If the input list `xs` is `Nil` (length 0), the function returns `Nil` (length 0). This fits the formula $2 \times 0 = 0$.
+2.  **Recursive Step:** If the input list is `y :: ys` (length $N$), the function returns `y :: (y :: (f(ys)))`.
+    *   The head `y` is added once.
+    *   The same element `y` is added again immediately after.
+    *   Then, the result of `f(ys)` is appended.
+    *   So, for each element in the original list, the function produces **two** copies of that element in the output list.
+
+Therefore, if the input list has length $N$, the output list will have length $2N$.
+
+============================================================
+
+2. 原问题: Consider the following Scala function definition. def f [X] (xs:List[X], ys:List[X]) : List[X] =   xs match     case Nil   => ys     case z::zs => z::(f (zs, ys))   end match end f If this function is executed on two lists of length M and N respectively, what is the length of the resulting list?
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "course_general_knowledge": true,
+  "resolve": null,
+  "reason": "The question provides the complete function definition and asks for a logical deduction of the output length based on the code's behavior, which is a general programming problem independent of the specific lecture recording."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala function definition list concatenation length M N recursive match case Nil z::zs resulting list length",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Consider the following Scala function definition. def f [X] (xs:List[X], ys:List[X]) : List[X] =   xs match     case Nil   => ys     case z::zs => z::(f (zs, ys))   end match end f If this function is executed on two lists of length M and N respectively, what is the length of the resulting list?
+
+Course subject knowledge is allowed. Lecture snippets below are optional support — solve the question even if they are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+
+Lecture content:
+
+[On slide] (02:12:08)
+slide, code
+
+FP Fold Right Evaluation
+Subheading: findRight with foldr evaluation
+
+Code block 1 (Haskell-like foldr definition):
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+// Translation from Haskell.
+def foldr[A, B](f: A => (=> B))(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z   // LazyList() analogous to Nil (sort of)
+    case x#::xs => f(x)(foldr(f)(z)(xs))  // #:: is how we pattern match with LazyList
+
+Code block 2 (findRight implementation):
+def findRight(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(next: (Int, Index))(findRest: => Index): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldr(check)(NotFound)(indexedInts)
+
+Code block showing evaluation trace for `findRight(7)(indexedInts)`:
+foldr(check)(NotFound)(0..)
+check(0, Index(0))(foldr(check)(NotFound)(..))
+...
+check(6, Index(6))(foldr(check)(NotFound)(..))
+check(7, Index(7))(foldr(check)(NotFound)(..))
+Index(7)
+
+[On slide] (02:12:02)
+slide, code
+
+FP Fold Right Evaluation
+Subheading: findRight with foldr evaluation
+
+Code block 1 (Haskell-like foldr definition):
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+// Translation from Haskell.
+def foldr[A, B](f: A => (=> B))(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z   // LazyList() analogous to Nil (sort of)
+    case x#::xs => f(x)(foldr(f)(z)(xs))  // #:: is how we pattern match with LazyList
+
+Code block 2 (findRight implementation):
+def findRight(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(next: (Int, Index))(findRest: => Index): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldr(check)(NotFound)(indexedInts)
+
+Code block showing evaluation trace for `findRight(7)(indexedInts)`:
+foldr(check)(NotFound)(0..)
+check(0, Index(0))(foldr(check)(NotFound)(..))
+...
+check(6, Index(6))(foldr(check)(NotFound)(..))
+check(7, Index(7))(foldr(check)(NotFound)(..))
+Index(7)
+
+[On slide] (02:12:07)
+slide, code
+
+FP Fold Right Evaluation
+Subheading: findRight with foldr evaluation
+
+Code block 1 (Haskell-like foldr definition):
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+// Translation from Haskell.
+def foldr[A, B](f: A => (=> B))(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z   // LazyList() analogous to Nil (sort of)
+    case x#::xs => f(x)(foldr(f)(z)(xs))  // #:: is how we pattern match with LazyList
+
+Code block 2 (findRight implementation):
+def findRight(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(next: (Int, Index))(findRest: => Index): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldr(check)(NotFound)(indexedInts)
+
+Code block showing evaluation trace for `findRight(7)(indexedInts)`:
+foldr(check)(NotFound)(0..)
+check(0, Index(0))(foldr(check)(NotFound)(..))
+...
+check(6, Index(6))(foldr(check)(NotFound)(..))
+check(7, Index(7))(foldr(check)(NotFound)(..))
+Index(7)
+
+[On slide] (02:12:04)
+slide, code
+
+FP Fold Right Evaluation
+Subheading: findRight with foldr evaluation
+
+Code block 1 (Haskell-like foldr definition):
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+// Translation from Haskell.
+def foldr[A, B](f: A => (=> B))(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z   // LazyList() analogous to Nil (sort of)
+    case x#::xs => f(x)(foldr(f)(z)(xs))  // #:: is how we pattern match with LazyList
+
+Code block 2 (findRight implementation):
+def findRight(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(next: (Int, Index))(findRest: => Index): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldr(check)(NotFound)(indexedInts)
+
+Code block showing evaluation trace for `findRight(7)(indexedInts)`:
+foldr(check)(NotFound)(0..)
+check(0, Index(0))(foldr(check)(NotFound)(..))
+...
+check(6, Index(6))(foldr(check)(NotFound)(..))
+check(7, Index(7))(foldr(check)(NotFound)(..))
+Index(7)
+
+答案:
+The length of the resulting list is **M + N**.
+
+Here is the breakdown:
+1.  The function `f` recursively traverses the first list `xs`.
+2.  For every element in `xs` (there are `M` of them), it prepends that element to the result of the recursive call.
+3.  When `xs` becomes `Nil` (after `M` steps), the base case returns `ys`.
+4.  Therefore, the final list consists of all `M` elements from `xs` followed by all `N` elements from `ys`.
+
+This is effectively a list concatenation operation (`xs ++ ys`), so the total length is the sum of the lengths of the two input lists.
+
+============================================================
+
+3. 原问题: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => f (ys) ::: List (y)   end match end f What is the result of evaluating the following Scala code? val myList: List[(Int,Int)] = List( (1,2), (3,4), (5,6) ) f (myList)
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "course_general_knowledge": true,
+  "resolve": null,
+  "reason": "The question provides the complete function definition and input, allowing the result to be determined purely through logical evaluation of the code without referencing specific lecture content."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala function definition recursive list reversal pattern matching Nil case y::ys f(ys) ::: List(y) evaluation result List of tuples (Int,Int) (1,2) (3,4) (5,6)",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => f (ys) ::: List (y)   end match end f What is the result of evaluating the following Scala code? val myList: List[(Int,Int)] = List( (1,2), (3,4), (5,6) ) f (myList)
+
+Course subject knowledge is allowed. Lecture snippets below are optional support — solve the question even if they are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+
+Lecture content:
+
+[On slide] (02:11:54)
+slide, code
+
+FP Fold Right Evaluation
+Subheading: findRight with foldr evaluation
+
+Code block 1 (Index definition):
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+Code block 2 (foldr translation from Haskell):
+def foldr[A, B](f: A => (=> B))(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z   // LazyList() analogous to Nil (sort of)
+    case x#::xs => f(x)(foldr(f)(z)(xs))  // #:: is how we pattern match with LazyList
+
+Code block 3 (findRight implementation):
+def findRight(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(next: (Int, Index))(findRest: => Index): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldr(check)(NotFound)(indexedInts)
+
+Code block 4 (LazyList setup):
+val lazyInts: LazyList[Int] = LazyList.from(0)
+val indexedInts = lazyInts.zipWithIndex.map((n, i) => n -> Index(i))
+findRight(7)(indexedInts)
+
+Evaluation trace for findRight(7)(indexedInts):
+foldr(check)(NotFound)(0..)
+check(0, Index(0))(foldr(check)(NotFound)(...)
+check(1, Index(1))(foldr(check)(NotFound)(...)
+check(2, Index(2))(foldr(check)(NotFound)(...)
+check(3, Index(3))(foldr(check)(NotFound)(...)
+check(4, Index(4))(foldr(check)(NotFound)(...)
+check(5, Index(5))(foldr(check)(NotFound)(...)
+check(6, Index(6))(foldr(check)(NotFound)(...)
+check(7, Index(7))(foldr(check)(NotFound)(...)
+
+[On slide] (02:11:55)
+slide, code
+
+FP Fold Right Evaluation
+Subheading: findRight with foldr evaluation
+
+Code block 1 (Index definition):
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+val NotFound = Index(-1)
+
+Code block 2 (foldr translation from Haskell):
+def foldr[A, B](f: A => (=> B))(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z   // LazyList() analogous to Nil (sort of)
+    case x#::xs => f(x)(foldr(f)(z)(xs))  // #:: is how we pattern match with LazyList
+
+Code block 3 (findRight implementation):
+def findRight(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(next: (Int, Index))(findRest: => Index): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldr(check)(NotFound)(indexedInts)
+
+Code block 4 (LazyList setup):
+val lazyInts: LazyList[Int] = LazyList.from(0)
+val indexedInts = lazyInts.zipWithIndex.map((n, i) => n -> Index(i))
+findRight(7)(indexedInts)
+
+Evaluation trace for findRight(7)(indexedInts):
+foldr(check)(NotFound)(0..)
+check(0, Index(0))(foldr(check)(NotFound)(...)
+check(1, Index(1))(foldr(check)(NotFound)(...)
+check(2, Index(2))(foldr(check)(NotFound)(...)
+check(3, Index(3))(foldr(check)(NotFound)(...)
+check(4, Index(4))(foldr(check)(NotFound)(...)
+check(5, Index(5))(foldr(check)(NotFound)(...)
+check(6, Index(6))(foldr(check)(NotFound)(...)
+check(7, Index(7))(foldr(check)(NotFound)(...)
+
+[On slide] (02:12:05)
+slide, code
+
+FP Fold Right Evaluation
+Subheading: findRight with foldr evaluation
+
+Code block 1 (Haskell-like foldr definition):
+opaque type Index = Int
+object Index:
+  def apply(i: Int): Index = i
+  val NotFound = Index(-1)
+
+// Translation from Haskell.
+def foldr[A, B](f: A => (=> B))(z: => B)(a: LazyList[A]): B =
+  a match
+    case LazyList() => z   // LazyList() analogous to Nil (sort of)
+    case x#::xs => f(x)(foldr(f)(z)(xs))  // #:: is how we pattern match with LazyList
+
+Code block 2 (findRight implementation):
+def findRight(key: Int)(indexedInts: LazyList[(Int, Index)]): Index =
+  def check(next: (Int, Index))(findRest: => Index): Index =
+    next match
+      case (n, i) if key == n => i
+      case _ => findRest
+  foldr(check)(NotFound)(indexedInts)
+
+Code block showing evaluation trace for `findRight(7)(indexedInts)`:
+foldr(check)(NotFound)(0..)
+check(0, Index(0))(foldr(check)(NotFound)(..))
+...
+check(6, Index(6))(foldr(check)(NotFound)(..))
+check(7, Index(7))(foldr(check)(NotFound)(..))
+Index(7)
+
+[Instructor said] (02:03:21.000 --> 02:05:24.500)
+it's a little uglier than what we're used to with nil, and with regular lists we're used to just the cons. You have to use these funny things here to make it work. So this pattern match will work. So if I get to the empty list, I'm going to produce the z element. So I'll finally evaluate the z element. And otherwise, I'm going to call foldL immediately, passing the function. So notice the first parameter is the function. And then the z element goes here. And in order to get to the z element, I'm passing f of z x. So see my function f of z x, I'm actually going to pass z for this one and then x for this one. So if I want to do my find left example, what happens? I'm going to implement a little helper function called check here. And what check's gonna do is it's gonna take this find rest. Okay, check. Yeah, so the find rest is gonna be a lazy parameter that's gonna produce some index, right, that's what I'm looking, I'm looking for what index it is. And then my next element is gonna be this here, and I'm gonna say okay, I'm gonna pattern match. If I found it, if the key is equal to n, I'm gonna return i, Otherwise, I'm going to just call find rest, which will be this thunk that I pass. So that's why this was passed here. So we say fold l passing check, that's the function that corresponds to this. Notice the function is defined here, lines two through five. So I'm passing that function in fold l, which is over here. And then my zero element is not found. And then I pass the index it's here. So if I do this, so I'm defining object index.
+
+答案:
+The result is `List((5,6), (3,4), (1,2))`.
+
+The function `f` reverses a list. It works by recursively reversing the tail (`ys`) and then appending the head (`y`) to the end using `:::`.
+
+Let's trace it for `myList = List((1,2), (3,4), (5,6))`:
+
+1.  `f(List((1,2), (3,4), (5,6)))`
+    Matches `y::ys` where `y = (1,2)` and `ys = List((3,4), (5,6))`.
+    Returns `f(List((3,4), (5,6))) ::: List((1,2))`
+
+2.  `f(List((3,4), (5,6)))`
+    Matches `y::ys` where `y = (3,4)` and `ys = List((5,6))`.
+    Returns `f(List((5,6))) ::: List((3,4))`
+
+3.  `f(List((5,6)))`
+    Matches `y::ys` where `y = (5,6)` and `ys = Nil`.
+    Returns `f(Nil) ::: List((5,6))`
+
+4.  `f(Nil)`
+    Matches `Nil`.
+    Returns `Nil`
+
+Now substitute back up:
+
+*   Step 3 becomes: `Nil ::: List((5,6))` which is `List((5,6))`
+*   Step 2 becomes: `List((5,6)) ::: List((3,4))` which is `List((5,6), (3,4))`
+*   Step 1 becomes: `List((5,6), (3,4)) ::: List((1,2))` which is `List((5,6), (3,4), (1,2))`
+
+So, `f(myList)` evaluates to `List((5,6), (3,4), (1,2))`.
+
+============================================================
+
+4. 原问题: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   filter ((x:Int) => (x%2) == 0).   map ((x:Int) => x*2)
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "course_general_knowledge": true,
+  "resolve": null,
+  "reason": "The question provides a complete, self-contained Scala code snippet and asks for its evaluation result, which is a standard programming problem solvable without reference to the specific lecture recording."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala List filter map example even numbers multiply by 2 evaluation result",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   filter ((x:Int) => (x%2) == 0).   map ((x:Int) => x*2)
+
+Course subject knowledge is allowed. Lecture snippets below are optional support — solve the question even if they are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+
+Lecture content:
+
+[On slide] (00:18:38)
+webpage
+
+q3 - Statements and Expressions - Preview
+1:26:49 remaining
+
+Page 1:
+[1] ✓ [2] ✓ [3] ✓
+[4] ✓ [5] ✓ [6] ✓
+[7] -- [8] -- [9] --
+[10] --
+
+Center: Question 7 (1 point)
+Which of the following is the correct definition of a function to multiply all of the numbers in a list?
+
+Code Block 1:
+def product(xs: List[Int]) : Int =
+    if xs.isEmpty then xs.head
+    else xs.head * product(xs.tail)
+
+Code Block 2:
+def product(xs: List[Int]) : Int =
+    if xs.isEmpty then 1
+    else xs.head * product(xs.tail)
+
+Code Block 3 (incomplete):
+def product(xs: List[Int]) : Int =
+    if xs.isEmpty then 1
+
+[Instructor said] (00:43:29.019 --> 00:45:30.179)
+So you're going to get a list of 2, 3, 4, 5 when you call this. And when it compares to YS, it's going to see that they're equal. So it's actually constructing a whole new list when you call mapping, and then comparing that listing in splas. What about the second one? I guess it's also correct. That's also going to return true. Okay. What's different about this one? It's the same. The semantics are the same. Yeah. It means the same. But the syntax is different obviously, right? Because it looks different on the screen, right? But what this is, is our don't care whatever. We're going to use the parameter once. And so this is the equivalent of saying x arrow x plus one. The compiler compiles that to the same thing. So those two will return true. What about this one? What does this next one do? What does this return? I mean, we would imagine that it takes the volumes and header set in excess of the list and anything that doesn't meet that requirement is taken out of the list, but everything else stays. So it divides by one, and then, if it doesn't equal zero, that's not added into the new list. Divide by two, it does equal, or the remainder is zero, so there's nothing else left over. So then that gets added to this so it only returns two and four. Okay. So just to make it really, your head is in the right space. To make it really clear, remember a filter is going to construct you a new list. And this is a function, again. And this function is returning Boolean. And we call this a predicate. That's a pretty standard term for it. So called the random lecture last week.
+
+[Instructor said] (00:49:50.539 --> 00:51:49.599)
+Yeah. For number 5, if the lists are in different sizes, what happens? What does the output for x like the x-axis hold thing? Oh, if these two lists? Not necessarily, you already know it's going to return false. But for that specific snippet in the back half, what's the integers that it gets? Well, this is always going to produce one list, not a list. I mean one element, one. It's going to be one int value, and not a list. Well, yeah, but I'm saying. Okay. I was rationalizing in my head that it would essentially, though because it's using the x and y rate, I equated x and y to xs and ys. Yeah, in my head. That's okay. So I assumed it was taking the information from the list and then adding it, but it's just its own separate thing. Now this here is a function on ints, so it's processing the elements. Yeah. Right. So it's taking whatever x and y it has. So usually what's happening is one is going to contain the accumulator in one of these. I think it's the one on the right right here. And x is going to contain the new element that we're processing. Getting from the source list. And so it's going to then do this combination of ints, so it's going to just add ints and produce an int, and then it's going to just roll all the way up and produce an int in the int, so there's no list over here, except for the list we start with that we're processing. OK. Ooh, this time our ys is now a single int with value 10. So, we've already talked through this map. Map is going to give us back a... List. List. Oh, you're going fast. List. List. Filter is going to give me a list.
+
+[Instructor said] (00:06:22.699 --> 00:08:28.459)
+I get through it a lot faster than, maybe I would have before I took a class like this. So this is just a testament to what this kind of material can help you in terms of thinking about programming languages. All right, now we've got some Scala code. So this next question is going to have us run some Scala code in our minds. We can also, when we're doing a quiz, of course, we can do it in the REPL. But for this Scala code, we have this function. It takes two integers, and it produces an integer. So it looks like it does something like taking the x value and adding it twice, and then adding the y value to it. So hopefully this is pretty simple. What do we think the answer is when we run the function f with the arguments 2 and 3? We get 7. You get seven. You get seven. Okay, hopefully that was easy. This is why we do this as a warm-up, right? Like we're getting ready to deep dive into complicated stuff. Okay. All right. This one always throws me for a little bit of a loop. So here we have this expression. I don't know if that's too small. I gotta get a little better. This expression has this embedded if expression inside of it. So, what happens when we run this? What do we get? ABE. Okay, so Dylan thinks it's ABE. Does somebody have a different opinion? I wasn't thinking that you did, I just heard two people talk. So A, B, E. All right, so let's kind of look through this. So we have A here, and we have this in parens here. We have this if 2 plus 3 greater or equal 4, then B, else C plus D.
+
+答案:
+The result is `List(4, 8, 12, 16, 20)`.
+
+Here is the step-by-step breakdown:
+1.  **Filter**: The `filter` operation keeps only the even numbers from the original list `(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)`. This results in `List(2, 4, 6, 8, 10)`.
+2.  **Map**: The `map` operation then multiplies each of these remaining elements by 2.
+    *   $2 \times 2 = 4$
+    *   $4 \times 2 = 8$
+    *   $6 \times 2 = 12$
+    *   $8 \times 2 = 16$
+    *   $10 \times 2 = 20$
+
+So the final list is `List(4, 8, 12, 16, 20)`.
+
+============================================================
+
+5. 原问题: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "course_general_knowledge": true,
+  "resolve": null,
+  "reason": "The question provides a complete, self-contained Scala code snippet and asks for its evaluation result, which is a standard programming problem solvable without reference to the specific lecture recording."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala list map filter example x*2 even numbers result evaluation",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+
+Course subject knowledge is allowed. Lecture snippets below are optional support — solve the question even if they are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+
+Lecture content:
+
+[On slide] (01:08:07)
+slide, code
+
+Exercise: Process a List of Numbers
+
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = ",2,4,"
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(")((x,y) => x.toString+y)
+6. ys == xs.filter(_ % 2 == 0).map(x => x.toString + ",").fold(",")((x,y) => x+y)
+7. ys == xs.filter(_ % 2 == 0).map(_.toString + ",").fold(",")(_ + _)
+
+• Snippets 6 and 7
+
+[On slide] (01:08:04)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = ",2,4,"
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold("")( (x,y) => x.toString+y)
+6. ys == xs.filter(_ % 2 == 0).map(x => x.toString + ",").fold(",")((x,y) => x+y)
+7. ys == xs.filter(_ % 2 == 0).map(_.toString + ",").fold(",")(_ + _)
+
+• Snippets 6 and 7
+
+[On slide] (01:08:06)
+slide, code
+
+Exercise: Process a List of Numbers
+
+Code:
+1 val xs = list(1,2,3,4)
+2 val ys = ",2,4,"
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(",")((x,y) => x.toString+y)
+6. ys == xs.filter(_ % 2 == 0).map(x => x.toString + ",").fold(",")((x,y) => x+y)
+7. ys == xs.filter(_ % 2 == 0).map(_.toString + ",").fold(",")(_ + _)
+
+• Snippets 6 and 7
+
+[Instructor said] (00:43:29.019 --> 00:45:30.179)
+So you're going to get a list of 2, 3, 4, 5 when you call this. And when it compares to YS, it's going to see that they're equal. So it's actually constructing a whole new list when you call mapping, and then comparing that listing in splas. What about the second one? I guess it's also correct. That's also going to return true. Okay. What's different about this one? It's the same. The semantics are the same. Yeah. It means the same. But the syntax is different obviously, right? Because it looks different on the screen, right? But what this is, is our don't care whatever. We're going to use the parameter once. And so this is the equivalent of saying x arrow x plus one. The compiler compiles that to the same thing. So those two will return true. What about this one? What does this next one do? What does this return? I mean, we would imagine that it takes the volumes and header set in excess of the list and anything that doesn't meet that requirement is taken out of the list, but everything else stays. So it divides by one, and then, if it doesn't equal zero, that's not added into the new list. Divide by two, it does equal, or the remainder is zero, so there's nothing else left over. So then that gets added to this so it only returns two and four. Okay. So just to make it really, your head is in the right space. To make it really clear, remember a filter is going to construct you a new list. And this is a function, again. And this function is returning Boolean. And we call this a predicate. That's a pretty standard term for it. So called the random lecture last week.
+
+答案:
+Let's break it down step-by-step:
+
+1.  **Start:** `List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)`
+2.  **`.map((x:Int) => x*2)`:** Multiplies every element by 2.
+    *   Result: `List(2, 4, 6, 8, 10, 12, 14, 16, 18, 20)`
+3.  **`.filter((x:Int) => (x%2) == 0)`:** Keeps only elements where the remainder when divided by 2 is 0 (i.e., even numbers).
+    *   Since all numbers in the previous list (2, 4, 6, ..., 20) are already even, **none** are filtered out.
+
+**Final Result:**
+`List(2, 4, 6, 8, 10, 12, 14, 16, 18, 20)`
+
+============================================================
+
+6. 原问题: Which types should replace ?1 and ?2 in the following Scala function? def f [X] (xss:?1) : ?2 = for (xs <- xss; x <- xs) yield x
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "course_general_knowledge": true,
+  "resolve": null,
+  "reason": "The question provides the complete Scala function definition and asks for type inference, which is a general programming problem solvable without specific lecture context."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala type inference for nested list flattening function def f [X] (xss:?1) : ?2 = for (xs <- xss; x <- xs) yield x, determine types ?1 and ?2, List[List[X]] to List[X], for comprehension desugaring, higher-kinded types, generic list transformation",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1 and ?2 in the following Scala function? def f [X] (xss:?1) : ?2 = for (xs <- xss; x <- xs) yield x
+
+Course subject knowledge is allowed. Lecture snippets below are optional support — solve the question even if they are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+
+Lecture content:
+
+[Instructor said] (00:47:37.419 --> 00:49:50.539)
+Bold is going to return what? kind of type how do you look at that and know what type fold terms age because zero is age. Because of this zero? Is that what you said? Yeah the zero element, so usually we use Z in the code. This is the type that we're going to reduce or fold into so you notice here this type here is going to to be the same type as this here. This has to be an int, right? So if I have a list of ints and I'm doing this, I take two ints and I produce an int, and this is also an int, then this whole thing should compile, right? We're going to add all this stuff up. And our base value is going to be 0. So just add the elements. So this is going to produce an int and not a list. So that cannot be equal to the list. OK. So I think the answer here is 1 and 2. Snip is one answer. There's another one. So here we have the same function. So we did this. We reasoned through what these are, right? These are all the same, looks like. Same functions we talked about before. So do we remember which one of these returns the list of 2 and 4? 3. three oh we have a new one don't we yep this is just driving home the point that you can use this don't care whatever syntax like this it means the same thing right so if I do this I should end up with two and four both of these and so three and four should result in these evaluating the true This last one's the same idea here. So here, we're adding all the elements of 1, 2, 3, 4, and getting back the sum of those elements. So that would be an int with value 10, and that count equal to a list. So we should have 3 and 4. Good question.
+
+[Instructor said] (00:06:22.699 --> 00:08:28.459)
+I get through it a lot faster than, maybe I would have before I took a class like this. So this is just a testament to what this kind of material can help you in terms of thinking about programming languages. All right, now we've got some Scala code. So this next question is going to have us run some Scala code in our minds. We can also, when we're doing a quiz, of course, we can do it in the REPL. But for this Scala code, we have this function. It takes two integers, and it produces an integer. So it looks like it does something like taking the x value and adding it twice, and then adding the y value to it. So hopefully this is pretty simple. What do we think the answer is when we run the function f with the arguments 2 and 3? We get 7. You get seven. You get seven. Okay, hopefully that was easy. This is why we do this as a warm-up, right? Like we're getting ready to deep dive into complicated stuff. Okay. All right. This one always throws me for a little bit of a loop. So here we have this expression. I don't know if that's too small. I gotta get a little better. This expression has this embedded if expression inside of it. So, what happens when we run this? What do we get? ABE. Okay, so Dylan thinks it's ABE. Does somebody have a different opinion? I wasn't thinking that you did, I just heard two people talk. So A, B, E. All right, so let's kind of look through this. So we have A here, and we have this in parens here. We have this if 2 plus 3 greater or equal 4, then B, else C plus D.
+
+[Instructor said] (00:49:50.539 --> 00:51:49.599)
+Yeah. For number 5, if the lists are in different sizes, what happens? What does the output for x like the x-axis hold thing? Oh, if these two lists? Not necessarily, you already know it's going to return false. But for that specific snippet in the back half, what's the integers that it gets? Well, this is always going to produce one list, not a list. I mean one element, one. It's going to be one int value, and not a list. Well, yeah, but I'm saying. Okay. I was rationalizing in my head that it would essentially, though because it's using the x and y rate, I equated x and y to xs and ys. Yeah, in my head. That's okay. So I assumed it was taking the information from the list and then adding it, but it's just its own separate thing. Now this here is a function on ints, so it's processing the elements. Yeah. Right. So it's taking whatever x and y it has. So usually what's happening is one is going to contain the accumulator in one of these. I think it's the one on the right right here. And x is going to contain the new element that we're processing. Getting from the source list. And so it's going to then do this combination of ints, so it's going to just add ints and produce an int, and then it's going to just roll all the way up and produce an int in the int, so there's no list over here, except for the list we start with that we're processing. OK. Ooh, this time our ys is now a single int with value 10. So, we've already talked through this map. Map is going to give us back a... List. List. Oh, you're going fast. List. List. Filter is going to give me a list.
+
+[Instructor said] (00:17:54.959 --> 00:20:13.919)
+Not the rest, but the whole list. So it's the same kind of problem, right? The type doesn't line up, right? So you can't do this, so right? At least here you're trying to do, it looks like you're trying to call tail here. which would give you a list, but you're not going to have a list here, so. Okay, now we have this one, so if XS is empty, then 1, otherwise, we take the head and we multiply by the product of the tail. Did that work? I think so, that looks promising. Someone in the beginning thought number one was going to work, so let's see. Ah, what's different about this one and the last one? If statement. Yes, the contents of the, you know, the then part specifically, right? So what happens if we have an empty list and we try to call head? Error. Yeah. What kind of error? No pointer. No, I think it's a no such element. You don't have to memorize that. Is that a compile-time error or a run-time error? Runtime. Runtime. So you said compile time. Why do you think it's compile time? Oh, okay. I thought I heard compile time. So at compile time, what happens? Well, this says, okay, if XS is empty, that compiles, then XS, which is a list, you call the head. It's like a method that's implemented on the list that can compile, right? We don't really know. Like, it doesn't, it's not smart enough to, like, even though we can look at this and say, well, it's empty. So this would, you know, the compiler doesn't reason that. Like, the compiler just says, does this type have this function? Yes. Or method. Does this type have this method? Yes. Compiles.
+
+答案:
+To determine the types for `?1` and `?2`, let's break down the `for` comprehension:
+
+```scala
+def f[X](xss: ?1): ?2 = for (xs <- xss; x <- xs) yield x
+```
+
+1.  **Analyze the inner loop:** `x <- xs`
+    *   The `for` comprehension desugars into `flatMap` and `map`.
+    *   The inner part `x <- xs` implies that `xs` is an iterable collection of type `X` (since the final yield is `x`, which is of type `X`).
+    *   So, `xs` must be of type `Iterable[X]` (or more generally, a type that supports `flatMap`/`map` and yields `X`). In standard Scala, this is typically `List[X]` or `Iterable[X]`.
+
+2.  **Analyze the outer loop:** `xs <- xss`
+    *   Since `xs` is of type `Iterable[X]` (or similar), `xss` must be a collection of these collections.
+    *   Therefore, `xss` is of type `Iterable[Iterable[X]]`.
+
+3.  **Determine the return type:**
+    *   The `yield x` produces a collection of `X`.
+    *   The `for` comprehension over a nested structure `Iterable[Iterable[X]]` flattens the structure.
+    *   The result is a single-level collection of `X`.
+    *   Therefore, the return type `?2` is `Iterable[X]`.
+
+**Conclusion:**
+
+*   **?1** should be `Iterable[Iterable[X]]` (or `List[List[X]]` if assuming concrete lists, but `Iterable` is the general type).
+*   **?2** should be `Iterable[X]` (or `List[X]`).
+
+In the most general and type-safe way using standard library types:
+
+*   **?1**: `Iterable[Iterable[X]]`
+*   **?2**: `Iterable[X]`
+
+If the context assumes `List` specifically (common in introductory courses):
+
+*   **?1**: `List[List[X]]`
+*   **?2**: `List[X]`
+
+Given the generic nature of the question, **`Iterable[Iterable[X]]`** and **`Iterable[X]`** are the correct abstract types.
+
+============================================================
+
+7. 原问题: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "time_preprobe_only": false,
+  "course_general_knowledge": true,
+  "resolve": null,
+  "reason": "The question provides the complete Scala function definition and asks for type inference, which is a standard programming problem solvable without specific lecture context."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala type inference polymorphic function list recursion Nil cons case f(y) :: g(ys, f) type parameters X Y",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+
+Course subject knowledge is allowed. Lecture snippets below are optional support — solve the question even if they are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+
+Lecture content:
+
+[On slide] (01:48:31)
+slide, code
+
+Recursion: Find
+How about recursion?
+Code: 
+val ints: List[Int] = (@ to 99_999).toList
+val key = 42
+import scala.annotation.tailrec
+def find(key: Int, intlist: List[Int]): Int =
+  @tailrec
+  def search(i: Int, remaining: List[Int]): Int =
+    remaining match
+      case Nil => -1
+      case (x :: xs) if x == key => i // Yay, I can stop!
+      case (_ :: xs) => search(i + 1, xs)
+  search(0, intlist)
+
+find(key, ints)
+
+• Now, I can abort the search when I'm done!
+• The compiler can optimize to a loop outside of the Scala language (don't care).
+• But I'm still responsible for execution control ...
+• Is there a way get the best of both (delegated execution control and efficiency)?
+
+[On slide] (01:48:32)
+slide, code
+
+Recursion: Find
+How about recursion?
+Code: 
+val ints: List[Int] = (@ to 99_999).toList
+val key = 42
+import scala.annotation.tailrec
+def find(key: Int, intlist: List[Int]): Int =
+  @tailrec
+  def search(i: Int, remaining: List[Int]): Int =
+    remaining match
+      case Nil => -1
+      case (x :: xs) if x == key => i // Yay, I can stop!
+      case (_ :: xs) => search(i + 1, xs)
+  search(0, intlist)
+
+find(key, ints)
+
+• Now, I can abort the search when I'm done!
+• The compiler can optimize to a loop outside of the Scala language (don't care).
+• But I'm still responsible for execution control ...
+• Is there a way get the best of both (delegated execution control and efficiency)?
+
+[On slide] (01:48:37)
+slide, code
+
+Recursion: Find
+How about recursion?
+Code: 
+val ints: List[Int] = (@ to 99_999).toList
+val key = 42
+import scala.annotation.tailrec
+def find(key: Int, intlist: List[Int]): Int =
+  @tailrec
+  def search(i: Int, remaining: List[Int]): Int =
+    remaining match
+      case Nil => -1
+      case (x :: xs) if x == key => i // Yay, I can stop!
+      case (_ :: xs) => search(i + 1, xs)
+  search(0, intlist)
+
+find(key, ints)
+
+• Now, I can abort the search when I'm done!
+• The compiler can optimize to a loop outside of the Scala language (don't care).
+• But I'm still responsible for execution control ...
+• Is there a way get the best of both (delegated execution control and efficiency)?
+
+[On slide] (01:48:36)
+slide, code
+
+Recursion: Find
+How about recursion?
+Code: 
+val ints: List[Int] = (@ to 99_999).toList
+val key = 42
+import scala.annotation.tailrec
+def find(key: Int, intlist: List[Int]): Int =
+  @tailrec
+  def search(i: Int, remaining: List[Int]): Int =
+    remaining match
+      case Nil => -1
+      case (x :: xs) if x == key => i // Yay, I can stop!
+      case (_ :: xs) => search(i + 1, xs)
+  search(0, intlist)
+
+find(key, ints)
+
+• Now, I can abort the search when I'm done!
+• The compiler can optimize to a loop outside of the Scala language (don't care).
+• But I'm still responsible for execution control ...
+• Is there a way get the best of both (delegated execution control and efficiency)?
+
+答案:
+Based on the code provided, here is the breakdown of the types:
+
+1.  **`?1` (Input List `xs`)**:
+    The function matches `xs` against `Nil` and `y :: ys`. This indicates `xs` is a `List`. Since the elements are passed to `f` and the result is prepended to a new list, `xs` must be `List[X]`.
+
+2.  **`?2` (Function `f`)**:
+    `f` is applied to `y` (which is of type `X`) and the result is used in `f(y) :: ...`. The result of `f(y)` must be compatible with the elements of the output list. Since the output list is `List[Y]` (see below), `f` must transform an `X` into a `Y`. Thus, `f` is `X => Y`.
+
+3.  **`?3` (Return Type)**:
+    The base case returns `Nil`. The recursive case returns `f(y) :: g(ys, f)`. Since `f(y)` is of type `Y`, the resulting list is a `List[Y]`.
+
+**Conclusion:**
+
+*   **`?1`**: `List[X]`
+*   **`?2`**: `X => Y`
+*   **`?3`**: `List[Y]`
+
+So the complete signature is:
+```scala
+def g[X, Y](xs: List[X], f: X => Y): List[Y] =
+  xs match
+    case Nil     => Nil
+    case y :: ys => f(y) :: g(ys, f)
+  end match
+end g
+```
+This is essentially the `map` function for lists.
+
+============================================================
+
+8. 原问题: Is there a simpler example for this concept?
+query_plan:
+{
+  "time_mode": "now",
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "01:22:09"
+    }
+  ],
+  "time_preprobe_only": false,
+  "course_general_knowledge": false,
+  "resolve": "this concept",
+  "reason": "The question uses the deictic phrase 'this concept' which must be identified from the current playback context before finding a simpler example."
+}
+
+preprobe:
+resolve=this concept
+query=this concept
+hits=3
+found=True
+name=Fold Left vs. Fold Right
+confidence=0.95
+
+preprobe hits:
+[01:22:32] score=0.4691 channel=preprobe
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)     // <------ Airbrushed!
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+• var
+• while
+• This is glorified iteration, implemented directly in Scala.
+• No way to avoid iterating over every element!
+
+---
+
+[01:22:30] score=0.4656 channel=preprobe
+slide, code
+
+Collections: Fold Left vs. Fold Right
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+• var
+• while
+• This is glorified iteration, implemented directly in Scala.
+• No way to avoid iterating over every element!
+
+---
+
+[01:22:33] score=0.4656 channel=preprobe
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+• var
+• while
+• This is glorified iteration, implemented directly in Scala.
+• No way to avoid iterating over every element!
+
+rewrite:
+{
+  "rewritten_query": "simpler example Fold Left vs. Fold Right",
+  "time_mode": "now",
+  "course_general_knowledge": false,
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "01:22:09"
+    }
+  ]
+}
+
+prompt:
+Student question: Is there a simpler example for this concept?
+
+Lecture content:
+
+[On slide] (01:22:09)
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+- var
+- while
+- This is glorified iteration, implemented directly in Scala.
+
+[Instructor said] (01:21:49.960 --> 01:23:44.420)
+have two loops so it's even worse. So here's why so we have fars we have while this is glorified iteration and it's implemented directly in Scala so in the language in the library it's right there it's not even at them at the machine code language. Now ultimately in the virtual machine, it is doing looping, right? It is, there's jumps and there's all these things and I don't care about that. Like, I'm working in a higher level language. I would like my, since we have support for things in Scala, I would like support for functional programming in Scala. I would like this to be more purely functional and it's not. And one thing that really stuck with me when I was like first learning about folds I have friends who were like Eric you gotta learn folds they're the most awesome things like 10 years and I was like I'm not sold because folds and Scala don't allow me to abort my processing early. I have a really big collection there's no way to avoid iterating over every element with the way we have defined folds with these iterations here. So every time we execute a fold, that particular piece of code executes in linear time in terms of the length of the list. And then this other thing, fold write, we have vars, we have while times two with the reverse call, and it's just more glorified iteration over every element. So my friends were like, learn folds. And I said, why? This is not giving me much. So here's an illustration of what happens when I try to do find and find is, this is like I'm finding a particular element. And this is linear find, this is not binary. Right?
+
+[On slide] (01:22:08)
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+- var
+- while
+- This is glorified iteration, implemented directly in Scala.
+
+[Instructor said] (01:20:15.220 --> 01:21:49.960)
+Those are called type bounds and this is called variance, but we'll do that in much later lecture, so don't worry about that. But you'll see fold left here and notice what it's doing. It's using a var and it's using a while loop. So we just got through talking about how these are sort of higher order functions. This is higher order programming. We're doing functional programming. And yet under the covers the Scala language here is doing this looping with a var. Over here with the fold right, it's even more interesting. We have, first we reverse, and then we're looping with a var. And if we call, look at reverse, this is what reverse looks like. And again, this may be a slightly older version of Scala than if you were to do this on your own today. You might see something different. But ultimately, you're gonna see this kind of thing. You're gonna have vars and while loops. You're calling reverse, so you're calling this whole thing. You're iterating through all the elements once and then you're iterating through all the elements again. If you have a lot of elements, it's not really desirable. So what I did here is I put these little comments, this is an expression, American slang, lipstick on a pig. It's like when you have something that's like ugly and you're trying to make it better, but it's still to me as a programmer, this is not intellectually satisfying because I'm not really doing a fold in the way that we would like to be we're just doing looping. And then over here I said lipstick on a pig airbrush because we
+
+答案:
+Yes, think of it like a conveyor belt.
+
+**`foldLeft`** is like standing at the start of the belt. You pick up the first item, combine it with your "accumulator" (your running total), and pass that new total to the next item. You keep going until the belt ends. It’s a simple, single pass.
+
+**`foldRight`** is trickier. Imagine the belt only moves one way, but you need to process items from the *end* first. In the code shown, Scala actually **reverses** the entire list first (which takes a full pass), and *then* does the same left-to-right loop. That’s why the instructor called it "lipstick on a pig"—it looks like a functional fold, but under the hood, it’s doing two full loops with mutable variables (`var`) and `while` loops, which is less efficient and less "pure" than a true recursive fold.
+
+So, the simpler mental model:
+- **Left:** One pass, forward.
+- **Right:** Reverse the list, then one pass, forward. (Inefficient!)
+
+============================================================
+
+9. 原问题: Could you find the example the instructor mentioned around 2h24min, and locate the questions about this concept?
+query_plan:
+{
+  "time_mode": "anchor",
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "02:24:00"
+    }
+  ],
+  "time_preprobe_only": true,
+  "course_general_knowledge": false,
+  "resolve": "the example",
+  "reason": "The user asks to identify a specific example at a timestamp and then find related questions, requiring a pre-probe to resolve the vague reference before general retrieval."
+}
+
+preprobe:
+resolve=the example
+query=the example
+hits=3
+found=True
+name=Language of Integer Expressions
+confidence=0.95
+
+preprobe hits:
+[02:22:12] score=3.3869 channel=preprobe
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+---
+
+[02:22:11] score=3.3869 channel=preprobe
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+---
+
+[02:22:14] score=3.3869 channel=preprobe
+slide
+
+Language of Integer Expressions
+
+Syntax:
+1. Expr ::= Number
+2. | Expr '+' Expr
+3. | Expr '-' Expr
+4. | Expr '*' Expr
+5. | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   • For example, (2 + 3) * 4 means 20
+
+rewrite:
+{
+  "rewritten_query": "Language of Integer Expressions example questions concept",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Could you find the example the instructor mentioned around 2h24min, and locate the questions about this concept?
+
+Lecture content:
+
+[On slide] (02:25:06)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+Expr ::= Number
+     | Expr '+' Expr
+     | Expr '-' Expr
+     | Expr '*' Expr
+     | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   ○ For example, (2 + 3) * 4 means 20
+• Numbers evaluate to their value
+   ⟨n,ξ⟩↓⟨n,ξ⟩^(Num)
+• Operations map to integer operations
+   ⟨e₁+e₂,ξ₀⟩↓⟨?,?⟩^(Add)
+
+Bottom right: Page number 5
+
+[On slide] (02:25:08)
+slide
+
+Language of Integer Expressions
+
+Syntax:
+Expr ::= Number
+     | Expr '+' Expr
+     | Expr '-' Expr
+     | Expr '*' Expr
+     | '(' Expr ')'
+
+Example:
+1. 2+3*4
+2. (2+3) * 4
+
+Semantics:
+• Semantic domain: integer arithmetic
+• Value v is the meaning of an expression
+   ○ For example, (2 + 3) * 4 means 20
+• Numbers evaluate to their value
+   ⟨n,ξ⟩↓⟨n,ξ⟩^(Num)
+• Operations map to integer operations
+   ⟨e₁+e₂,ξ₀⟩↓⟨?,?⟩^(Add)
+
+Bottom right: Page number 5
+
+[Instructor said] (02:20:02.220 --> 02:21:57.179)
+that's what this down arrow means. value v and new state, new set of variables and values, new map of variables and values, psi prime. So then we're going to have, so those are judgments, then we're going to also have this idea of a reduction rule. So in our reduction rule, we're going to have a series of premises, premise 1, 2, 3, n, up to n, whatever n is, And we're gonna have this line and then underneath the line, we're gonna have the conclusion. So this will be what the meaning of this is. This is like saying these little gray bars tell you what this means. So the conclusion follows from all the premises being satisfied. Okay. So if we have the language of integer expressions, so here's our syntax. An expression can be, this is, I can't remember for sure, but there's a formal name for this, I think it's called Bacchusnauer form. I can't remember if this is exactly that or not. But, this is a way to define a language, that's what we're doing here. So, we're saying that an expression is either a number, this little pipe character means or. Or, it's an expression plus an expression, so this would be addition. Or, it's an expression minus an expression. that would be subtraction, or it's an expression times an expression, that would be multiplication, or it's got this parenthesis idea, which you can group things. Or I could have an open paren, an expression, and a closed paren. So here's an example of an expression in my, or a couple different expressions in my language. So I have this expression here, 2 plus 3 times 4. Here I have the group 2 plus 3.
+
+[Instructor said] (02:16:09.279 --> 02:18:08.539)
+Again, the semantics is just meaning. We talked earlier about syntax and semantics. We're going to identify the difference between syntactic and semantic expressions in operational semantics. We'll identify judgments and reduction rules, apply reduction rules to execute programming. If all that sounds really abstract, hang on tight. So here's a small program. We're making this language up. So our language is going to have integer expressions, statements, assignment. Our statements are going to be assignment or statement lists or conditionals or loops. So we're used to thinking, you know, whenever you learn a new programming language, you want to learn about, like, well, what can I do? How do I control the flow of the program? Here's an example program in our made up programming language called factorial. This should look familiar to you. So we're just iteratively computing the factorial, right? So we've made this up in syntax while I do and then it ends with OD. A lot of times there are languages out there in the world that use like the reverse of the control word, the keyword. You see here that same idea with a headline. Operational semantics defines meaning of programs relative to an abstract machine. The abstract machine, so this is a reduction machine. machine operates on a program and reduces it to its semantic quote value. And we're gonna use this funny little character here. I had to look it up. It's called a psi. It's a Greek letter. When you see that this is the beginning of okay we're starting to get into math land. So all this is gonna do is be a symbol that
+
+答案:
+Around the 2:24 mark, the instructor was discussing the **Language of Integer Expressions**.
+
+The specific examples mentioned on the slide and in the lecture are:
+1.  `2 + 3 * 4`
+2.  `(2 + 3) * 4`
+
+The instructor used these to illustrate the syntax (defined in BNF-like form) and the semantics, noting that `(2 + 3) * 4` evaluates to the value **20**.
+
+**Regarding "questions about this concept":**
+The provided lecture content does not contain a list of specific exam or homework questions. It only shows the slide content and the instructor's explanation of the syntax and semantics rules (judgments and reduction rules) for this integer expression language. If you are looking for practice problems, they are likely in the course's problem sets or exam review materials, which are not included in this transcript snippet.
+
+============================================================
+

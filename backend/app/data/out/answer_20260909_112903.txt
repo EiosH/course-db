@@ -1,0 +1,683 @@
+1. 原问题: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => y::(y::(f (ys)))   end match end f If this function is executed on a list of length N, what is the length of the resulting list?
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question provides the complete Scala function code and asks for a direct computation based on that code, containing no opaque external entities or unclear referents."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala list transformation function f doubling elements recursion pattern case Nil y::ys resulting list length N complexity",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => y::(y::(f (ys)))   end match end f If this function is executed on a list of length N, what is the length of the resulting list?
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Let's trace the pattern of the function `f`:
+
+1.  **Base Case:** If the input list is `Nil` (length 0), the result is `Nil` (length 0).
+2.  **Recursive Step:** For a list `y :: ys` (where `y` is the head and `ys` is the tail), the function returns `y :: (y :: f(ys))`.
+    *   This takes the head element `y`, duplicates it (`y :: y`), and prepends these two copies to the result of recursively calling `f` on the tail `ys`.
+
+Let $L(N)$ be the length of the output list when the input list has length $N$.
+
+*   $L(0) = 0$
+*   For $N > 0$, the input is $y :: ys$, where the tail $ys$ has length $N-1$.
+    The output is `y :: (y :: f(ys))`.
+    This list consists of:
+    - One `y`
+    - One `y`
+    - The result of `f(ys)`, which has length $L(N-1)$.
+
+So, the recurrence relation is:
+$$ L(N) = 2 + L(N-1) $$
+
+Let's compute the first few values:
+*   $L(0) = 0$
+*   $L(1) = 2 + L(0) = 2 + 0 = 2$
+*   $L(2) = 2 + L(1) = 2 + 2 = 4$
+*   $L(3) = 2 + L(2) = 2 + 4 = 6$
+
+We can see that $L(N) = 2N$.
+
+**Conclusion:**
+If the function is executed on a list of length $N$, the length of the resulting list is **2N**.
+
+============================================================
+
+2. 原问题: Consider the following Scala function definition. def f [X] (xs:List[X], ys:List[X]) : List[X] =   xs match     case Nil   => ys     case z::zs => z::(f (zs, ys))   end match end f If this function is executed on two lists of length M and N respectively, what is the length of the resulting list?
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question contains a self-contained code snippet and asks for a logical consequence (length) derivable directly from the provided code structure, with no opaque external entities or unclear referents."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala function def f [X] (xs:List[X], ys:List[X]) list concatenation recursive pattern matching Nil case z::zs length of resulting list for input lists length M and N",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Consider the following Scala function definition. def f [X] (xs:List[X], ys:List[X]) : List[X] =   xs match     case Nil   => ys     case z::zs => z::(f (zs, ys))   end match end f If this function is executed on two lists of length M and N respectively, what is the length of the resulting list?
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Let's trace through the function to see what it actually does.
+
+The function `f` takes two lists `xs` and `ys`. It recursively processes `xs`:
+1. If `xs` is `Nil`, it returns `ys`.
+2. Otherwise, it takes the head `z`, and recursively calls `f` on the tail `zs` and the *same* `ys`, then prepends `z` to the result.
+
+Essentially, `f` walks down `xs` until it hits the end, and then "unwinds" the stack, prepending each element of `xs` to the list `ys`.
+
+This is effectively concatenation, but with a specific order: it reconstructs `xs` in its original order and appends `ys` to the end. So, `f(xs, ys)` is equivalent to `xs ++ ys`.
+
+Since `xs` has length M and `ys` has length N, the resulting list is the concatenation of `xs` and `ys`.
+
+Therefore, the length of the resulting list is **M + N**.
+
+============================================================
+
+3. 原问题: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => f (ys) ::: List (y)   end match end f What is the result of evaluating the following Scala code? val myList: List[(Int,Int)] = List( (1,2), (3,4), (5,6) ) f (myList)
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question provides a complete, self-contained code snippet and asks for a specific trace result without using opaque acronyms or vague deictic referents."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala List reverse implementation using match Nil and y::ys recursive append ::: List(y) evaluation result tuple list (1,2)(3,4)(5,6) reversal order",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Consider the following Scala function definition. def f [X] (xs:List[X]) : List[X] =   xs match     case Nil   => Nil     case y::ys => f (ys) ::: List (y)   end match end f What is the result of evaluating the following Scala code? val myList: List[(Int,Int)] = List( (1,2), (3,4), (5,6) ) f (myList)
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Hi! Great question. Let's trace through what `f` does.
+
+### Step-by-Step Analysis
+
+1.  **The Function `f`:**
+    The function `f` takes a list `xs` and recursively processes it.
+    -   Base case: If `xs` is `Nil`, it returns `Nil`.
+    -   Recursive case: If `xs` is `y :: ys` (a head `y` and a tail `ys`), it computes `f(ys) ::: List(y)`.
+
+    Essentially, `f` builds a new list by taking the elements from the tail (processed recursively) and **appending the head element to the end**. This is the definition of **reversing a list**.
+
+2.  **The Input:**
+    `myList` is `List((1,2), (3,4), (5,6))`.
+
+3.  **Evaluation:**
+    -   `f(List((1,2), (3,4), (5,6)))`
+    -   Matches `y=(1,2)`, `ys=List((3,4), (5,6))`
+    -   Returns `f(List((3,4), (5,6))) ::: List((1,2))`
+
+    -   Next, `f(List((3,4), (5,6)))`:
+        -   Matches `y=(3,4)`, `ys=List((5,6))`
+        -   Returns `f(List((5,6))) ::: List((3,4))`
+
+    -   Next, `f(List((5,6)))`:
+        -   Matches `y=(5,6)`, `ys=Nil`
+        -   Returns `f(Nil) ::: List((5,6))`
+
+    -   Finally, `f(Nil)`:
+        -   Returns `Nil`
+
+    Now substitute back:
+    -   `f(List((5,6))) = Nil ::: List((5,6)) = List((5,6))`
+    -   `f(List((3,4), (5,6))) = List((5,6)) ::: List((3,4)) = List((5,6), (3,4))`
+    -   `f(List((1,2), (3,4), (5,6))) = List((5,6), (3,4)) ::: List((1,2)) = List((5,6), (3,4), (1,2))`
+
+### Result
+
+The result of evaluating `f(myList)` is:
+
+```scala
+List((5,6), (3,4), (1,2))
+```
+
+This makes sense because `f` reverses the list.
+
+============================================================
+
+4. 原问题: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   filter ((x:Int) => (x%2) == 0).   map ((x:Int) => x*2)
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question is a self-contained pure code-trace task with no opaque course-specific entity or unclear referent."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala code evaluation result List filter even numbers map multiply by 2 x%2 == 0 x*2",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   filter ((x:Int) => (x%2) == 0).   map ((x:Int) => x*2)
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (00:52:25)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+[On slide] (00:52:46)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+[On slide] (00:52:22)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+[On slide] (00:55:12)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+答案:
+To evaluate that code, we just follow the steps:
+
+1.  **`filter ((x:Int) => (x%2) == 0)`**: This keeps only the even numbers from the list `1` to `10`.
+    *   The result is: `List(2, 4, 6, 8, 10)`
+
+2.  **`map ((x:Int) => x*2)`**: This multiplies every element in the filtered list by 2.
+    *   `2 * 2 = 4`
+    *   `4 * 2 = 8`
+    *   `6 * 2 = 12`
+    *   `8 * 2 = 16`
+    *   `10 * 2 = 20`
+
+So, the final result is:
+**`List(4, 8, 12, 16, 20)`**
+
+============================================================
+
+5. 原问题: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question is a self-contained pure code-trace request where the entities (Scala, List, map, filter) are standard and the code snippet is fully provided."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Evaluating Scala code: List 1 to 10 map x*2 filter even numbers, expected result list, higher-order functions map and filter, pure functions",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).   map ((x:Int) => x*2).   filter ((x:Int) => (x%2) == 0)
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (00:52:27)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+[On slide] (00:52:29)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+[On slide] (00:52:44)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+[On slide] (00:52:23)
+slide, code
+
+Exercise: Process a List of Numbers
+Code:
+1 val xs = List(1,2,3,4)
+2 val ys = 10
+
+Which snippets return true ?
+1. ys == xs.map(x => x+1)
+2. ys == xs.map(_ + 1)
+3. ys == xs.filter(x => x % 2 == 0)
+4. ys == xs.filter(_ % 2 == 0)
+5. ys == xs.fold(0)((x,y) => x+y)
+
+Page 4 of 7
+
+答案:
+The lecture content provided doesn't actually contain that specific code snippet or its result. The slides in the material cover a different exercise involving `List(1,2,3,4)` and checking which snippets equal `10`.
+
+Hmm, I couldn't find that specific evaluation in this lecture — sorry, I'm not sure.
+
+============================================================
+
+6. 原问题: Which types should replace ?1 and ?2 in the following Scala function? def f [X] (xss:?1) : ?2 = for (xs <- xss; x <- xs) yield x
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question is a self-contained code-tracing/type-inference task with no opaque named entities or vague referents."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala function type inference replacing ?1 and ?2 for nested list comprehension def f[X](xss:?1):?2 = for (xs <- xss; x <- xs) yield x",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1 and ?2 in the following Scala function? def f [X] (xss:?1) : ?2 = for (xs <- xss; x <- xs) yield x
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+That’s a classic way to reason about what `for`-comprehensions actually desugar into!
+
+Let’s break down the `for` loop:
+```scala
+for (xs <- xss; x <- xs) yield x
+```
+This desugars into a `flatMap` followed by a `map`:
+```scala
+xss.flatMap(xs => xs.map(x => x))
+```
+Or, more idiomatically:
+```scala
+xss.flatMap(identity)
+```
+
+For this to work:
+1.  **`xss`** must be a "collection" of collections. In Scala, the standard type for this is `TraversableOnce[X]` (or more specifically, `IterableOnce[X]`). Let's assume the standard higher-order collection type, often represented as `Iterable[X]` or `Traversable[X]`. Let's call the type of `xss` **`Iterable[X]`** for simplicity (though `TraversableOnce` is the more precise FP abstraction).
+2.  **`xs`** is an element of `xss`, so `xs` has type `Iterable[X]`.
+3.  The `flatMap` operation on an `Iterable[A]` with a function `A => Iterable[B]` returns an `Iterable[B]`.
+    *   Here, `A` is `Iterable[X]` (the type of `xs`).
+    *   The function is `xs => xs`, which returns `Iterable[X]`. So `B` is `X`.
+    *   Therefore, the result type is `Iterable[X]`.
+
+So, if we assume `xss` is a standard collection of collections:
+*   **?1** should be **`Iterable[X]`** (or `TraversableOnce[Iterable[X]]`, but usually just `Iterable[X]` if `xs` is also `Iterable[X]`). Wait, let's look closer. `xs` is an element of `xss`. So `xss` is a collection *of* `xs`. If `xs` is an `Iterable[X]`, then `xss` is an `Iterable[Iterable[X]]`.
+*   **?2** is the result type, which is **`Iterable[X]`**.
+
+Let's refine the types based on standard Scala `for`-comprehension laws:
+*   `xs` is drawn from `xss`. So `xs : Iterable[X]` is a reasonable assumption for the inner type.
+*   Therefore, `xss : Iterable[Iterable[X]]`.
+*   The result of flattening `Iterable[Iterable[X]]` is `Iterable[X]`.
+
+So:
+*   **?1 = `Iterable[Iterable[X]]`**
+*   **?2 = `Iterable[X]`**
+
+*Note: In strict FP/Scala terminology, you might see `TraversableOnce[TraversableOnce[X]]` or `View` types, but `Iterable` is the standard concrete type expected in such questions.*
+
+============================================================
+
+7. 原问题: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+entity_judge:
+{
+  "needs_preprobe": false,
+  "unknown_entity": null,
+  "referent_unclear": false,
+  "reason": "The question contains self-contained code and specific placeholders (?1, ?2, ?3) without vague deixis or opaque external entities requiring definition lookup."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "Scala type inference placeholder types ?1 ?2 ?3 in recursive function g with list and function parameters",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": []
+}
+
+prompt:
+Student question: Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g
+
+Lecture content (use only what is needed to answer the question above):
+
+(nothing found)
+
+答案:
+Hmm, I couldn't find anything useful in the lecture notes for that — sorry, I'm not sure. Want to try asking another way?
+
+============================================================
+
+8. 原问题: Is there a simpler example for this concept?
+entity_judge:
+{
+  "needs_preprobe": true,
+  "unknown_entity": "this concept",
+  "referent_unclear": true,
+  "reason": "The question uses the vague deictic phrase 'this concept' without naming the specific technical idea or term being discussed."
+}
+
+preprobe:
+entity=this concept
+referent_unclear=True
+query=What concept or topic is being discussed (this concept)
+hits=3
+entity_not_found=False
+gloss_found=True
+confidence=0.85
+definition=A higher-order function that combines elements of a collection into a single value, often using syntactic sugar for pattern matching and accumulation operations like concatenation.
+
+preprobe hits:
+[00:02:26.659 --> 00:04:24.300] score=16.7828 channel=preprobe
+please send me a message and I will, I might forget because I'm getting busy with traveling so just send me a message. I'm not trying to ignore you. I've just got too many things going on. So that's that. If you got an email from me today, if you're in section 941, you need to go, the email was about scheduling the exam. I do ask that everybody taking the exam in the classroom registers in the intranet for that. Now that doesn't apply to you if you are in section 901, because in Section 901, you are taking the exam here by default. There is no way for you to schedule through the proctoring system. So for 941 only, make sure you're registering for the exam if you haven't already. We do have limited slots in the classroom, so get your registrations in now. We will also plan on week six to have lecture for the second half. So we'll be next week and into week six, we'll be diving into new material for the second half of the course. So be aware of that. Any questions about any of those housekeeping items? Okay. Good. Plan for today. We've got some review stuff. I'm going to go over the quiz as kind of a warm-up and any homework questions you may have. We're going to go back through and do some examples with map, filter, and fold. Then what I've decided I'm going to do, I have done this a little bit differently before, but I think this is going to work better if I do the new slide discussions of the new topics here. And then whatever time is left, it might be 45 minutes, it might be an hour, it might be more than an hour.
+
+---
+
+[01:23:44.420 --> 01:25:32.779] score=10.7277 channel=preprobe
+If we did binary search, it would be more efficient. Right? We're not doing that for this discussion. We're going to walk through the list and we're going to find the element. So this is our old school iteration. This is what it looks like. You start with a key. You're trying to find the index where that key exists, and then you use this loop control, this i, and then you use this while loop. I have this special condition here to if I get a minus one. Oh, I'm sorry. I have to be before the end of the list, and as long as I haven't found the result, then I wanna keep executing. Otherwise, I'm gonna exit the loop early. That's what I wanna do. If you can imagine why I would do this, I might have a really, really, really long list. And if I'm looking for a number that occurs early in the list, in this case, these are not sordid. They are shuffled, but they could be shuffled. And if they're shuffled, we don't know where the result lives. So in this case, I'm gonna find this seven pretty quick, right, because it's in the beginning. But if I shuffled the list and it was really, really huge that I had pulled in off network or something like that. Well, I might have to go through this whole list and I might want to stop early. So this is me saying, I want to stop early if I found it. That's all. So what we see down here is just the finding like if I were to execute it in the REPL for you and it would find the element, sorry, I jumped ahead. it would find the element at 8 because we're 0 indexed, so it would find 7. Again, contrived, because I'm not shuffling the data,
+
+---
+
+[01:06:37.159 --> 01:08:45.340] score=6.2910 channel=preprobe
+So we have a don't care whatever pattern, we have a don't care whatever pattern but notice x arrow x if we just replace with a single underscore, that's syntactic sugar for this. So so far we're the same, right? Yeah. And then here we have a fold, we have this, Z element, which is the single string with a comma, and then we have this, which is syntactic sugar for that. So these two are actually semantically the exact same. Does everybody see that? This here is we have an X and a Y, and we combine them by doing this plus, which in this case is going to be string concatenation, or should be. Okay. And so here, this is like a shorthand for saying this. That's why I call it syntactic trigger. It's just, I guess, a little bit less junking on the screen for you to look at. So I think the answer here is going to be six and seven. So you can see that by noticing that the first step is this filtering. So that gets you halfway there. Then you have to just sort of process through in your mind what happens here. But if you do that for each of these, since they are the same, you just have to do it once. Okay, so that was our little one. That was fun, wasn't it? We're gonna start this topic. this is my pride and joy so I gave a talk at the Chicago area Scala meetup but it was 2022 they haven't had a meetup in a long time and this that talk turned into this so there's still a video on the webpage of the website of a different set of slides that I completely lost and I don't I don't know how I did that. I should check if Andy still has that.
+
+rewrite:
+{
+  "rewritten_query": "simple example fold function higher-order function combining collection elements into single value syntactic sugar pattern matching accumulation",
+  "time_mode": "now",
+  "course_general_knowledge": false,
+  "hard_constraints": [
+    {
+      "field": "timestamp",
+      "operator": "range",
+      "value": "01:22:09"
+    }
+  ]
+}
+
+prompt:
+Student question: Is there a simpler example for this concept?
+
+Entity glossary (from pre-probe; use only as term definition):
+- this concept (confidence=0.85): A higher-order function that combines elements of a collection into a single value, often using syntactic sugar for pattern matching and accumulation operations like concatenation.
+
+Lecture content (use only what is needed to answer the question above):
+
+[On slide] (01:22:09)
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+- var
+- while
+- This is glorified iteration, implemented directly in Scala.
+
+[Instructor said] (01:21:49.960 --> 01:23:44.420)
+have two loops so it's even worse. So here's why so we have fars we have while this is glorified iteration and it's implemented directly in Scala so in the language in the library it's right there it's not even at them at the machine code language. Now ultimately in the virtual machine, it is doing looping, right? It is, there's jumps and there's all these things and I don't care about that. Like, I'm working in a higher level language. I would like my, since we have support for things in Scala, I would like support for functional programming in Scala. I would like this to be more purely functional and it's not. And one thing that really stuck with me when I was like first learning about folds I have friends who were like Eric you gotta learn folds they're the most awesome things like 10 years and I was like I'm not sold because folds and Scala don't allow me to abort my processing early. I have a really big collection there's no way to avoid iterating over every element with the way we have defined folds with these iterations here. So every time we execute a fold, that particular piece of code executes in linear time in terms of the length of the list. And then this other thing, fold write, we have vars, we have while times two with the reverse call, and it's just more glorified iteration over every element. So my friends were like, learn folds. And I said, why? This is not giving me much. So here's an illustration of what happens when I try to do find and find is, this is like I'm finding a particular element. And this is linear find, this is not binary. Right?
+
+[On slide] (01:22:08)
+slide, code
+
+Collections: Fold Left vs. Fold Right
+
+How does Scala implement foldLeft and foldRight?
+
+package scala.collection
+trait LinearSeqOps[A, +CC[X] <: LinearSeq[X],
+  +C <: LinearSeq[A] with LinearSeqOps[A, CC, C]] {
+  // ...
+  override def foldLeft[B](z: B)(op: (B, A) => B): B = {
+    var acc = z
+    var these: LinearSeq[A] = coll
+    while (!these.isEmpty) {
+      acc = op(acc, these.head)   // <-- Ed.: Lipstick on a pig.
+      these = these.tail
+    }
+    acc
+  }
+}
+
+package scala.collection.immutable.List
+sealed abstract class List[+A] extends /* ... */ {
+  // ...
+  final override def foldRight[B](z: B)(op: (A, B) => B): B = {
+    var acc = z
+    var these: List[A] = reverse   // <-- Ed.: Lipstick on a pig.
+    while (!these.isEmpty) {
+      acc = op(these.head, acc)
+      these = these.tail
+    }
+    acc
+  }
+
+  final override def reverse: List[A] = {
+    var result: List[A] = Nil
+    var these = this
+    while (!these.isEmpty) {
+      result = these.head :: result
+      these = these.tail
+    }
+    result
+  }
+}
+
+- var
+- while
+- This is glorified iteration, implemented directly in Scala.
+
+[Instructor said] (01:20:15.220 --> 01:21:49.960)
+Those are called type bounds and this is called variance, but we'll do that in much later lecture, so don't worry about that. But you'll see fold left here and notice what it's doing. It's using a var and it's using a while loop. So we just got through talking about how these are sort of higher order functions. This is higher order programming. We're doing functional programming. And yet under the covers the Scala language here is doing this looping with a var. Over here with the fold right, it's even more interesting. We have, first we reverse, and then we're looping with a var. And if we call, look at reverse, this is what reverse looks like. And again, this may be a slightly older version of Scala than if you were to do this on your own today. You might see something different. But ultimately, you're gonna see this kind of thing. You're gonna have vars and while loops. You're calling reverse, so you're calling this whole thing. You're iterating through all the elements once and then you're iterating through all the elements again. If you have a lot of elements, it's not really desirable. So what I did here is I put these little comments, this is an expression, American slang, lipstick on a pig. It's like when you have something that's like ugly and you're trying to make it better, but it's still to me as a programmer, this is not intellectually satisfying because I'm not really doing a fold in the way that we would like to be we're just doing looping. And then over here I said lipstick on a pig airbrush because we
+
+答案:
+The lecture didn't provide a simpler code example; instead, it focused on deconstructing the complex implementation to show why it feels like "glorified iteration."
+
+If you're looking for the core concept without the `var`/`while` implementation details, think of it this way:
+*   **`foldLeft`** is just a loop that accumulates a result from left to right.
+*   **`foldRight`** is the same, but it reverses the list first (which is why the instructor called it "lipstick on a pig" or "airbrush," as it's less efficient).
+
+The instructor used these examples specifically to highlight that they *aren't* simple, purely functional operations under the hood, but rather efficient loops.
+
+============================================================
+
