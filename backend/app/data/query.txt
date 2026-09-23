@@ -1,6 +1,7 @@
-10. What did the instructor say say at 20min?
-10. What did the instructor say in the last session at the 20‑minute mark?
-10. What did the instructor say about xx in the previous course?
-10. what quizzes about xx did the instructor mention in the other lectures?
+What did the instructor say at 20min?
+What did the instructor say about Dynamic dispatch?
+What did the instructor say in the class before last at 2h56?
+What did the instructor say about Call by name in the previous course?
+what quizzes about Dynamic dispatch did the instructor mention in the other lectures?
 
 
