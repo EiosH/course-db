@@ -26,7 +26,7 @@ from config.prompts import *  # noqa: E402,F401,F403
 
 DATA_DIR = APP_DIR / "data"
 OUTPUT_DIR = DATA_DIR / "out"
-LECTURES_DIR = DATA_DIR / "lectures"  # each subdir: optional doc.txt + transcript.vtt
+LECTURES_DIR = DATA_DIR / "lectures"  # <course_id>/<lecture_id>/{doc,transcript,meta}
 QUERY_PATH = DATA_DIR / "query.txt"
 
 TIME_WINDOW_SEC = 120  # 时间戳约束：±2 分钟

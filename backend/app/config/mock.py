@@ -2,6 +2,7 @@
 
 # timestamp = 当前播放进度
 # user_courses = 选课清单 + 当前课/当前讲
+# 材料目录: data/lectures/<course_id>/<lecture_id>/{doc.txt, transcript.vtt, meta.json}
 MOCK_SESSION = {
     "timestamp": "01:22:09",
     "user_courses": {
@@ -15,12 +16,35 @@ MOCK_SESSION = {
                 "lecturer": "Eric J. Fredericks",
                 "lecture_id": ["lec01"],
             },
-            # {
-            #     "course_id": "CSC421",
-            #     "quarter": "2025-Fall",
-            #     "lecturer": "Jane Doe",
-            #     "lecture_id": ["lec01", "lec02"],
-            # },
+            {
+                "course_id": "CSC477",
+                "quarter": "2026-Spring",
+                "lecturer": "Eric J. Fredericks",
+                "lecture_id": [
+                    "lec01",
+                    "lec02",
+                    "lec03",
+                    "lec04",
+                    "lec05",
+                    "lec06",
+                    "lec07",
+                    "lec08",
+                    "lec09",
+                    "lec10",
+                ],
+            },
+            {
+                "course_id": "CSC421",
+                "quarter": "2025-Fall",
+                "lecturer": "Unknown",
+                "lecture_id": ["lec01"],
+            },
+            {
+                "course_id": "CSC435",
+                "quarter": "2025-Fall",
+                "lecturer": "Unknown",
+                "lecture_id": ["lec02"],
+            },
         ],
     },
 }

@@ -6,6 +6,7 @@ from qdrant_client.models import (
     Document,
     FieldCondition,
     Filter,
+    MatchAny,
     MatchValue,
     Range,
 )
@@ -49,28 +50,44 @@ def course_must(course_ctx: dict) -> list:
     ]
 
 
-def lecture_id_constraint(course_ctx: dict) -> dict:
+def lecture_ids_from_ctx(course_ctx: dict) -> list[str]:
+    raw = course_ctx.get("lecture_ids")
+    if raw is None:
+        raw = course_ctx.get("lecture_id")
+    if raw is None or raw == "":
+        return []
+    if isinstance(raw, str):
+        return [raw]
+    return [str(x) for x in raw if x]
+
+
+def lecture_id_constraint(course_ctx: dict) -> dict | None:
+    """Always use operator in + list value (one or many lecture ids)."""
+    lids = lecture_ids_from_ctx(course_ctx)
+    if not lids:
+        return None
     return {
         "field": "lecture_id",
-        "operator": "eq",
-        "value": course_ctx["lecture_id"],
+        "operator": "in",
+        "value": lids,
     }
 
 
 def with_lecture_constraint(constraints, course_ctx: dict) -> list:
-    """Ensure hard_constraints always pin the routed lecture_id."""
+    """Ensure hard_constraints pin routed lecture_ids (may be multiple)."""
     out = [
         c
         for c in (constraints or [])
         if c.get("field") != "lecture_id"
     ]
-    if course_ctx.get("lecture_id"):
-        out.append(lecture_id_constraint(course_ctx))
+    c = lecture_id_constraint(course_ctx)
+    if c is not None:
+        out.append(c)
     return out
 
 
-def _eq_constraint_must(constraints) -> list:
-    """Non-timestamp hard_constraints → Qdrant MatchValue filters."""
+def _constraint_must(constraints) -> list:
+    """Non-timestamp hard_constraints → Qdrant MatchValue / MatchAny filters."""
     must = []
     for c in constraints or []:
         field = c.get("field")
@@ -79,7 +96,20 @@ def _eq_constraint_must(constraints) -> list:
         value = c.get("value")
         if value is None or value == "":
             continue
-        must.append(FieldCondition(key=field, match=MatchValue(value=value)))
+        op = str(c.get("operator") or "eq").lower()
+        if op == "in" or isinstance(value, list):
+            values = value if isinstance(value, list) else [value]
+            values = [v for v in values if v is not None and v != ""]
+            if not values:
+                continue
+            if len(values) == 1:
+                must.append(
+                    FieldCondition(key=field, match=MatchValue(value=values[0]))
+                )
+            else:
+                must.append(FieldCondition(key=field, match=MatchAny(any=values)))
+        else:
+            must.append(FieldCondition(key=field, match=MatchValue(value=value)))
     return must
 
 
@@ -92,7 +122,7 @@ def _scroll_time_filter(
     *,
     use_range: bool,
 ):
-    must = course_must(course_ctx) + _eq_constraint_must(constraints)
+    must = course_must(course_ctx) + _constraint_must(constraints)
     if doc_type:
         must.append(FieldCondition(key="type", match=MatchValue(value=doc_type)))
     if use_range:
@@ -171,7 +201,7 @@ def search_time_window(
 def build_filter(doc_type: str, constraints, course_ctx: dict) -> Filter:
     must = (
         course_must(course_ctx)
-        + _eq_constraint_must(constraints)
+        + _constraint_must(constraints)
         + [FieldCondition(key="type", match=MatchValue(value=doc_type))]
     )
     ts_value = timestamp_constraint_value(constraints, course_ctx=course_ctx)

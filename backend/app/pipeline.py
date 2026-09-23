@@ -77,7 +77,7 @@ def _route(state: dict) -> dict:
         course_ctx = route_course(state["query"])
         print(
             f"course_route: {course_ctx['course_id']} / {course_ctx['quarter']} / "
-            f"{course_ctx['lecturer']!r} lecture_id={course_ctx['lecture_id']} "
+            f"{course_ctx['lecturer']!r} lecture_ids={course_ctx.get('lecture_ids')} "
             f"({course_ctx.get('reason')})"
         )
         if obs is not None:
@@ -462,6 +462,7 @@ def answer_query(client, query: str) -> QueryResult:
                     "course_id": ctx.get("course_id"),
                     "quarter": ctx.get("quarter"),
                     "lecture_id": ctx.get("lecture_id"),
+                    "lecture_ids": ctx.get("lecture_ids"),
                     "resolve": plan.get("resolve"),
                     "probe_hard_constraints": plan.get("probe_hard_constraints"),
                     "course_general": bool(

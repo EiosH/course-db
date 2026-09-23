@@ -135,16 +135,27 @@ def load_transcript(path: str | Path, *, lecture_id: str = "", meta: dict | None
 
 
 def iter_lecture_dirs(lectures_dir: str | Path | None = None) -> list[Path]:
-    """Subdirs of data/lectures/ that contain doc.txt and/or transcript.vtt."""
+    """
+    Lecture material folders:
+      data/lectures/<course_id>/<lecture_id>/{doc.txt, transcript.vtt, meta.json}
+    Also accepts legacy flat: data/lectures/<lecture_id>/...
+    """
     root = Path(lectures_dir) if lectures_dir else LECTURES_DIR
     if not root.is_dir():
         return []
     found = []
-    for d in sorted(root.iterdir()):
-        if not d.is_dir():
+    for child in sorted(root.iterdir()):
+        if not child.is_dir():
             continue
-        if (d / "doc.txt").exists() or (d / "transcript.vtt").exists():
-            found.append(d)
+        if (child / "doc.txt").exists() or (child / "transcript.vtt").exists():
+            # legacy flat lecture folder
+            found.append(child)
+            continue
+        for lec in sorted(child.iterdir()):
+            if not lec.is_dir():
+                continue
+            if (lec / "doc.txt").exists() or (lec / "transcript.vtt").exists():
+                found.append(lec)
     return found
 
 
@@ -158,6 +169,12 @@ def load_all_lecture_chunks(lectures_dir: str | Path | None = None) -> list[dict
     for d in dirs:
         lecture_id = d.name
         meta = load_lecture_meta(d)
+        # prefer path parent as course when nested: lectures/<course>/<lec>/
+        if d.parent != (Path(lectures_dir) if lectures_dir else LECTURES_DIR):
+            meta = {
+                **meta,
+                "course_id": meta.get("course_id") or d.parent.name,
+            }
         doc = d / "doc.txt"
         vtt = d / "transcript.vtt"
         n_ss = n_tr = 0
@@ -170,7 +187,7 @@ def load_all_lecture_chunks(lectures_dir: str | Path | None = None) -> list[dict
             chunks.extend(tr)
             n_tr = len(tr)
         print(
-            f"lecture {lecture_id}: "
+            f"lecture {meta.get('course_id', '?')}/{lecture_id}: "
             f"course={meta['course_id']} quarter={meta['quarter']} "
             f"lecturer={meta['lecturer']!r} "
             f"screen_shot={n_ss} transcript={n_tr}"

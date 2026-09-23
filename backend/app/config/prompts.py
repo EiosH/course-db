@@ -92,22 +92,22 @@ Output JSON only:
 """
 
 
-COURSE_ROUTE_SYSTEM = """You decide whether a student question refers to a different enrolled course/lecture than the one they are currently viewing.
+COURSE_ROUTE_SYSTEM = """You decide which lecture(s) of the CURRENT course a student question is about.
 
 Output JSON only:
 {
   "use_current": true,
-  "course_id": null,
-  "lecture_id": null,
+  "lecture_ids": null,
   "reason": "short"
 }
 
 Rules:
-- use_current=true when the question does NOT clearly point to another course or another lecture (no other course code, course name, lecturer, "last lecture", "lecture 2", "in CSC421", etc.). Then leave course_id and lecture_id null — the system will use current_course / current_lecture.
-- use_current=false only when the question clearly refers to another course and/or another lecture in the catalog. Then set course_id and lecture_id to values that appear in the catalog (do NOT invent ids).
-- If they name another course but not a lecture, pick a lecture_id that belongs to that course in the catalog (prefer the first listed for that course unless a lecture is specified).
-- If they name another lecture in the current course, set course_id to current_course and that lecture_id.
-- Prefer explicit matches (course code, lecturer, "lecture N", lec0N). Vague topic questions without course/lecture deixis → use_current=true.
+- lecture_ids MUST be chosen ONLY from the current course's lecture list in the catalog. Never pick lectures from any other course.
+- use_current=true when the question does NOT clearly point to another lecture (e.g. "last lecture", "lecture 2", "lec03"). Then leave lecture_ids null — the system will use current_lecture.
+- use_current=false when the question clearly refers to one or more other lectures of the current course. Then set lecture_ids to those ids from the catalog (do NOT invent ids).
+- lecture_ids is an array (one or many).
+- If they ask about the whole current course / all lectures without naming one, set use_current=false and lecture_ids to ALL lectures in the catalog.
+- Vague topic questions without lecture deixis → use_current=true.
 """
 
 ANSWER_SYSTEM = """You are a friendly course assistant sitting next to the student during lecture.

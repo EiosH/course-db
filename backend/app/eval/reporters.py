@@ -279,7 +279,7 @@ class ConsoleReporter:
         if ctx:
             print(
                 f"course:   {ctx.get('course_id')} / {ctx.get('quarter')} / "
-                f"{ctx.get('lecturer')} (lecture_id={ctx.get('lecture_id')})"
+                f"{ctx.get('lecturer')} (lecture_ids={ctx.get('lecture_ids')})"
             )
         print("query_plan:")
         print(format_query_plan(result.preprobe) or "(none)")
