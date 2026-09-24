@@ -61,10 +61,21 @@ def lecture_ids_from_ctx(course_ctx: dict) -> list[str]:
     return [str(x) for x in raw if x]
 
 
+# Large MatchAny(lecture_id) + BM25 is heavy and has 500'd on some setups.
+# course_id/quarter/lecturer already scopes; only pin lecture for small sets.
+_MAX_LECTURE_ID_FILTER = 3
+
+
 def lecture_id_constraint(course_ctx: dict) -> dict | None:
-    """Always use operator in + list value (one or many lecture ids)."""
+    """Pin lecture_id when few ids; omit for whole-course / large multi-lecture."""
     lids = lecture_ids_from_ctx(course_ctx)
     if not lids:
+        return None
+    catalog = [str(x) for x in (course_ctx.get("catalog_lecture_ids") or []) if x]
+    if catalog and set(lids) >= set(catalog):
+        # all lectures of this course → course_must is enough
+        return None
+    if len(lids) > _MAX_LECTURE_ID_FILTER:
         return None
     return {
         "field": "lecture_id",
@@ -74,7 +85,7 @@ def lecture_id_constraint(course_ctx: dict) -> dict | None:
 
 
 def with_lecture_constraint(constraints, course_ctx: dict) -> list:
-    """Ensure hard_constraints pin routed lecture_ids (may be multiple)."""
+    """Pin routed lecture_ids into hard_constraints (skipped when whole-course / too many)."""
     out = [
         c
         for c in (constraints or [])

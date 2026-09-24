@@ -90,10 +90,13 @@ def build_course_ctx(
     if not lids:
         lids = list(allowed) or [CURRENT_LECTURE]
     primary = lids[0]
+    catalog = _lecture_ids(course)
     meta = _load_lecture_meta(course.get("course_id", ""), primary)
     return {
         "lecture_id": primary,  # primary (e.g. playback / max_ts)
         "lecture_ids": lids,
+        # full enrollment list — search skips lecture_id filter when lids ≈ catalog
+        "catalog_lecture_ids": catalog,
         "course_id": course.get("course_id") or meta.get("course_id", ""),
         "quarter": course.get("quarter") or meta.get("quarter", ""),
         "lecturer": course.get("lecturer") or meta.get("lecturer", ""),
