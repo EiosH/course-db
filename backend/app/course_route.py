@@ -84,20 +84,30 @@ def build_course_ctx(
     *,
     reason: str = "",
 ) -> dict:
-    """Merge enrollment row + lecture meta + session playback timestamp."""
+    """Merge enrollment row + lecture meta + session playback timestamp.
+
+    Empty lecture_ids → whole current course (no lecture_id filter).
+    course_id / quarter / lecturer always come from the current-course enrollment row.
+    """
     allowed = set(_lecture_ids(course))
-    lids = [x for x in _normalize_lecture_ids(lecture_ids) if x in allowed]
-    if not lids:
-        lids = list(allowed) or [CURRENT_LECTURE]
-    primary = lids[0]
     catalog = _lecture_ids(course)
-    meta = _load_lecture_meta(course.get("course_id", ""), primary)
+    lids = [x for x in _normalize_lecture_ids(lecture_ids) if x in allowed]
+    # Model dumped the full catalog → treat as whole-course (no lecture_id pin)
+    if lids and allowed and set(lids) >= allowed:
+        lids = []
+    if lids:
+        primary = lids[0]
+    else:
+        primary = (
+            CURRENT_LECTURE
+            if CURRENT_LECTURE in allowed
+            else (catalog[0] if catalog else CURRENT_LECTURE)
+        )
+    meta = _load_lecture_meta(course.get("course_id", "") or CURRENT_COURSE, primary)
     return {
         "lecture_id": primary,  # primary (e.g. playback / max_ts)
         "lecture_ids": lids,
-        # full enrollment list — search skips lecture_id filter when lids ≈ catalog
-        "catalog_lecture_ids": catalog,
-        "course_id": course.get("course_id") or meta.get("course_id", ""),
+        "course_id": course.get("course_id") or CURRENT_COURSE,
         "quarter": course.get("quarter") or meta.get("quarter", ""),
         "lecturer": course.get("lecturer") or meta.get("lecturer", ""),
         "lecture_max_ts": meta.get("lecture_max_ts", DEFAULT_LECTURE_MAX_TS),
@@ -124,8 +134,10 @@ def _parse_json(raw: str) -> dict:
 
 def route_course(query: str) -> dict:
     """
-    Pick lecture_ids only from current_course.
-    No lecture deixis → [current_lecture]; else one/many/all of current_course.
+    Always scoped to current_course.
+    - use_current → [current_lecture]
+    - named lecture(s) → those ids
+    - whole-course (null/empty/full catalog) → [] (course_id filter only)
     """
     course = _current_course()
     allowed = _current_lecture_catalog()
@@ -167,9 +179,5 @@ def route_course(query: str) -> dict:
     if not requested:
         requested = _normalize_lecture_ids(data.get("lecture_id"))
 
-    # only keep ids that belong to current_course
     lids = [x for x in requested if x in allowed_set]
-    if not lids:
-        # whole-course / invalid → all lectures of current_course
-        lids = list(allowed) or [CURRENT_LECTURE]
     return build_course_ctx(course, lids, reason=reason)

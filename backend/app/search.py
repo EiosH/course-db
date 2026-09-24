@@ -24,6 +24,7 @@ from config import (
     BM25_LIMIT,
     BM25_MODEL,
     COLLECTION_NAME,
+    CURRENT_COURSE,
     DENSE_LIMIT,
     PREPROBE_BM25_LIMIT,
     PREPROBE_DENSE_LIMIT,
@@ -32,27 +33,38 @@ from config import (
     RERANK_TOP_K,
     TIME_NEAR_TOP_K,
     TIME_WINDOW_SEC,
+    USER_COURSES,
 )
 from llm import embed, get_reranker
 from time_utils import time_distance, timestamp_constraint_value, ts_to_sec
 
 
+def _current_course_row() -> dict:
+    """Enrollment row for MOCK current_course — source of truth for course filters."""
+    for c in USER_COURSES.get("courses") or []:
+        if c.get("course_id") == CURRENT_COURSE:
+            return c
+    return {"course_id": CURRENT_COURSE}
+
+
 def course_must(course_ctx: dict) -> list:
-    """Qdrant must-clauses for the routed course (lecture_id via hard_constraints)."""
+    """Always pin to the session current course (not other subjects)."""
+    row = _current_course_row()
+    course_id = row.get("course_id") or CURRENT_COURSE
+    quarter = row.get("quarter") or course_ctx.get("quarter") or ""
+    lecturer = row.get("lecturer") or course_ctx.get("lecturer") or ""
     return [
-        FieldCondition(
-            key="course_id", match=MatchValue(value=course_ctx["course_id"])
-        ),
-        FieldCondition(key="quarter", match=MatchValue(value=course_ctx["quarter"])),
-        FieldCondition(
-            key="lecturer", match=MatchValue(value=course_ctx["lecturer"])
-        ),
+        FieldCondition(key="course_id", match=MatchValue(value=course_id)),
+        FieldCondition(key="quarter", match=MatchValue(value=quarter)),
+        FieldCondition(key="lecturer", match=MatchValue(value=lecturer)),
     ]
 
 
 def lecture_ids_from_ctx(course_ctx: dict) -> list[str]:
+    """Routed lecture_ids only. Empty list = whole current course (no lecture pin)."""
     raw = course_ctx.get("lecture_ids")
     if raw is None:
+        # legacy: single lecture_id when lecture_ids omitted
         raw = course_ctx.get("lecture_id")
     if raw is None or raw == "":
         return []
@@ -61,21 +73,10 @@ def lecture_ids_from_ctx(course_ctx: dict) -> list[str]:
     return [str(x) for x in raw if x]
 
 
-# Large MatchAny(lecture_id) + BM25 is heavy and has 500'd on some setups.
-# course_id/quarter/lecturer already scopes; only pin lecture for small sets.
-_MAX_LECTURE_ID_FILTER = 3
-
-
 def lecture_id_constraint(course_ctx: dict) -> dict | None:
-    """Pin lecture_id when few ids; omit for whole-course / large multi-lecture."""
+    """Always use operator in + list value (one or many lecture ids)."""
     lids = lecture_ids_from_ctx(course_ctx)
     if not lids:
-        return None
-    catalog = [str(x) for x in (course_ctx.get("catalog_lecture_ids") or []) if x]
-    if catalog and set(lids) >= set(catalog):
-        # all lectures of this course → course_must is enough
-        return None
-    if len(lids) > _MAX_LECTURE_ID_FILTER:
         return None
     return {
         "field": "lecture_id",
@@ -85,7 +86,7 @@ def lecture_id_constraint(course_ctx: dict) -> dict | None:
 
 
 def with_lecture_constraint(constraints, course_ctx: dict) -> list:
-    """Pin routed lecture_ids into hard_constraints (skipped when whole-course / too many)."""
+    """Ensure hard_constraints pin routed lecture_ids (may be multiple)."""
     out = [
         c
         for c in (constraints or [])
