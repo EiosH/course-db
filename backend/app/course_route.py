@@ -125,6 +125,11 @@ def _default_ctx(reason: str = "current course/lecture") -> dict:
     return build_course_ctx(course, [lecture_id], reason=reason)
 
 
+def session_course_ctx(reason: str = "session baseline") -> dict:
+    """Current course + current lecture without LLM — for parallel plan siblings."""
+    return _default_ctx(reason)
+
+
 def _parse_json(raw: str) -> dict:
     if raw.startswith("```"):
         raw = re.sub(r"^```(?:json)?\s*", "", raw)

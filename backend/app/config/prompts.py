@@ -4,6 +4,7 @@ import re
 
 
 def query_plan_system(course_ctx: dict) -> str:
+    """Legacy monolithic plan prompt (kept for reference / fallback)."""
     course_id = course_ctx["course_id"]
     timestamp = course_ctx["timestamp"]
     lecture_max_ts = course_ctx["lecture_max_ts"]
@@ -52,6 +53,88 @@ Critical consistency:
 - A timestamp plus a vague phrase ("the example at 2h24") ⇒ set resolve to that phrase; put the timestamp in probe_hard_constraints (not hard_constraints) unless the whole answer must stay near that time.
 - "What does this mean now?" with no other vague object: time_mode "now", resolve null (the current window is the context).
 - If the question already states the full problem and does not refer to this lecture: resolve null, course_general_knowledge true.
+"""
+
+
+def _time_rules(timestamp: str, lecture_max_ts: str) -> str:
+    return f"""Timestamp rules (elapsed lecture time 0:00–{lecture_max_ts}, store HH:MM:SS):
+- Two parts (MM:SS) = minutes:seconds from start → 00:MM:SS ("05:00" → 00:05:00, never 05:00:00)
+- Three parts (HH:MM:SS) stay as elapsed HH:MM:SS
+- "2h24min" / "2h24" → 02:24:00
+- For a range, pick one point inside the span
+- Do NOT use "{timestamp}" unless the user means the current playback moment
+- Current playback "now" (mock): {timestamp}"""
+
+
+def time_plan_system(course_ctx: dict) -> str:
+    course_id = course_ctx["course_id"]
+    timestamp = course_ctx["timestamp"]
+    lecture_max_ts = course_ctx["lecture_max_ts"]
+    return f"""You decide MAIN retrieval time filters for a lecture Q&A system ({course_id}).
+
+Do NOT answer the student. Do NOT invent lecture facts. Ignore which lecture id to search — another step handles that.
+
+{_time_rules(timestamp, lecture_max_ts)}
+
+Output JSON only:
+{{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "reason": "short"
+}}
+
+- time_mode: "now" | "anchor" | "none" (MAIN retrieval only)
+  * "now" — current playback, no clock in the question → hard_constraints MUST be
+    [{{"field":"timestamp","operator":"range","value":"{timestamp}"}}]
+  * "anchor" — a specific elapsed time in the lecture → exactly one timestamp constraint
+  * "none" — no time filter for main retrieval → hard_constraints=[]
+- Only put MAIN-retrieval time in hard_constraints. If time is only to locate a vague phrase
+  ("the example at 2h24"), use time_mode "none" and hard_constraints=[] — another step owns the probe time.
+- "What does this mean now?" → time_mode "now".
+"""
+
+
+def resolve_plan_system(course_ctx: dict) -> str:
+    course_id = course_ctx["course_id"]
+    timestamp = course_ctx["timestamp"]
+    lecture_max_ts = course_ctx["lecture_max_ts"]
+    return f"""You decide whether a vague phrase must be resolved before main retrieval ({course_id}).
+
+Do NOT answer the student. Do NOT invent lecture facts.
+
+{_time_rules(timestamp, lecture_max_ts)}
+
+Output JSON only:
+{{
+  "resolve": null,
+  "probe_hard_constraints": [],
+  "reason": "short"
+}}
+
+- resolve: copy an underspecified phrase from the question ("the example", "this", "it"), or null.
+  Named terms already in the question (jargon, "Fold Left", "Question 9") → null.
+- probe_hard_constraints: time filters ONLY for the resolve probe (same timestamp JSON shape as
+  {{"field":"timestamp","operator":"range","value":"<HH:MM:SS>"}}).
+  * Timestamp solely to locate the vague phrase ("the example at 2h24") → put it here, not in main time.
+  * Empty [] when resolve is null, or when the probe should share main retrieval filters.
+- "What does this mean now?" with no other vague object → resolve null.
+"""
+
+
+def knowledge_plan_system(course_ctx: dict) -> str:
+    course_id = course_ctx["course_id"]
+    return f"""You decide if a student question for course {course_id} can use general course subject knowledge.
+
+Do NOT answer the student. Do NOT invent lecture facts.
+
+Output JSON only:
+{{
+  "course_general_knowledge": false,
+  "reason": "short"
+}}
+
+- true: answerable from this course's subject knowledge without this recording (definition, or a problem fully stated in the question).
+- false: depends on this lecture (what was said, this slide, a numbered item whose stem is not in the question, timestamps).
 """
 
 

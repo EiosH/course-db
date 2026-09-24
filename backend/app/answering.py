@@ -12,8 +12,11 @@ from config import (
     RESOLVE_EXTRACT_SYSTEM,
     STIFF_REFUSAL_RE,
     STIFF_REFUSAL_REPLY,
+    knowledge_plan_system,
     query_plan_system,
+    resolve_plan_system,
     rewrite_system,
+    time_plan_system,
 )
 from llm import ollama_chat
 from time_utils import normalize_rewrite_timestamps
@@ -36,8 +39,104 @@ def plan_resolve(plan: dict | None) -> str | None:
     return None
 
 
+def plan_time(query: str, course_ctx: dict) -> dict:
+    """MAIN retrieval time_mode + timestamp hard_constraints."""
+    raw = ollama_chat(
+        [
+            {"role": "system", "content": time_plan_system(course_ctx)},
+            {"role": "user", "content": query},
+        ],
+        format="json",
+        name="llm.plan_time",
+    )
+    data = _parse_json_content(raw)
+    planned = normalize_rewrite_timestamps(
+        {
+            "time_mode": data.get("time_mode", "none"),
+            "hard_constraints": data.get("hard_constraints", []),
+        },
+        lecture_max_ts=course_ctx.get("lecture_max_ts"),
+    )
+    return {
+        "time_mode": planned.get("time_mode", "none"),
+        "hard_constraints": planned.get("hard_constraints", []),
+        "reason": str(data.get("reason") or "").strip(),
+    }
+
+
+def plan_resolve_part(query: str, course_ctx: dict) -> dict:
+    """resolve phrase + probe_hard_constraints (independent of main time)."""
+    raw = ollama_chat(
+        [
+            {"role": "system", "content": resolve_plan_system(course_ctx)},
+            {"role": "user", "content": query},
+        ],
+        format="json",
+        name="llm.plan_resolve",
+    )
+    data = _parse_json_content(raw)
+    resolve = data.get("resolve")
+    if isinstance(resolve, str):
+        resolve = resolve.strip() or None
+    else:
+        resolve = None
+    probe_planned = normalize_rewrite_timestamps(
+        {"hard_constraints": data.get("probe_hard_constraints", [])},
+        lecture_max_ts=course_ctx.get("lecture_max_ts"),
+    )
+    probe_constraints = list(probe_planned.get("hard_constraints") or [])
+    if not resolve:
+        probe_constraints = []
+    return {
+        "resolve": resolve,
+        "probe_hard_constraints": probe_constraints,
+        "reason": str(data.get("reason") or "").strip(),
+    }
+
+
+def plan_knowledge(query: str, course_ctx: dict) -> dict:
+    """course_general_knowledge flag."""
+    raw = ollama_chat(
+        [
+            {"role": "system", "content": knowledge_plan_system(course_ctx)},
+            {"role": "user", "content": query},
+        ],
+        format="json",
+        name="llm.plan_knowledge",
+    )
+    data = _parse_json_content(raw)
+    return {
+        "course_general_knowledge": bool(data.get("course_general_knowledge")),
+        "reason": str(data.get("reason") or "").strip(),
+    }
+
+
+def assemble_plan(
+    *,
+    time_part: dict,
+    resolve_part: dict,
+    knowledge_part: dict,
+) -> dict:
+    """Merge parallel plan siblings into one plan dict (before course constraints)."""
+    reasons = [
+        p.get("reason")
+        for p in (time_part, resolve_part, knowledge_part)
+        if p.get("reason")
+    ]
+    return {
+        "time_mode": time_part.get("time_mode", "none"),
+        "hard_constraints": list(time_part.get("hard_constraints") or []),
+        "probe_hard_constraints": list(resolve_part.get("probe_hard_constraints") or []),
+        "course_general_knowledge": bool(
+            knowledge_part.get("course_general_knowledge")
+        ),
+        "resolve": resolve_part.get("resolve"),
+        "reason": " | ".join(reasons),
+    }
+
+
 def plan_query(query: str, course_ctx: dict) -> dict:
-    """Time + optional resolve + course_general_knowledge."""
+    """Legacy monolithic plan (unused by parallel pipeline; kept for scripts)."""
     raw = ollama_chat(
         [
             {"role": "system", "content": query_plan_system(course_ctx)},
@@ -198,8 +297,8 @@ def build_prompt(
     else:
         for h in hits:
             p = h.payload
-            label = "On slide" if p["type"] == "screen_shot" else "Instructor said"
-            parts.append(f"[{label}] ({p['timestamp']})\n{p['text']}")
+            label = "slide" if p.get("type") == "screen_shot" else "speech"
+            parts.append(f"[{label}] ({p.get('timestamp', '')})\n{p.get('text', '')}")
     return "\n\n".join(parts)
 
 
@@ -212,9 +311,10 @@ def answer(prompt: str) -> str:
         temperature=ANSWER_TEMPERATURE,
         name="llm.answer",
     )
-    if STIFF_REFUSAL_RE.match(raw.strip()):
+    text = (raw or "").strip()
+    if STIFF_REFUSAL_RE.match(text):
         return STIFF_REFUSAL_REPLY
-    return raw
+    return text
 
 
 def no_hit_reply(*, now: bool = False) -> str:

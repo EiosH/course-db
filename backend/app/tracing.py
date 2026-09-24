@@ -47,6 +47,23 @@ def _get_client():
     return _client
 
 
+def run_with_parent(parent, fn, /, *args, **kwargs):
+    """
+    Run fn on a worker thread with Langfuse parent stacked, so nested
+    observation(..., require_parent=True) still attaches under `parent`.
+    """
+    stack = _stack()
+    pushed = False
+    if parent is not None:
+        stack.append(parent)
+        pushed = True
+    try:
+        return fn(*args, **kwargs)
+    finally:
+        if pushed and stack and stack[-1] is parent:
+            stack.pop()
+
+
 @contextmanager
 def observation(
     *,

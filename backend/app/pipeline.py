@@ -2,21 +2,25 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from langchain_core.runnables import RunnableBranch, RunnableLambda
 
 from answering import (
     answer,
+    assemble_plan,
     build_prompt,
     extract_resolved_name,
     no_hit_reply,
-    plan_query,
+    plan_knowledge,
     plan_resolve,
+    plan_resolve_part,
+    plan_time,
     rewrite,
 )
 from config import TIME_NEAR_TOP_K
-from course_route import route_course
+from course_route import route_course, session_course_ctx
 from search import (
     expand_query_with_anchors,
     merge_unique_hits,
@@ -34,7 +38,7 @@ from time_utils import (
     timestamp_constraint_value,
     ts_to_sec,
 )
-from tracing import hits_preview, observation
+from tracing import hits_preview, observation, run_with_parent
 
 
 @dataclass
@@ -66,15 +70,14 @@ def _empty_preprobe() -> dict:
     }
 
 
-def _route(state: dict) -> dict:
-    """Stage 0: pick enrolled course → course_ctx for filters / prompts."""
+def _plan_course_route(query: str) -> dict:
     with observation(
         name="course_route",
         as_type="span",
         require_parent=True,
-        input={"query": state["query"]},
+        input={"query": query},
     ) as obs:
-        course_ctx = route_course(state["query"])
+        course_ctx = route_course(query)
         print(
             f"course_route: {course_ctx['course_id']} / {course_ctx['quarter']} / "
             f"{course_ctx['lecturer']!r} lecture_ids={course_ctx.get('lecture_ids')} "
@@ -82,37 +85,102 @@ def _route(state: dict) -> dict:
         )
         if obs is not None:
             obs.update(output=course_ctx)
-        return {**state, "course_ctx": course_ctx}
+        return course_ctx
+
+
+def _plan_time_part(query: str, session_ctx: dict) -> dict:
+    with observation(
+        name="plan_time",
+        as_type="span",
+        require_parent=True,
+        input={"query": query},
+    ) as obs:
+        part = plan_time(query, session_ctx)
+        if obs is not None:
+            obs.update(output=part)
+        return part
+
+
+def _plan_resolve_sibling(query: str, session_ctx: dict) -> dict:
+    with observation(
+        name="plan_resolve",
+        as_type="span",
+        require_parent=True,
+        input={"query": query},
+    ) as obs:
+        part = plan_resolve_part(query, session_ctx)
+        if obs is not None:
+            obs.update(output=part)
+        return part
+
+
+def _plan_knowledge_part(query: str, session_ctx: dict) -> dict:
+    with observation(
+        name="plan_knowledge",
+        as_type="span",
+        require_parent=True,
+        input={"query": query},
+    ) as obs:
+        part = plan_knowledge(query, session_ctx)
+        if obs is not None:
+            obs.update(output=part)
+        return part
 
 
 def _plan(state: dict) -> dict:
-    """Stage 0a: unified plan (time + optional resolve + course_general)."""
-    course_ctx = state["course_ctx"]
+    """
+    Stage 0: parallel siblings under plan, then assemble constraints.
+    Independent: course_route | time | resolve | knowledge.
+    Sequential after this: preprobe → rewrite → recall.
+    """
+    query = state["query"]
+    session_ctx = session_course_ctx()
     with observation(
         name="plan",
         as_type="span",
         require_parent=True,
-        input={"query": state["query"], "course_id": course_ctx.get("course_id")},
+        input={"query": query, "course_id": session_ctx.get("course_id")},
     ) as obs:
-        plan = plan_query(state["query"], course_ctx)
+        parent = obs
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            f_route = pool.submit(run_with_parent, parent, _plan_course_route, query)
+            f_time = pool.submit(
+                run_with_parent, parent, _plan_time_part, query, session_ctx
+            )
+            f_resolve = pool.submit(
+                run_with_parent, parent, _plan_resolve_sibling, query, session_ctx
+            )
+            f_knowledge = pool.submit(
+                run_with_parent, parent, _plan_knowledge_part, query, session_ctx
+            )
+            course_ctx = f_route.result()
+            time_part = f_time.result()
+            resolve_part = f_resolve.result()
+            knowledge_part = f_knowledge.result()
+
+        plan = assemble_plan(
+            time_part=time_part,
+            resolve_part=resolve_part,
+            knowledge_part=knowledge_part,
+        )
         plan = {
             **plan,
             "hard_constraints": with_lecture_constraint(
                 plan.get("hard_constraints"), course_ctx
             ),
-            # probe list stays as planned; lecture_id pinned when probe runs
             "probe_hard_constraints": list(plan.get("probe_hard_constraints") or []),
         }
         print(
             f"plan: time_mode={plan.get('time_mode')} "
             f"course_general={bool(plan.get('course_general_knowledge'))} "
             f"resolve={plan.get('resolve')!r} "
+            f"hard_cs={plan.get('hard_constraints')} "
             f"probe_cs={plan.get('probe_hard_constraints')} "
             f"({plan.get('reason')})"
         )
         if obs is not None:
-            obs.update(output=plan)
-        return {**state, "plan": plan}
+            obs.update(output={"course_ctx": course_ctx, "plan": plan})
+        return {**state, "course_ctx": course_ctx, "plan": plan}
 
 
 def _preprobe(state: dict) -> dict:
@@ -276,18 +344,21 @@ def _retrieve_now(state: dict) -> dict:
 
 def _hybrid_recall(state: dict) -> dict:
     """Dense(short) + BM25(expanded) + anchor hits for both doc types."""
+    constraints = state.get("constraints") or []
+    course_ctx = state.get("course_ctx") or {}
     with observation(
         name="hybrid_recall",
         as_type="retriever",
         require_parent=True,
         input={
             "q": state.get("q"),
-            "constraints": state.get("constraints"),
+            "constraints": constraints,
+            "course_id": course_ctx.get("course_id"),
+            "lecture_ids": course_ctx.get("lecture_ids"),
         },
     ) as obs:
         client, query, q_short = state["client"], state["query"], state["q"]
-        constraints = state["constraints"]
-        course_ctx = state["course_ctx"]
+        print(f"hybrid_recall: constraints={constraints}")
         q_expand, anchors = expand_query_with_anchors(
             client, query, q_short, constraints, course_ctx
         )
@@ -422,10 +493,9 @@ def _to_result(state: dict) -> QueryResult:
     )
 
 
-# route course → plan → optional resolve → rewrite → branch(retrieve) → answer
+# plan (parallel: course_route | time | resolve | knowledge) → preprobe → rewrite → retrieve → answer
 _CHAIN = (
-    RunnableLambda(_route)
-    | RunnableLambda(_plan)
+    RunnableLambda(_plan)
     | RunnableLambda(_preprobe)
     | RunnableLambda(_prepare)
     | RunnableBranch(

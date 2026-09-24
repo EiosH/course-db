@@ -86,12 +86,31 @@ def lecture_id_constraint(course_ctx: dict) -> dict | None:
 
 
 def with_lecture_constraint(constraints, course_ctx: dict) -> list:
-    """Ensure hard_constraints pin routed lecture_ids (may be multiple)."""
+    """Pin current course (+ optional lecture_ids) into hard_constraints for retrieval/UI."""
+    row = _current_course_row()
     out = [
         c
         for c in (constraints or [])
-        if c.get("field") != "lecture_id"
+        if c.get("field") not in ("lecture_id", "course_id", "quarter", "lecturer")
     ]
+    # Always scope to session current course (visible in hybrid_recall constraints too)
+    out = [
+        {
+            "field": "course_id",
+            "operator": "eq",
+            "value": row.get("course_id") or CURRENT_COURSE,
+        },
+        {
+            "field": "quarter",
+            "operator": "eq",
+            "value": row.get("quarter") or course_ctx.get("quarter") or "",
+        },
+        {
+            "field": "lecturer",
+            "operator": "eq",
+            "value": row.get("lecturer") or course_ctx.get("lecturer") or "",
+        },
+    ] + out
     c = lecture_id_constraint(course_ctx)
     if c is not None:
         out.append(c)
