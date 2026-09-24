@@ -30,21 +30,65 @@ def get_reranker():
     return _reranker
 
 
-def embed(texts):
+def embed(texts, *, retries: int = 5):
+    """Embed texts via Ollama in batches.
+
+    Retries transient failures (Windows socket buffer / ephemeral-port
+    exhaustion after long runs is a common cause of Ollama 400s).
+    """
     out = []
     total = len(texts)
-    for i in range(0, total, EMBED_BATCH):
-        batch = texts[i : i + EMBED_BATCH]
-        r = requests.post(
-            f"{OLLAMA_URL}/api/embed",
-            json={"model": EMBED_MODEL, "input": batch},
-            timeout=300,
-        )
-        if not r.ok:
-            raise RuntimeError(f"Ollama embed {r.status_code}: {r.text}")
-        out.extend(r.json()["embeddings"])
-        done = min(i + EMBED_BATCH, total)
-        print(f"embed {done}/{total}")
+    session = requests.Session()
+    try:
+        for i in range(0, total, EMBED_BATCH):
+            batch = texts[i : i + EMBED_BATCH]
+            last_err = None
+            for attempt in range(1, retries + 1):
+                try:
+                    r = session.post(
+                        f"{OLLAMA_URL}/api/embed",
+                        json={"model": EMBED_MODEL, "input": batch},
+                        timeout=300,
+                    )
+                    if not r.ok:
+                        # Socket exhaustion often surfaces as HTTP 400 from Ollama.
+                        transient = r.status_code in (400, 429, 500, 502, 503)
+                        msg = f"Ollama embed {r.status_code}: {r.text}"
+                        if transient and attempt < retries:
+                            wait = min(30, 2 ** attempt)
+                            print(
+                                f"embed error (attempt {attempt}/{retries}), "
+                                f"retry in {wait}s: {msg[:200]}"
+                            )
+                            time.sleep(wait)
+                            last_err = RuntimeError(msg)
+                            continue
+                        raise RuntimeError(msg)
+                    out.extend(r.json()["embeddings"])
+                    last_err = None
+                    break
+                except (
+                    requests.exceptions.ReadTimeout,
+                    requests.exceptions.ConnectionError,
+                ) as e:
+                    last_err = e
+                    if attempt < retries:
+                        wait = min(30, 2 ** attempt)
+                        print(
+                            f"embed timeout/error "
+                            f"(attempt {attempt}/{retries}), "
+                            f"retry in {wait}s..."
+                        )
+                        time.sleep(wait)
+            if last_err is not None:
+                raise last_err
+            done = min(i + EMBED_BATCH, total)
+            print(f"embed {done}/{total}")
+            # Brief pause every ~1k chunks to let Windows reclaim sockets.
+            if done % 1024 < EMBED_BATCH and done < total:
+                time.sleep(0.5)
+    finally:
+        session.close()
     return out
 
 
