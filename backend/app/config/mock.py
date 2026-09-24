@@ -7,15 +7,9 @@ MOCK_SESSION = {
     "timestamp": "01:22:09",
     "user_courses": {
         "current_quarter": "2026-Spring",
-        "current_course": "CSC447",
-        "current_lecture": "lec01",
+        "current_course": "CSC477",
+        "current_lecture": "lec07",
         "courses": [
-            {
-                "course_id": "CSC447",
-                "quarter": "2026-Spring",
-                "lecturer": "Eric J. Fredericks",
-                "lecture_id": ["lec01"],
-            },
             {
                 "course_id": "CSC477",
                 "quarter": "2026-Spring",
