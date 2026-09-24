@@ -156,12 +156,26 @@ Rules:
 
 def rewrite_system(course_ctx: dict) -> str:
     course_id = course_ctx["course_id"]
+    lids = course_ctx.get("lecture_ids") or []
+    if not lids:
+        scope = (
+            "Lecture scope is already handled by filters (whole current course). "
+            "Do NOT put scope words into rewritten_query."
+        )
+    elif len(lids) == 1:
+        scope = f"Lecture scope is already filtered to {lids[0]}. Do NOT put lecture deixis into rewritten_query."
+    else:
+        scope = (
+            f"Lecture scope is already filtered to {lids}. "
+            "Do NOT put lecture/course deixis into rewritten_query."
+        )
     return f"""You write a retrieval query string for lecture notes / transcript search ({course_id}).
 
 You receive:
 1) the original student question
 2) a query plan (time already decided — do NOT change it)
 3) an optional resolved name from a prior resolve search (a concrete name for a vague phrase)
+4) lecture routing already applied — {scope}
 
 Output JSON only:
 {{
@@ -169,10 +183,41 @@ Output JSON only:
 }}
 
 - rewritten_query: a grounded search string for slides and spoken content (not a tiny stub)
+- Focus on the TOPIC / concepts to find (e.g. "call by name", thunks, non-strict evaluation).
+- STRIP lecture/course deixis from the query. Do NOT include phrases like:
+  "previous course(s)", "prior courses", "other course(s)", "other lecture(s)",
+  "earlier lectures", "previous class(es)", "in this course", "last lecture",
+  "second-to-last", lecture ids (lec03), or similar scope wording.
+  Those only select which lectures to search; filters already did that.
 - Licensed only by the student question and the optional resolved name. Rephrase freely; do not invent assignment/homework/quiz labels the student did not say.
-- Keep concrete labels that already appear in the question (e.g. a numbered item).
+- Keep concrete labels that already appear in the question (e.g. a numbered item), except the scope deixis above.
 - If a resolved name is provided, you MAY include that name. Do not dump lecture snippets.
 """
+
+
+def answer_scope_note(course_ctx: dict) -> str:
+    """Tell the answer model how lecture routing was applied (deixis already consumed)."""
+    lids = course_ctx.get("lecture_ids")
+    if lids is None:
+        lids = []
+    if not lids:
+        return (
+            "Retrieval already searched the whole current course (all lectures). "
+            "The student's phrases like \"previous courses\" / \"other lectures\" only "
+            "meant earlier sessions of THIS course — they are NOT something to find "
+            "quoted in the materials. Answer the TOPIC using the lecture content below; "
+            "do not say the instructor never mentioned previous courses."
+        )
+    if len(lids) == 1:
+        return (
+            f"Retrieval is scoped to lecture {lids[0]} of the current course. "
+            "Answer from that material; ignore lecture-selection wording in the question."
+        )
+    return (
+        f"Retrieval is scoped to lectures {lids} of the current course. "
+        "Answer the topic from that material; ignore lecture-selection wording "
+        "(e.g. \"other lectures\", \"previous courses\") in the question."
+    )
 
 
 COURSE_ROUTE_SYSTEM = """You decide which lecture(s) of the CURRENT course a student question is about.
@@ -217,11 +262,14 @@ Tone:
 - Refer naturally: "the instructor said", "on the slide", "in class".
 
 Rules:
-1. Every sentence should serve the student question.
+1. Every sentence should serve the student question's TOPIC (the concept they asked about).
 2. Prefer facts from the lecture content below.
-3. If the prompt says course subject knowledge is allowed, you may use it to finish the answer when lecture snippets are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
-4. If course subject knowledge is not allowed and the lecture content does not cover the question, apologize briefly like a person.
-5. Be concise."""
+3. If a routing/scope note is provided, follow it: lecture selection words in the question
+   ("previous courses", "other lectures", etc.) were already applied as search filters —
+   do NOT look for the instructor literally saying those phrases, and do NOT refuse on that basis.
+4. If the prompt says course subject knowledge is allowed, you may use it to finish the answer when lecture snippets are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+5. If course subject knowledge is not allowed and the lecture content does not cover the topic, apologize briefly like a person.
+6. Be concise."""
 
 # 无检索结果时不交给模型套模板，直接用人话回复
 NO_HIT_REPLY = (

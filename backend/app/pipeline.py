@@ -433,11 +433,15 @@ def _finalize_rerank(state: dict) -> dict:
             state["tr_dense"],
             state["tr_bm25"],
         )
-        final = rerank_and_filter(f"{state['query']}\n{state['q']}", candidates)
+        # Rerank on topic query only — original question may contain lecture
+        # deixis ("previous courses") that biases toward meta mentions.
+        rerank_q = (state.get("q") or state.get("query") or "").strip()
+        final = rerank_and_filter(rerank_q, candidates)
         if obs is not None:
             obs.update(
                 output={
                     "candidates": len(candidates),
+                    "rerank_q": rerank_q,
                     **hits_preview(final),
                 }
             )
@@ -455,6 +459,7 @@ def _answer(state: dict) -> dict:
             "course_general": bool(
                 (state.get("rewritten") or {}).get("course_general_knowledge")
             ),
+            "lecture_ids": (state.get("course_ctx") or {}).get("lecture_ids"),
         },
     ) as obs:
         rewritten = state["rewritten"]
@@ -464,6 +469,7 @@ def _answer(state: dict) -> dict:
             state["query"],
             hits,
             course_general=course_general,
+            course_ctx=state.get("course_ctx") or {},
         )
         if hits or course_general:
             text = answer(prompt)

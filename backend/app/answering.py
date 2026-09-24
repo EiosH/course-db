@@ -12,6 +12,7 @@ from config import (
     RESOLVE_EXTRACT_SYSTEM,
     STIFF_REFUSAL_RE,
     STIFF_REFUSAL_REPLY,
+    answer_scope_note,
     knowledge_plan_system,
     query_plan_system,
     resolve_plan_system,
@@ -226,10 +227,21 @@ def extract_resolved_name(phrase: str, hits) -> dict:
 def _rewrite_user_message(
     query: str,
     plan: dict,
+    course_ctx: dict,
     resolved_name: str | None = None,
 ) -> str:
+    lids = course_ctx.get("lecture_ids")
+    if lids is None:
+        lids = []
+    scope = (
+        "whole current course (all lectures)"
+        if not lids
+        else f"lecture_ids={lids}"
+    )
     parts = [
         f"Student question:\n{query}",
+        f"Lecture routing already applied: {scope}. "
+        "Strip scope/deixis from rewritten_query; keep only the topic to retrieve.",
         "Query plan (time already fixed — do not change it):\n"
         + json.dumps(
             {
@@ -260,7 +272,9 @@ def rewrite(
             {"role": "system", "content": rewrite_system(course_ctx)},
             {
                 "role": "user",
-                "content": _rewrite_user_message(query, plan, resolved_name),
+                "content": _rewrite_user_message(
+                    query, plan, course_ctx, resolved_name
+                ),
             },
         ],
         format="json",
@@ -281,8 +295,11 @@ def build_prompt(
     hits,
     *,
     course_general: bool = False,
+    course_ctx: dict | None = None,
 ):
     parts = [f"Student question: {question}"]
+    if course_ctx:
+        parts.append(f"Routing note: {answer_scope_note(course_ctx)}")
     if course_general:
         parts.append(
             "Course subject knowledge is allowed. Lecture snippets below are "
@@ -298,7 +315,11 @@ def build_prompt(
         for h in hits:
             p = h.payload
             label = "slide" if p.get("type") == "screen_shot" else "speech"
-            parts.append(f"[{label}] ({p.get('timestamp', '')})\n{p.get('text', '')}")
+            lid = p.get("lecture_id")
+            loc = f"{lid} " if lid else ""
+            parts.append(
+                f"[{label}] {loc}({p.get('timestamp', '')})\n{p.get('text', '')}"
+            )
     return "\n\n".join(parts)
 
 
