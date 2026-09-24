@@ -1,7 +1,7 @@
 What did the instructor say at 20min?
 What did the instructor say about Dynamic dispatch?
-What did the instructor say in the class before last at 2h56?
-What did the instructor say about Call by name in the previous course?
+What did the instructor say at 2:56 in the second-to-last class?
+What did the instructor say about Call by name in the previous courses?
 what quizzes about Dynamic dispatch did the instructor mention in the other lectures?
 
 

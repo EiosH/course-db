@@ -8,7 +8,7 @@ MOCK_SESSION = {
     "user_courses": {
         "current_quarter": "2026-Spring",
         "current_course": "CSC477",
-        "current_lecture": "lec07",
+        "current_lecture": "lec08",
         "courses": [
             {
                 "course_id": "CSC477",

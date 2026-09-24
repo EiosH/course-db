@@ -94,6 +94,8 @@ Output JSON only:
 
 COURSE_ROUTE_SYSTEM = """You decide which lecture(s) of the CURRENT course a student question is about.
 
+You only ever choose from the current course catalog. Other subjects / other course codes are out of scope — ignore them; never say the question is unroutable for that reason.
+
 Output JSON only:
 {
   "use_current": true,
@@ -102,12 +104,13 @@ Output JSON only:
 }
 
 Rules:
-- lecture_ids MUST be chosen ONLY from the current course's lecture list in the catalog. Never pick lectures from any other course.
-- use_current=true when the question does NOT clearly point to another lecture (e.g. "last lecture", "lecture 2", "lec03"). Then leave lecture_ids null — the system will use current_lecture.
-- use_current=false when the question clearly refers to one or more other lectures of the current course. Then set lecture_ids to those ids from the catalog (do NOT invent ids).
-- lecture_ids is an array (one or many).
-- If they ask about the whole current course / all lectures without naming one, set use_current=false and lecture_ids to ALL lectures in the catalog.
-- Vague topic questions without lecture deixis → use_current=true.
+- lecture_ids MUST be chosen ONLY from the current course's lecture list in the catalog. Do NOT invent ids.
+- use_current=true when the question does NOT clearly point away from the playback lecture. Leave lecture_ids null — the system uses current_lecture.
+- use_current=false when the question clearly refers to one or more other lectures of THIS course. Set lecture_ids to those catalog ids (one or many).
+- Whole-course / multi-session wording → use_current=false and lecture_ids = ALL lectures in the catalog. Treat these as the same intent (other sessions of this class, not another subject):
+  "previous course(s)", "prior course(s)", "other course(s)", "previous class(es)", "other lecture(s)", "other class(es)", "earlier lectures", "in previous lectures", "across lectures", "in this course" (when not naming one lecture).
+- Named deixis ("last lecture", "second-to-last", "lecture 2", "lec03") → use_current=false and the matching catalog id(s) only.
+- Vague topic questions with no lecture/session deixis → use_current=true.
 """
 
 ANSWER_SYSTEM = """You are a friendly course assistant sitting next to the student during lecture.
