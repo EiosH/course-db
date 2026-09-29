@@ -39,7 +39,7 @@ from time_utils import (
     timestamp_constraint_value,
     ts_to_sec,
 )
-from tracing import hits_preview, observation, submit_with_parent, trace_attributes
+from tracing import hits_preview, observation, submit_with_parent
 
 
 @dataclass
@@ -551,28 +551,26 @@ def answer_query(
     query: str,
     history: list[dict] | None = None,
     *,
-    session_id: str | None = None,
-    tags: list[str] | None = None,
-    trace_metadata: dict[str, str] | None = None,
+    name: str = "answer_query",
+    metadata: dict | None = None,
 ) -> QueryResult:
     """
     Public entry for eval / callers.
 
     history: earlier turns of the same dialog, oldest first, each
     {"question": standalone question, "answer": answer text}.
-    session_id / tags / trace_metadata: Langfuse trace attributes; turns of
-    one dialog share a session_id.
+    name / metadata: this turn's Langfuse observation. Opened inside another
+    observation (e.g. a dialog root) it nests there; otherwise it is the root.
     """
     history = list(history or [])
-    # One Langfuse trace per question. Nested ollama_chat generations attach here.
+    # Nested ollama_chat generations attach here.
     # (LangChain CallbackHandler is intentionally NOT used: it opens a second root.)
     with observation(
-        name="answer_query",
+        name=name,
         as_type="chain",
         input={"query": query, "history": history},
-    ) as span, trace_attributes(
-        span, session_id=session_id, tags=tags, metadata=trace_metadata
-    ):
+        metadata=metadata,
+    ) as span:
         result = _CHAIN.invoke(
             {"client": client, "query": query, "history": history}
         )
@@ -585,6 +583,7 @@ def answer_query(
                     "standalone_query": result.standalone_query,
                 },
                 metadata={
+                    **(metadata or {}),
                     "standalone_query": result.standalone_query,
                     "history_turns": len(history),
                     "time_mode": result.time_mode,
@@ -602,5 +601,4 @@ def answer_query(
                     "search_query": result.search_query,
                 },
             )
-            print(f"langfuse: trace_id={span.trace_id}")
         return result

@@ -22,7 +22,6 @@ from config import (
     UPSERT_BATCH,
 )
 from eval import default_reporters, run_batch
-from eval.reporters import ConsoleReporter, ExcelReporter, TxtReporter
 from llm import embed
 from loaders import load_all_lecture_chunks, load_dialogs
 
@@ -46,24 +45,14 @@ def parse_args():
         "or legacy .txt with one question per line",
     )
     parser.add_argument(
-        "--no-excel",
+        "--excel",
         action="store_true",
-        help="eval: skip Excel reporter",
+        help="eval: also write data/out/answer.xlsx (default: console + Langfuse only)",
     )
     parser.add_argument(
-        "--no-txt",
+        "--txt",
         action="store_true",
-        help="eval: skip txt reporter",
-    )
-    parser.add_argument(
-        "--excel-only",
-        action="store_true",
-        help="eval: only Excel (+ console)",
-    )
-    parser.add_argument(
-        "--txt-only",
-        action="store_true",
-        help="eval: only txt (+ console)",
+        help="eval: also write data/out/answer_<stamp>.txt",
     )
     return parser.parse_args()
 
@@ -170,11 +159,7 @@ def ingest_docs(client):
 
 def build_reporters(args):
     """Assemble pluggable eval sinks from CLI flags."""
-    if args.excel_only:
-        return [ConsoleReporter(), ExcelReporter()]
-    if args.txt_only:
-        return [ConsoleReporter(), TxtReporter()]
-    return default_reporters(excel=not args.no_excel, txt=not args.no_txt)
+    return default_reporters(excel=args.excel, txt=args.txt)
 
 
 def main():

@@ -57,7 +57,7 @@ Docker Compose
 
 # 问答路由（按用户问题类型）
 
-`data/dialogs.yaml` 中每条问题（多轮对话按轮次顺序）统一走：**rewrite → 检索 → 拼 prompt → 回答 → 写 Excel**。  
+`data/dialogs.yaml` 中每条问题（多轮对话按轮次顺序）统一走：**rewrite → 检索 → 拼 prompt → 回答 → 上报 Langfuse**。  
 预过滤始终带上 `course_id` / `quarter` / `lecturer`；数据分 `screen_shot`（课件 OCR）与 `transcript`（字幕）两类。
 
 | 用户问题类型 | rewrite | 检索 | 回答 |
@@ -83,8 +83,9 @@ cd backend/app
 python main.py --backfill-bm25-phrases   # 旧库只补 BM25 短语 token
 python main.py --inspect-phrase "Question 9"  # 对比词袋 BM25 vs 短语 token
 python main.py --ingest                  # 全量重建（含短语 token）
-python main.py                           # 跑 data/dialogs.yaml 问答
+python main.py                           # 跑 data/dialogs.yaml 问答（结果看控制台 + Langfuse）
 python main.py --dialogs path/to/q.txt   # 旧格式：每行一个单轮问题
+python main.py --excel --txt             # 额外写 data/out/ 下的 Excel / txt
 ```
 
 `dialogs.yaml` 格式（文件头注释有完整说明）：
@@ -97,6 +98,8 @@ python main.py --dialogs path/to/q.txt   # 旧格式：每行一个单轮问题
     - "Give me an example of it."
 ```
 
-Excel 里多轮的序号列显示为 `call-by-name#2`；重复跑时按「对话轮次 + 问题」匹配已有行，追加到下一个答案列。
+多轮流程：从第 2 轮起，先用最近 3 轮问答把追问改写成完整问题（standalone question），后续 plan / 检索 / 回答都用它；回答时也带上最近 3 轮问答作为上下文。
 
-多轮流程：从第 2 轮起，先用最近 3 轮问答把追问改写成完整问题（「独立问题」列），后续 plan / 检索 / 回答都用它；回答时也带上最近 3 轮问答作为上下文。
+Langfuse：每段对话一条 trace（根节点名 = 对话 id），每轮是其下的 `turn N` 子节点；同一次跑批的所有对话在同一个 session（`eval-<时间>`）。
+
+开了 `--excel` 时，多轮的序号列显示为 `call-by-name#2`；重复跑时按「对话轮次 + 问题」匹配已有行，追加到下一个答案列。

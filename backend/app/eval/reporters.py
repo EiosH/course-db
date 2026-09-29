@@ -391,7 +391,7 @@ class ConsoleReporter:
         return
 
 
-def default_reporters(*, excel: bool = True, txt: bool = True) -> list[Reporter]:
+def default_reporters(*, excel: bool = False, txt: bool = False) -> list[Reporter]:
     reps: list[Reporter] = [ConsoleReporter()]
     if excel:
         reps.append(ExcelReporter())
