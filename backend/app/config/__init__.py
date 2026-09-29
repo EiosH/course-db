@@ -27,7 +27,7 @@ from config.prompts import *  # noqa: E402,F401,F403
 DATA_DIR = APP_DIR / "data"
 OUTPUT_DIR = DATA_DIR / "out"
 LECTURES_DIR = DATA_DIR / "lectures"  # <course_id>/<lecture_id>/{doc,transcript,meta}
-QUERY_PATH = DATA_DIR / "query.txt"
+DIALOGS_PATH = DATA_DIR / "dialogs.yaml"
 
 TIME_WINDOW_SEC = 120  # 时间戳约束：±2 分钟
 
@@ -39,6 +39,9 @@ RERANK_TOP_K = 4
 RERANK_MIN_SCORE = 0.0  # Qwen3-Reranker: yes/no logit diff，>0 表示相关
 
 # 可选 resolve：问题里说不清的指称，小 top-k 召回后抽出具体名字（不 rerank）
+HISTORY_TURNS = 3  # 多轮：补全问题 / 回答时带上的最近轮数
+HISTORY_ANSWER_CHARS = 800  # 多轮：每轮历史答案截断长度
+
 PREPROBE_TOP_K = 3
 PREPROBE_DENSE_LIMIT = 3
 PREPROBE_BM25_LIMIT = 3

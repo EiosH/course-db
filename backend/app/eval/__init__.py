@@ -5,6 +5,7 @@ from eval.reporters import (
     ConsoleReporter,
     ExcelReporter,
     Reporter,
+    TurnRef,
     TxtReporter,
     default_reporters,
 )
@@ -12,6 +13,7 @@ from eval.reporters import (
 __all__ = [
     "run_batch",
     "Reporter",
+    "TurnRef",
     "ConsoleReporter",
     "ExcelReporter",
     "TxtReporter",

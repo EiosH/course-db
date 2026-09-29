@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol
@@ -18,6 +19,7 @@ from pipeline import QueryResult
 ANSWER_HEADERS = [
     "序号",
     "原问题",
+    "独立问题",
     "查询计划",
     "预探查",
     "预探查召回",
@@ -36,23 +38,25 @@ ANSWER_HEADERS = [
 # 1-based Excel column of the first answer cell ("答案")
 ANSWER_COL = ANSWER_HEADERS.index("答案") + 1
 QUERY_COL = ANSWER_HEADERS.index("原问题") + 1
+INDEX_COL = ANSWER_HEADERS.index("序号") + 1
 ANSWER_COL_WIDTHS = {
-    "A": 6,
+    "A": 16,
     "B": 36,
     "C": 36,
     "D": 36,
-    "E": 42,
-    "F": 40,
-    "G": 28,
-    "H": 12,
-    "I": 14,
-    "J": 20,
-    "K": 42,
+    "E": 36,
+    "F": 42,
+    "G": 40,
+    "H": 28,
+    "I": 12,
+    "J": 14,
+    "K": 20,
     "L": 42,
     "M": 42,
     "N": 42,
-    "O": 50,
+    "O": 42,
     "P": 50,
+    "Q": 50,
 }
 DEFAULT_ANSWER_WIDTH = 50
 CELL_WRAP = Alignment(vertical="top", wrap_text=True)
@@ -100,12 +104,40 @@ def format_preprobe(preprobe: dict | None) -> str:
     )
 
 
+@dataclass(frozen=True)
+class TurnRef:
+    """Where a QueryResult sits in the eval input."""
+
+    index: int  # 1-based running number across the whole batch
+    dialog_id: str | None  # None = anonymous single-turn entry
+    turn: int  # 1-based within the dialog
+    n_turns: int
+
+    @property
+    def key(self) -> str | None:
+        """Stable identity across runs; None for anonymous single-turn entries."""
+        return None if self.dialog_id is None else f"{self.dialog_id}#{self.turn}"
+
+    @property
+    def label(self) -> str | int:
+        return self.key or self.index
+
+
+def _is_turn_key(value) -> bool:
+    return isinstance(value, str) and "#" in value
+
+
+def _header_matches(ws) -> bool:
+    got = [ws.cell(row=1, column=c).value for c in range(1, ANSWER_COL + 1)]
+    return got == ANSWER_HEADERS
+
+
 class Reporter(Protocol):
     """Eval sink: start → record each QueryResult → finish."""
 
     def start(self) -> None: ...
 
-    def record(self, index: int, result: QueryResult) -> None: ...
+    def record(self, ref: TurnRef, result: QueryResult) -> None: ...
 
     def finish(self) -> None: ...
 
@@ -116,6 +148,10 @@ class ExcelReporter:
 
     Same question → append answer in the next empty answer column.
     New question → append a full new row.
+    Dialog turns are matched on (dialog_id#turn, question), since the same
+    follow-up text means different things in different dialogs.
+    An existing file with a different column layout is renamed to
+    <stem>_old_<stamp>.xlsx and a fresh one is started.
     """
 
     def __init__(self, path: Path | str | None = None):
@@ -126,10 +162,17 @@ class ExcelReporter:
     def start(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if self.path.exists():
-            self.wb = load_workbook(self.path)
-            self.ws = self.wb.active
-            print(f"[excel] appending → {self.path}")
-            return
+            wb = load_workbook(self.path)
+            if _header_matches(wb.active):
+                self.wb, self.ws = wb, wb.active
+                print(f"[excel] appending → {self.path}")
+                return
+            stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            old = self.path.with_name(
+                f"{self.path.stem}_old_{stamp}{self.path.suffix}"
+            )
+            self.path.rename(old)
+            print(f"[excel] column layout changed; moved old file → {old}")
         self.wb = Workbook()
         self.ws = self.wb.active
         self.ws.title = "answers"
@@ -142,10 +185,14 @@ class ExcelReporter:
         self.wb.save(self.path)
         print(f"[excel] writing → {self.path}")
 
-    def _find_question_row(self, query: str) -> int | None:
+    def _find_question_row(self, ref: TurnRef, query: str) -> int | None:
         for row_idx in range(2, (self.ws.max_row or 1) + 1):
             val = self.ws.cell(row=row_idx, column=QUERY_COL).value
-            if val is not None and str(val).strip() == query.strip():
+            if val is None or str(val).strip() != query.strip():
+                continue
+            label = self.ws.cell(row=row_idx, column=INDEX_COL).value
+            row_key = label if _is_turn_key(label) else None
+            if row_key == ref.key:
                 return row_idx
         return None
 
@@ -176,8 +223,8 @@ class ExcelReporter:
         cell.alignment = CELL_WRAP
         return col
 
-    def record(self, index: int, result: QueryResult) -> None:
-        existing = self._find_question_row(result.query)
+    def record(self, ref: TurnRef, result: QueryResult) -> None:
+        existing = self._find_question_row(ref, result.query)
         if existing is not None:
             col = self._append_answer_cell(existing, result.answer_text)
             self.wb.save(self.path)
@@ -189,8 +236,9 @@ class ExcelReporter:
         final_channel = "time" if result.ts_value else "rerank"
         preprobe_hits = (result.preprobe or {}).get("hits") or []
         row = [
-            index,
+            ref.label,
             result.query,
+            result.standalone_query,
             format_query_plan(result.preprobe),
             format_preprobe(result.preprobe),
             format_hits(preprobe_hits, "preprobe"),
@@ -231,11 +279,17 @@ class TxtReporter:
         self._fh = open(self.path, "w", encoding="utf-8")
         print(f"[txt] writing → {self.path}")
 
-    def record(self, index: int, result: QueryResult) -> None:
+    def record(self, ref: TurnRef, result: QueryResult) -> None:
         preprobe_hits = (result.preprobe or {}).get("hits") or []
         hits_block = format_hits(preprobe_hits, "preprobe") or "(none)"
+        standalone = (
+            f"独立问题: {result.standalone_query}\n"
+            if result.standalone_query != result.query
+            else ""
+        )
         block = (
-            f"{index}. 原问题: {result.query}\n"
+            f"{ref.label}. 原问题: {result.query}\n"
+            f"{standalone}"
             f"query_plan:\n"
             f"{format_query_plan(result.preprobe)}\n"
             f"\n"
@@ -258,7 +312,7 @@ class TxtReporter:
         )
         self._fh.write(block)
         self._fh.flush()
-        print(f"[txt] wrote item {index} → {self.path}")
+        print(f"[txt] wrote item {ref.label} → {self.path}")
 
     def finish(self) -> None:
         if self._fh:
@@ -273,8 +327,13 @@ class ConsoleReporter:
     def start(self) -> None:
         return
 
-    def record(self, index: int, result: QueryResult) -> None:
-        print(f"\nquery:    {result.query}")
+    def record(self, ref: TurnRef, result: QueryResult) -> None:
+        print()
+        if ref.dialog_id is not None:
+            print(f"dialog:   {ref.dialog_id} (turn {ref.turn}/{ref.n_turns})")
+        print(f"query:    {result.query}")
+        if result.standalone_query != result.query:
+            print(f"standalone: {result.standalone_query}")
         ctx = result.course_ctx or {}
         if ctx:
             print(

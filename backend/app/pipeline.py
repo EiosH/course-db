@@ -11,6 +11,7 @@ from answering import (
     answer,
     assemble_plan,
     build_prompt,
+    condense,
     extract_resolved_name,
     no_hit_reply,
     plan_knowledge,
@@ -38,7 +39,7 @@ from time_utils import (
     timestamp_constraint_value,
     ts_to_sec,
 )
-from tracing import hits_preview, observation, run_with_parent
+from tracing import hits_preview, observation, submit_with_parent, trace_attributes
 
 
 @dataclass
@@ -59,6 +60,8 @@ class QueryResult:
     answer_text: str = ""
     preprobe: dict = field(default_factory=dict)
     course_ctx: dict = field(default_factory=dict)
+    # query with earlier turns folded in; equals query on the first turn
+    standalone_query: str = ""
 
 
 def _empty_preprobe() -> dict:
@@ -68,6 +71,29 @@ def _empty_preprobe() -> dict:
         "hits": [],
         "resolved": None,
     }
+
+
+def _condense(state: dict) -> dict:
+    """
+    Stage -1: fold earlier turns into a standalone question.
+    Everything downstream reads state["query"]; the original stays in raw_query.
+    """
+    query = state["query"]
+    history = state.get("history") or []
+    if not history:
+        return state
+    with observation(
+        name="condense",
+        as_type="span",
+        require_parent=True,
+        input={"query": query, "history": history},
+    ) as obs:
+        out = condense(query, history)
+        standalone = out["standalone"]
+        print(f"condense: {query!r} → {standalone!r} ({out['reason']})")
+        if obs is not None:
+            obs.update(output=out)
+    return {**state, "raw_query": query, "query": standalone}
 
 
 def _plan_course_route(query: str) -> dict:
@@ -143,15 +169,15 @@ def _plan(state: dict) -> dict:
     ) as obs:
         parent = obs
         with ThreadPoolExecutor(max_workers=4) as pool:
-            f_route = pool.submit(run_with_parent, parent, _plan_course_route, query)
-            f_time = pool.submit(
-                run_with_parent, parent, _plan_time_part, query, session_ctx
+            f_route = submit_with_parent(pool, parent, _plan_course_route, query)
+            f_time = submit_with_parent(
+                pool, parent, _plan_time_part, query, session_ctx
             )
-            f_resolve = pool.submit(
-                run_with_parent, parent, _plan_resolve_sibling, query, session_ctx
+            f_resolve = submit_with_parent(
+                pool, parent, _plan_resolve_sibling, query, session_ctx
             )
-            f_knowledge = pool.submit(
-                run_with_parent, parent, _plan_knowledge_part, query, session_ctx
+            f_knowledge = submit_with_parent(
+                pool, parent, _plan_knowledge_part, query, session_ctx
             )
             course_ctx = f_route.result()
             time_part = f_time.result()
@@ -460,6 +486,7 @@ def _answer(state: dict) -> dict:
                 (state.get("rewritten") or {}).get("course_general_knowledge")
             ),
             "lecture_ids": (state.get("course_ctx") or {}).get("lecture_ids"),
+            "history_turns": len(state.get("history") or []),
         },
     ) as obs:
         rewritten = state["rewritten"]
@@ -472,7 +499,7 @@ def _answer(state: dict) -> dict:
             course_ctx=state.get("course_ctx") or {},
         )
         if hits or course_general:
-            text = answer(prompt)
+            text = answer(prompt, history=state.get("history"))
         else:
             text = no_hit_reply(now=state["time_mode"] == "now")
         if obs is not None:
@@ -482,7 +509,8 @@ def _answer(state: dict) -> dict:
 
 def _to_result(state: dict) -> QueryResult:
     return QueryResult(
-        query=state["query"],
+        query=state.get("raw_query") or state["query"],
+        standalone_query=state["query"],
         rewritten=state["rewritten"],
         search_query=state["q"],
         time_mode=state["time_mode"],
@@ -499,9 +527,10 @@ def _to_result(state: dict) -> QueryResult:
     )
 
 
-# plan (parallel: course_route | time | resolve | knowledge) → preprobe → rewrite → retrieve → answer
+# condense → plan (parallel: course_route | time | resolve | knowledge) → preprobe → rewrite → retrieve → answer
 _CHAIN = (
-    RunnableLambda(_plan)
+    RunnableLambda(_condense)
+    | RunnableLambda(_plan)
     | RunnableLambda(_preprobe)
     | RunnableLambda(_prepare)
     | RunnableBranch(
@@ -517,22 +546,47 @@ _CHAIN = (
 )
 
 
-def answer_query(client, query: str) -> QueryResult:
-    """Public entry: same contract as before for eval / callers."""
+def answer_query(
+    client,
+    query: str,
+    history: list[dict] | None = None,
+    *,
+    session_id: str | None = None,
+    tags: list[str] | None = None,
+    trace_metadata: dict[str, str] | None = None,
+) -> QueryResult:
+    """
+    Public entry for eval / callers.
+
+    history: earlier turns of the same dialog, oldest first, each
+    {"question": standalone question, "answer": answer text}.
+    session_id / tags / trace_metadata: Langfuse trace attributes; turns of
+    one dialog share a session_id.
+    """
+    history = list(history or [])
     # One Langfuse trace per question. Nested ollama_chat generations attach here.
     # (LangChain CallbackHandler is intentionally NOT used: it opens a second root.)
     with observation(
         name="answer_query",
         as_type="chain",
-        input={"query": query},
-    ) as span:
-        result = _CHAIN.invoke({"client": client, "query": query})
+        input={"query": query, "history": history},
+    ) as span, trace_attributes(
+        span, session_id=session_id, tags=tags, metadata=trace_metadata
+    ):
+        result = _CHAIN.invoke(
+            {"client": client, "query": query, "history": history}
+        )
         if span is not None:
             plan = (result.preprobe or {}).get("plan") or {}
             ctx = result.course_ctx or {}
             span.update(
-                output={"answer": result.answer_text},
+                output={
+                    "answer": result.answer_text,
+                    "standalone_query": result.standalone_query,
+                },
                 metadata={
+                    "standalone_query": result.standalone_query,
+                    "history_turns": len(history),
                     "time_mode": result.time_mode,
                     "ts_value": result.ts_value,
                     "course_id": ctx.get("course_id"),

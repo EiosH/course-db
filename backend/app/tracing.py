@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextvars
 import threading
 from contextlib import contextmanager
 from typing import Any, Iterator
@@ -62,6 +63,47 @@ def run_with_parent(parent, fn, /, *args, **kwargs):
     finally:
         if pushed and stack and stack[-1] is parent:
             stack.pop()
+
+
+def submit_with_parent(pool, parent, fn, /, *args, **kwargs):
+    """
+    pool.submit + run_with_parent, carrying the caller's context into the
+    worker so propagated trace attributes (session / tags / metadata) apply
+    to observations opened there too.
+    """
+    ctx = contextvars.copy_context()
+    return pool.submit(ctx.run, run_with_parent, parent, fn, *args, **kwargs)
+
+
+@contextmanager
+def trace_attributes(
+    obs,
+    *,
+    session_id: str | None = None,
+    tags: list[str] | None = None,
+    metadata: dict[str, str] | None = None,
+) -> Iterator[None]:
+    """
+    Trace-level session / tags / metadata for `obs` and observations opened
+    inside. Langfuse v4 propagates them via context; v3 sets them on the trace.
+    Propagated metadata values must be strings of at most 200 chars.
+    """
+    if obs is None:
+        yield
+        return
+    try:
+        from langfuse import propagate_attributes
+    except ImportError:
+        propagate_attributes = None
+    if propagate_attributes is not None:
+        with propagate_attributes(
+            session_id=session_id, tags=tags, metadata=metadata
+        ):
+            yield
+        return
+    if hasattr(obs, "update_trace"):
+        obs.update_trace(session_id=session_id, tags=tags, metadata=metadata)
+    yield
 
 
 @contextmanager

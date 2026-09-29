@@ -138,6 +138,32 @@ Output JSON only:
 """
 
 
+CONDENSE_SYSTEM = """You turn a student's follow-up question into a standalone question, using the earlier conversation.
+
+Do NOT answer the question. Do NOT add facts beyond what is needed to make the question self-contained.
+
+Output JSON only:
+{
+  "standalone": "...",
+  "reason": "short"
+}
+
+Rules:
+- Replace references to earlier turns with what they refer to: pronouns ("it", "that", "he"),
+  "the same topic", "the first one", "that moment", "then", "the example", etc.
+  Take the referent from the earlier questions or answers (e.g. a quiz title listed in an answer).
+- Relative time → one explicit time, computed from the time in earlier turns
+  (e.g. earlier "at 20min", follow-up "a few minutes after that" → "around 23min").
+  "then" / "that moment" → repeat the earlier time.
+- Lecture scope:
+  - If the follow-up names its own scope ("in this lecture", "in lec03", "in the previous courses"), keep that wording as-is.
+  - Otherwise carry over the scope wording of the earlier turn it continues ("in the class before last", "in the other lectures").
+  - Do NOT convert scope wording into lecture ids.
+- If the follow-up is already self-contained or starts a new topic, return it unchanged.
+- Keep it one question, in the student's language, close to the student's wording.
+"""
+
+
 RESOLVE_EXTRACT_SYSTEM = """You resolve a vague phrase to a concrete name using lecture snippets.
 
 Given a phrase from the student question (e.g. "the example", "this") and retrieved snippets, output JSON only:
@@ -269,7 +295,11 @@ Rules:
    do NOT look for the instructor literally saying those phrases, and do NOT refuse on that basis.
 4. If the prompt says course subject knowledge is allowed, you may use it to finish the answer when lecture snippets are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
 5. If course subject knowledge is not allowed and the lecture content does not cover the topic, apologize briefly like a person.
-6. Be concise."""
+6. Be concise.
+7. Earlier turns of the conversation may come before the current question. Use them only to
+   understand the question and stay consistent (build on what you already said, don't repeat it).
+   Lecture facts must come from the lecture content in the current message — your earlier
+   answers are not a source of new lecture facts."""
 
 # 无检索结果时不交给模型套模板，直接用人话回复
 NO_HIT_REPLY = (

@@ -5,3 +5,4 @@ sentence-transformers
 langchain-core
 langfuse
 python-dotenv
+pyyaml

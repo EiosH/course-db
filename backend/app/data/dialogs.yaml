@@ -1,0 +1,45 @@
+# 批量评估输入（python main.py 默认读取本文件）
+#
+# 每一项是一段对话，按顺序执行；同一段对话里的各轮共享上下文。
+#
+# 单轮：直接写问题
+#   - "What did the instructor say at 20min?"
+#
+# 多轮：写 id + turns。多轮必须有 id，结果里序号列显示为 id#轮次
+#   - id: call-by-name
+#     turns:
+#       - "What did the instructor say about call by name?"
+#       - "Give me an example of it."
+#       - "What about in lec03?"
+#
+# 问题里有 ": "（冒号加空格）时必须加引号，建议统一加双引号。
+
+- id: at-20min
+  turns:
+    - "What did the instructor say at 20min?"
+    - "What was on the slide at that moment?"
+    - "What did he say a few minutes after that?"
+
+- id: dynamic-dispatch
+  turns:
+    - "What did the instructor say about Dynamic dispatch?"
+    - "How is it different from static dispatch?"
+    - "Can you give me an example from the lecture?"
+
+- id: class-before-last-2h56
+  turns:
+    - "What did the instructor say around 2:56：00 in the class before last?"
+    - "What topic was he explaining then?"
+    - "Did he talk about the same topic in this lecture?"
+
+- id: call-by-name-previous
+  turns:
+    - "What did the instructor say about Call by name in the previous courses?"
+    - "How does it compare to call by value?"
+    - "Which lecture covered it in the most detail?"
+
+- id: dynamic-dispatch-quizzes
+  turns:
+    - "what quizzes about Dynamic dispatch did the instructor mention in the other lectures?"
+    - "What was the answer to the first one?"
+    - "Explain why that answer is correct."

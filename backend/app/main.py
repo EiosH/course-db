@@ -24,7 +24,7 @@ from config import (
 from eval import default_reporters, run_batch
 from eval.reporters import ConsoleReporter, ExcelReporter, TxtReporter
 from llm import embed
-from loaders import load_all_lecture_chunks
+from loaders import load_all_lecture_chunks, load_dialogs
 
 
 def parse_args():
@@ -38,6 +38,12 @@ def parse_args():
         "--backfill-bm25-phrases",
         action="store_true",
         help="rebuild BM25 sparse vectors with phrase tokens from existing payloads (no dense re-embed)",
+    )
+    parser.add_argument(
+        "--dialogs",
+        metavar="PATH",
+        help="eval input: dialogs .yaml (default data/dialogs.yaml) "
+        "or legacy .txt with one question per line",
     )
     parser.add_argument(
         "--no-excel",
@@ -185,7 +191,11 @@ def main():
         print("skip ingest, search existing collection")
 
     # Batch Q&A is eval-layer only; core stays in pipeline.answer_query
-    run_batch(client, reporters=build_reporters(args))
+    run_batch(
+        client,
+        dialogs=load_dialogs(args.dialogs),
+        reporters=build_reporters(args),
+    )
 
 
 if __name__ == "__main__":

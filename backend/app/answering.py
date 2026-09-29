@@ -6,6 +6,9 @@ import re
 from config import (
     ANSWER_SYSTEM,
     ANSWER_TEMPERATURE,
+    CONDENSE_SYSTEM,
+    HISTORY_ANSWER_CHARS,
+    HISTORY_TURNS,
     NO_HIT_NOW_REPLY,
     NO_HIT_REPLY,
     PREPROBE_MIN_CONFIDENCE,
@@ -28,6 +31,56 @@ def _parse_json_content(raw: str) -> dict:
         raw = re.sub(r"^```(?:json)?\s*", "", raw)
         raw = re.sub(r"\s*```$", "", raw)
     return json.loads(raw)
+
+
+def _clip_answer(text: str | None) -> str:
+    text = (text or "").strip()
+    if len(text) > HISTORY_ANSWER_CHARS:
+        text = text[:HISTORY_ANSWER_CHARS].rstrip() + " …"
+    return text
+
+
+def _history_block(history: list[dict]) -> str:
+    return "\n\n".join(
+        f"Q{i}: {turn.get('question', '')}\nA{i}: {_clip_answer(turn.get('answer'))}"
+        for i, turn in enumerate(history, 1)
+    )
+
+
+def _history_messages(history: list[dict] | None) -> list[dict]:
+    messages = []
+    for turn in (history or [])[-HISTORY_TURNS:]:
+        messages.append({"role": "user", "content": turn.get("question", "")})
+        messages.append({"role": "assistant", "content": _clip_answer(turn.get("answer"))})
+    return messages
+
+
+def condense(query: str, history: list[dict]) -> dict:
+    """Follow-up + recent turns → standalone question (unchanged if no history)."""
+    turns = history[-HISTORY_TURNS:]
+    if not turns:
+        return {"standalone": query, "reason": "no history"}
+    raw = ollama_chat(
+        [
+            {"role": "system", "content": CONDENSE_SYSTEM},
+            {
+                "role": "user",
+                "content": (
+                    "Earlier conversation (oldest first):\n\n"
+                    f"{_history_block(turns)}\n\n"
+                    f"Follow-up question: {query}"
+                ),
+            },
+        ],
+        format="json",
+        name="llm.condense",
+    )
+    data = _parse_json_content(raw)
+    standalone = str(data.get("standalone") or "").strip()
+    return {
+        "standalone": standalone or query,
+        "reason": str(data.get("reason") or "").strip(),
+    }
 
 
 def plan_resolve(plan: dict | None) -> str | None:
@@ -323,10 +376,12 @@ def build_prompt(
     return "\n\n".join(parts)
 
 
-def answer(prompt: str) -> str:
+def answer(prompt: str, history: list[dict] | None = None) -> str:
+    """history: earlier turns of the dialog, sent as prior user/assistant messages."""
     raw = ollama_chat(
         [
             {"role": "system", "content": ANSWER_SYSTEM},
+            *_history_messages(history),
             {"role": "user", "content": prompt},
         ],
         temperature=ANSWER_TEMPERATURE,

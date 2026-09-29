@@ -1,13 +1,16 @@
-"""Load queries, screenshot OCR dumps, and VTT transcript chunks."""
+"""Load eval dialogs, screenshot OCR dumps, and VTT transcript chunks."""
 
 import json
 import re
+from dataclasses import dataclass
 from pathlib import Path
+
+import yaml
 
 from config import (
     CUE_RE,
+    DIALOGS_PATH,
     LECTURES_DIR,
-    QUERY_PATH,
     SCREEN_BOILERPLATE_RE,
     SCREEN_LABEL_RE,
     TRANSCRIPT_MAX_CHARS,
@@ -16,14 +19,71 @@ from config import (
 from time_utils import ts_to_sec
 
 
-def load_queries(path: str | Path | None = None):
-    path = Path(path) if path else QUERY_PATH
-    queries = []
-    for line in open(path, encoding="utf-8"):
+@dataclass(frozen=True)
+class Dialog:
+    """One eval conversation; turns run in order and share context."""
+
+    id: str | None  # None = anonymous single-turn entry
+    turns: list[str]
+
+
+def load_dialogs(path: str | Path | None = None) -> list[Dialog]:
+    """
+    Eval input: data/dialogs.yaml by default, or a legacy .txt file
+    (one single-turn question per line, optional "1. " numbering).
+    """
+    path = Path(path) if path else DIALOGS_PATH
+    text = path.read_text(encoding="utf-8")
+    if path.suffix.lower() == ".txt":
+        return [Dialog(None, [q]) for q in _txt_questions(text)]
+    return parse_dialogs(yaml.safe_load(text) or [], source=path.name)
+
+
+def _txt_questions(text: str) -> list[str]:
+    out = []
+    for line in text.splitlines():
         line = re.sub(r"^\d+\.\s*", "", line.strip())
         if line:
-            queries.append(line)
-    return queries
+            out.append(line)
+    return out
+
+
+def parse_dialogs(raw, *, source: str = "dialogs") -> list[Dialog]:
+    """
+    Each item is either a question string (single turn) or
+    {id, turns: [question, ...]}. Multi-turn dialogs need a unique id.
+    """
+    if not isinstance(raw, list):
+        raise ValueError(f"{source}: top level must be a list of dialogs")
+    dialogs: list[Dialog] = []
+    seen_ids: set[str] = set()
+    for i, item in enumerate(raw, 1):
+        where = f"{source} item {i}"
+        if isinstance(item, str):
+            if not item.strip():
+                raise ValueError(f"{where}: empty question")
+            dialogs.append(Dialog(None, [item.strip()]))
+            continue
+        if not isinstance(item, dict) or "turns" not in item:
+            raise ValueError(
+                f"{where}: expected a question string or {{id, turns}} "
+                "(quote questions that contain ': ')"
+            )
+        turns = item["turns"]
+        if not isinstance(turns, list) or not turns:
+            raise ValueError(f"{where}: 'turns' must be a non-empty list")
+        for t in turns:
+            if not isinstance(t, str) or not t.strip():
+                raise ValueError(f"{where}: every turn must be a non-empty string")
+        dialog_id = str(item.get("id") or "").strip() or None
+        if dialog_id is None and len(turns) > 1:
+            raise ValueError(f"{where}: multi-turn dialogs need an 'id'")
+        if dialog_id is not None:
+            if dialog_id in seen_ids:
+                raise ValueError(f"{where}: duplicate id {dialog_id!r}")
+            seen_ids.add(dialog_id)
+        dialogs.append(Dialog(dialog_id, [t.strip() for t in turns]))
+    return dialogs
 
 
 def load_lecture_meta(lecture_dir: str | Path) -> dict:
