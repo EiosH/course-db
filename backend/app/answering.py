@@ -34,30 +34,42 @@ def _parse_json_content(raw: str) -> dict:
 
 
 def _clip_answer(text: str | None) -> str:
+    # result stays within HISTORY_ANSWER_CHARS so clipping twice is a no-op
     text = (text or "").strip()
     if len(text) > HISTORY_ANSWER_CHARS:
-        text = text[:HISTORY_ANSWER_CHARS].rstrip() + " …"
+        text = text[: HISTORY_ANSWER_CHARS - 2].rstrip() + " …"
     return text
+
+
+def recent_history(history: list[dict] | None) -> list[dict]:
+    """The history the LLM actually sees: last HISTORY_TURNS turns, answers clipped."""
+    return [
+        {
+            "question": turn.get("question", ""),
+            "answer": _clip_answer(turn.get("answer")),
+        }
+        for turn in (history or [])[-HISTORY_TURNS:]
+    ]
 
 
 def _history_block(history: list[dict]) -> str:
     return "\n\n".join(
-        f"Q{i}: {turn.get('question', '')}\nA{i}: {_clip_answer(turn.get('answer'))}"
-        for i, turn in enumerate(history, 1)
+        f"Q{i}: {turn['question']}\nA{i}: {turn['answer']}"
+        for i, turn in enumerate(recent_history(history), 1)
     )
 
 
 def _history_messages(history: list[dict] | None) -> list[dict]:
     messages = []
-    for turn in (history or [])[-HISTORY_TURNS:]:
-        messages.append({"role": "user", "content": turn.get("question", "")})
-        messages.append({"role": "assistant", "content": _clip_answer(turn.get("answer"))})
+    for turn in recent_history(history):
+        messages.append({"role": "user", "content": turn["question"]})
+        messages.append({"role": "assistant", "content": turn["answer"]})
     return messages
 
 
 def condense(query: str, history: list[dict]) -> dict:
     """Follow-up + recent turns → standalone question (unchanged if no history)."""
-    turns = history[-HISTORY_TURNS:]
+    turns = recent_history(history)
     if not turns:
         return {"standalone": query, "reason": "no history"}
     raw = ollama_chat(

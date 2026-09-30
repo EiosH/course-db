@@ -18,6 +18,7 @@ from answering import (
     plan_resolve,
     plan_resolve_part,
     plan_time,
+    recent_history,
     rewrite,
 )
 from config import TIME_NEAR_TOP_K
@@ -558,11 +559,12 @@ def answer_query(
     Public entry for eval / callers.
 
     history: earlier turns of the same dialog, oldest first, each
-    {"question": standalone question, "answer": answer text}.
+    {"question": standalone question, "answer": answer text}. Only the recent
+    window (answers clipped) is used, and that is also what gets traced.
     name / metadata: this turn's Langfuse observation. Opened inside another
     observation (e.g. a dialog root) it nests there; otherwise it is the root.
     """
-    history = list(history or [])
+    history = recent_history(history)
     # Nested ollama_chat generations attach here.
     # (LangChain CallbackHandler is intentionally NOT used: it opens a second root.)
     with observation(
