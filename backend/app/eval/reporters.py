@@ -334,6 +334,9 @@ class ConsoleReporter:
         print(f"query:    {result.query}")
         if result.standalone_query != result.query:
             print(f"standalone: {result.standalone_query}")
+        summary = (result.memory or {}).get("summary")
+        if summary:
+            print(f"summary ({result.memory.get('summarized_turns')} turns): {summary}")
         ctx = result.course_ctx or {}
         if ctx:
             print(

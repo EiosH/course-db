@@ -18,8 +18,9 @@ from answering import (
     plan_resolve,
     plan_resolve_part,
     plan_time,
-    recent_history,
     rewrite,
+    split_history,
+    summarize,
 )
 from config import TIME_NEAR_TOP_K
 from course_route import route_course, session_course_ctx
@@ -63,6 +64,36 @@ class QueryResult:
     course_ctx: dict = field(default_factory=dict)
     # query with earlier turns folded in; equals query on the first turn
     standalone_query: str = ""
+    # dialog memory after this turn; pass back into the next answer_query call
+    memory: dict = field(default_factory=dict)
+
+
+def _empty_memory() -> dict:
+    return {"summary": "", "summarized_turns": 0}
+
+
+def _update_memory(history: list[dict], memory: dict | None) -> tuple[dict, list[dict]]:
+    """
+    Split history into the verbatim window and older turns, folding older turns
+    not yet summarized into the rolling summary.
+    memory: {"summary": str, "summarized_turns": number of turns in summary}.
+    """
+    memory = dict(memory or _empty_memory())
+    older, window = split_history(history)
+    pending = older[memory["summarized_turns"]:]
+    if not pending:
+        return memory, window
+    with observation(
+        name="summarize",
+        as_type="span",
+        require_parent=True,
+        input={"summary": memory["summary"], "turns": pending},
+    ) as obs:
+        summary = summarize(memory["summary"], pending)
+        if obs is not None:
+            obs.update(output=summary)
+    print(f"summarize: folded {len(pending)} turn(s) → {len(summary)} chars")
+    return {"summary": summary, "summarized_turns": len(older)}, window
 
 
 def _empty_preprobe() -> dict:
@@ -81,15 +112,16 @@ def _condense(state: dict) -> dict:
     """
     query = state["query"]
     history = state.get("history") or []
-    if not history:
+    summary = state.get("summary") or ""
+    if not history and not summary:
         return state
     with observation(
         name="condense",
         as_type="span",
         require_parent=True,
-        input={"query": query, "history": history},
+        input={"query": query, "summary": summary, "history": history},
     ) as obs:
-        out = condense(query, history)
+        out = condense(query, history, summary)
         standalone = out["standalone"]
         print(f"condense: {query!r} → {standalone!r} ({out['reason']})")
         if obs is not None:
@@ -488,6 +520,7 @@ def _answer(state: dict) -> dict:
             ),
             "lecture_ids": (state.get("course_ctx") or {}).get("lecture_ids"),
             "history_turns": len(state.get("history") or []),
+            "has_summary": bool(state.get("summary")),
         },
     ) as obs:
         rewritten = state["rewritten"]
@@ -500,7 +533,11 @@ def _answer(state: dict) -> dict:
             course_ctx=state.get("course_ctx") or {},
         )
         if hits or course_general:
-            text = answer(prompt, history=state.get("history"))
+            text = answer(
+                prompt,
+                window=state.get("history"),
+                summary=state.get("summary") or "",
+            )
         else:
             text = no_hit_reply(now=state["time_mode"] == "now")
         if obs is not None:
@@ -552,30 +589,42 @@ def answer_query(
     query: str,
     history: list[dict] | None = None,
     *,
+    memory: dict | None = None,
     name: str = "answer_query",
     metadata: dict | None = None,
 ) -> QueryResult:
     """
     Public entry for eval / callers.
 
-    history: earlier turns of the same dialog, oldest first, each
-    {"question": standalone question, "answer": answer text}. Only the recent
-    window (answers clipped) is used, and that is also what gets traced.
+    history: ALL earlier turns of the same dialog, oldest first, each
+    {"question": standalone question, "answer": answer text}.
+    memory: result.memory from the previous turn (None on the first turn).
+    The LLM sees the rolling summary + a budgeted window of recent turns;
+    that same view is what gets traced as this turn's input.
     name / metadata: this turn's Langfuse observation. Opened inside another
     observation (e.g. a dialog root) it nests there; otherwise it is the root.
     """
-    history = recent_history(history)
     # Nested ollama_chat generations attach here.
     # (LangChain CallbackHandler is intentionally NOT used: it opens a second root.)
     with observation(
         name=name,
         as_type="chain",
-        input={"query": query, "history": history},
+        input={"query": query},
         metadata=metadata,
     ) as span:
+        memory, window = _update_memory(history or [], memory)
+        summary = memory["summary"]
+        if span is not None:
+            span.update(input={"query": query, "summary": summary, "history": window})
         result = _CHAIN.invoke(
-            {"client": client, "query": query, "history": history}
+            {
+                "client": client,
+                "query": query,
+                "history": window,
+                "summary": summary,
+            }
         )
+        result.memory = memory
         if span is not None:
             plan = (result.preprobe or {}).get("plan") or {}
             ctx = result.course_ctx or {}
@@ -587,7 +636,8 @@ def answer_query(
                 metadata={
                     **(metadata or {}),
                     "standalone_query": result.standalone_query,
-                    "history_turns": len(history),
+                    "history_turns": len(window),
+                    "summarized_turns": memory["summarized_turns"],
                     "time_mode": result.time_mode,
                     "ts_value": result.ts_value,
                     "course_id": ctx.get("course_id"),

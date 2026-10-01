@@ -151,7 +151,8 @@ Output JSON only:
 Rules:
 - Replace references to earlier turns with what they refer to: pronouns ("it", "that", "he"),
   "the same topic", "the first one", "that moment", "then", "the example", etc.
-  Take the referent from the earlier questions or answers (e.g. a quiz title listed in an answer).
+  Take the referent from the earlier questions or answers (e.g. a quiz title listed in an answer),
+  or from the summary of earlier conversation when the follow-up reaches back further.
 - Relative time → one explicit time, computed from the time in earlier turns
   (e.g. earlier "at 20min", follow-up "a few minutes after that" → "around 23min").
   "then" / "that moment" → repeat the earlier time.
@@ -161,6 +162,27 @@ Rules:
   - Do NOT convert scope wording into lecture ids.
 - If the follow-up is already self-contained or starts a new topic, return it unchanged.
 - Keep it one question, in the student's language, close to the student's wording.
+"""
+
+
+SUMMARY_SYSTEM = """You maintain a running summary of a conversation between a student and a lecture assistant.
+
+You receive the current summary (may be empty) and older turns that are leaving the recent window.
+Merge them into ONE updated summary.
+
+Output JSON only:
+{
+  "summary": "..."
+}
+
+Rules:
+- At most 200 words, chronological, plain English sentences or short bullets.
+- Keep concrete references the student may point back to later:
+  topics and concept names, timestamps (e.g. 20min, 01:22:09), lecture scope
+  (e.g. lec03, "the class before last"), quiz / question / example titles,
+  and the key conclusion or answer given for each.
+- Drop greetings, filler, and apologies. When space is tight, compress the oldest parts first.
+- Do NOT add facts that are not in the input.
 """
 
 
@@ -296,8 +318,9 @@ Rules:
 4. If the prompt says course subject knowledge is allowed, you may use it to finish the answer when lecture snippets are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
 5. If course subject knowledge is not allowed and the lecture content does not cover the topic, apologize briefly like a person.
 6. Be concise.
-7. Earlier turns of the conversation may come before the current question. Use them only to
-   understand the question and stay consistent (build on what you already said, don't repeat it).
+7. Earlier turns of the conversation (and a summary of older ones) may come before the current
+   question. Use them only to understand the question and stay consistent (build on what you
+   already said, don't repeat it).
    Lecture facts must come from the lecture content in the current message — your earlier
    answers are not a source of new lecture facts."""
 

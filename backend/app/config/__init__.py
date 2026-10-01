@@ -38,10 +38,33 @@ TIME_NEAR_TOP_K = 4  # 时间类问题：最终保留条数（screen_shot / tran
 RERANK_TOP_K = 4
 RERANK_MIN_SCORE = 0.0  # Qwen3-Reranker: yes/no logit diff，>0 表示相关
 
-# 可选 resolve：问题里说不清的指称，小 top-k 召回后抽出具体名字（不 rerank）
-HISTORY_TURNS = 3  # 多轮：补全问题 / 回答时带上的最近轮数
-HISTORY_ANSWER_CHARS = 800  # 多轮：每轮历史答案截断长度
+# 多轮记忆：最近几轮原文（窗口）+ 更早轮次的滚动摘要
+HISTORY_MAX_TURNS = 5  # 窗口最多几轮原文；实际轮数还受 HISTORY_BUDGET_CHARS 限制
+HISTORY_ANSWER_CHARS = 1500  # 窗口 / 摘要输入里每轮答案的截断长度
+SUMMARY_MAX_CHARS = 1600  # 滚动摘要上限
 
+# 上下文预算：按字符估 token（英文约 4 字符/token，中文约 1~1.5 字/token）
+CHARS_PER_TOKEN = 4
+CTX_SAFETY_RATIO = 0.15  # 估算误差 + 格式标签
+ANSWER_RESERVE_TOKENS = 1000  # 留给回答输出
+SNIPPET_MAX_CHARS = 2000  # 拼进 prompt 的每条课程片段上限（覆盖约 99% 的截图 OCR）
+QUESTION_RESERVE_CHARS = 2000  # 本轮问题 + 路由说明 + 片段标签
+# 窗口原文的字符预算 = 上下文窗口扣掉其它各块后的剩余
+HISTORY_BUDGET_CHARS = int(
+    LLM_CONTEXT_WINDOW * (1 - CTX_SAFETY_RATIO) * CHARS_PER_TOKEN  # noqa: F405
+    - ANSWER_RESERVE_TOKENS * CHARS_PER_TOKEN
+    - len(ANSWER_SYSTEM)  # noqa: F405
+    - SUMMARY_MAX_CHARS
+    - max(RERANK_TOP_K, TIME_NEAR_TOP_K) * SNIPPET_MAX_CHARS
+    - QUESTION_RESERVE_CHARS
+)
+if HISTORY_BUDGET_CHARS <= 0:
+    raise ValueError(
+        f"HISTORY_BUDGET_CHARS={HISTORY_BUDGET_CHARS}: LLM_CONTEXT_WINDOW too small "
+        "for the other prompt parts"
+    )
+
+# 可选 resolve：问题里说不清的指称，小 top-k 召回后抽出具体名字（不 rerank）
 PREPROBE_TOP_K = 3
 PREPROBE_DENSE_LIMIT = 3
 PREPROBE_BM25_LIMIT = 3

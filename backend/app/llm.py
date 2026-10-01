@@ -5,8 +5,10 @@ import time
 import requests
 
 from config import (
+    CONTEXT_WARN_RATIO,
     EMBED_BATCH,
     EMBED_MODEL,
+    LLM_CONTEXT_WINDOW,
     OLLAMA_CHAT_RETRIES,
     OLLAMA_CHAT_TIMEOUT,
     OLLAMA_MODEL,
@@ -92,6 +94,23 @@ def embed(texts, *, retries: int = 5):
     return out
 
 
+def _usage(data: dict, name: str) -> dict:
+    """Token counts from an Ollama response; warns when nearing the context window."""
+    usage = {}
+    if data.get("prompt_eval_count") is not None:
+        usage["input"] = data["prompt_eval_count"]
+    if data.get("eval_count") is not None:
+        usage["output"] = data["eval_count"]
+    total = usage.get("input", 0) + usage.get("output", 0)
+    if total >= LLM_CONTEXT_WINDOW * CONTEXT_WARN_RATIO:
+        print(
+            f"warning: {name} used {total}/{LLM_CONTEXT_WINDOW} tokens "
+            f"(input={usage.get('input')} output={usage.get('output')}); "
+            "prompt may be truncated"
+        )
+    return usage
+
+
 def ollama_chat(
     messages,
     *,
@@ -111,6 +130,7 @@ def ollama_chat(
         "options": {
             "temperature": temperature,
             "seed": OLLAMA_SEED,
+            "num_ctx": LLM_CONTEXT_WINDOW,
         },
     }
     if format is not None:
@@ -127,6 +147,7 @@ def ollama_chat(
             "temperature": temperature,
             "seed": OLLAMA_SEED,
             "format": format,
+            "num_ctx": LLM_CONTEXT_WINDOW,
         },
     ) as gen:
         last_err = None
@@ -138,9 +159,11 @@ def ollama_chat(
                     timeout=timeout,
                 )
                 r.raise_for_status()
-                content = r.json()["message"]["content"].strip()
+                data = r.json()
+                content = data["message"]["content"].strip()
+                usage = _usage(data, name)
                 if gen is not None:
-                    gen.update(output=content)
+                    gen.update(output=content, usage_details=usage or None)
                 return content
             except (
                 requests.exceptions.ReadTimeout,

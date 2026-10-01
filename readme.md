@@ -55,9 +55,24 @@ Docker Compose
   ]
 } -->
 
+# 整体流程
+
+`pipeline.py` 的 `_CHAIN`（每轮一次）：
+
+```text
+condense（追问 → 完整问题）
+  → plan（course_route ∥ plan_time ∥ plan_resolve ∥ plan_knowledge，合并成约束）
+  → preprobe（有模糊指代时）
+  → rewrite（生成检索词）
+  → 检索：now        → retrieve_now
+          有时间戳   → hybrid_recall → finalize_time
+          其他       → hybrid_recall → finalize_rerank
+  → answer → QueryResult
+```
+
 # 问答路由（按用户问题类型）
 
-`data/dialogs.yaml` 中每条问题（多轮对话按轮次顺序）统一走：**rewrite → 检索 → 拼 prompt → 回答 → 上报 Langfuse**。  
+上面流程中，不同类型的问题在 rewrite / 检索 / 回答上的差异如下。  
 预过滤始终带上 `course_id` / `quarter` / `lecturer`；数据分 `screen_shot`（课件 OCR）与 `transcript`（字幕）两类。
 
 | 用户问题类型 | rewrite | 检索 | 回答 |
@@ -98,7 +113,10 @@ python main.py --excel --txt             # 额外写 data/out/ 下的 Excel / tx
     - "Give me an example of it."
 ```
 
-多轮流程：从第 2 轮起，先用最近 3 轮问答把追问改写成完整问题（standalone question），后续 plan / 检索 / 回答都用它；回答时也带上最近 3 轮问答作为上下文。
+多轮流程：
+- 记忆 = 最近几轮原文（窗口）+ 更早轮次的滚动摘要。窗口最多 `HISTORY_MAX_TURNS` 轮，且总长不超过 `HISTORY_BUDGET_CHARS`（由 `LLM_CONTEXT_WINDOW` 扣掉系统提示词、摘要、课程片段、问题、输出预留后算出）；装不下的轮次折进摘要（不超过 `SUMMARY_MAX_CHARS`）。
+- 从第 2 轮起，先用「摘要 + 窗口」把追问改写成完整问题（standalone question），后续 plan / 检索 / 回答都用它；回答时也带上「摘要 + 窗口」作为上下文。
+- 每次 LLM 调用的 token 用量（`prompt_eval_count` / `eval_count`）记在 Langfuse generation 的 usage 上；接近 `LLM_CONTEXT_WINDOW` 时控制台打印警告。
 
 Langfuse：每段对话一条 trace（根节点名 = 对话 id），每轮是其下的 `turn N` 子节点；同一次跑批的所有对话在同一个 session（`eval-<时间>`）。
 

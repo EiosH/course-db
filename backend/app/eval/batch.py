@@ -21,6 +21,7 @@ def _run_dialog(client, dialog: Dialog, start_index: int, run_id: str, reporters
     tags = ["eval", "multi_turn" if n_turns > 1 else "single_turn"]
 
     history: list[dict] = []
+    memory: dict | None = None
     with observation(
         name=dialog.id or "single_turn",
         as_type="chain",
@@ -40,9 +41,11 @@ def _run_dialog(client, dialog: Dialog, start_index: int, run_id: str, reporters
                 client,
                 query,
                 history=history,
+                memory=memory,
                 name=f"turn {turn}",
                 metadata={"turn": turn, "index": ref.index},
             )
+            memory = result.memory
             history.append(
                 {"question": result.standalone_query, "answer": result.answer_text}
             )
@@ -50,14 +53,18 @@ def _run_dialog(client, dialog: Dialog, start_index: int, run_id: str, reporters
                 r.record(ref, result)
         if root is not None:
             root.update(
-                output=[
-                    {
-                        "question": q,
-                        "standalone_query": h["question"],
-                        "answer": h["answer"],
-                    }
-                    for q, h in zip(dialog.turns, history)
-                ]
+                output={
+                    "turns": [
+                        {
+                            "question": q,
+                            "standalone_query": h["question"],
+                            "answer": h["answer"],
+                        }
+                        for q, h in zip(dialog.turns, history)
+                    ],
+                    # summary as of the last turn (older turns only)
+                    "summary": (memory or {}).get("summary", ""),
+                }
             )
             print(f"langfuse: trace_id={root.trace_id}")
     return n_turns

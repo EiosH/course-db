@@ -13,6 +13,11 @@ OLLAMA_CHAT_RETRIES = 3
 OLLAMA_TEMPERATURE = 0.0
 ANSWER_TEMPERATURE = 0.2  # answer() only: slightly warmer tone
 OLLAMA_SEED = 42
+# LLM 上下文窗口（输入 + 输出 token），与具体推理后端无关；上下文预算据此计算。
+# Ollama 下传为 options.num_ctx —— 不设时用默认值（约 2048~4096），
+# 超出部分会从消息开头被静默截掉（system prompt 最先丢）。
+LLM_CONTEXT_WINDOW = 16384
+CONTEXT_WARN_RATIO = 0.9  # 输入+输出超过上下文窗口的这个比例就打印警告
 EMBED_BATCH = 32
 QDRANT_URL = "http://localhost:6333"
 COLLECTION_NAME = "docs"

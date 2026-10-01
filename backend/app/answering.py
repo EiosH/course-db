@@ -8,13 +8,17 @@ from config import (
     ANSWER_TEMPERATURE,
     CONDENSE_SYSTEM,
     HISTORY_ANSWER_CHARS,
-    HISTORY_TURNS,
+    HISTORY_BUDGET_CHARS,
+    HISTORY_MAX_TURNS,
     NO_HIT_NOW_REPLY,
     NO_HIT_REPLY,
     PREPROBE_MIN_CONFIDENCE,
     RESOLVE_EXTRACT_SYSTEM,
+    SNIPPET_MAX_CHARS,
     STIFF_REFUSAL_RE,
     STIFF_REFUSAL_REPLY,
+    SUMMARY_MAX_CHARS,
+    SUMMARY_SYSTEM,
     answer_scope_note,
     knowledge_plan_system,
     query_plan_system,
@@ -33,56 +37,91 @@ def _parse_json_content(raw: str) -> dict:
     return json.loads(raw)
 
 
-def _clip_answer(text: str | None) -> str:
-    # result stays within HISTORY_ANSWER_CHARS so clipping twice is a no-op
+def _clip(text: str | None, limit: int) -> str:
+    # result stays within limit so clipping twice is a no-op
     text = (text or "").strip()
-    if len(text) > HISTORY_ANSWER_CHARS:
-        text = text[: HISTORY_ANSWER_CHARS - 2].rstrip() + " …"
+    if len(text) > limit:
+        text = text[: limit - 2].rstrip() + " …"
     return text
 
 
-def recent_history(history: list[dict] | None) -> list[dict]:
-    """The history the LLM actually sees: last HISTORY_TURNS turns, answers clipped."""
-    return [
+def split_history(history: list[dict] | None) -> tuple[list[dict], list[dict]]:
+    """
+    (older, window). window: newest turns kept verbatim — at most
+    HISTORY_MAX_TURNS and within HISTORY_BUDGET_CHARS, newest turn always kept.
+    older: everything before the window, for the rolling summary.
+    Answers are clipped to HISTORY_ANSWER_CHARS in both.
+    """
+    turns = [
         {
-            "question": turn.get("question", ""),
-            "answer": _clip_answer(turn.get("answer")),
+            "question": (turn.get("question") or "").strip(),
+            "answer": _clip(turn.get("answer"), HISTORY_ANSWER_CHARS),
         }
-        for turn in (history or [])[-HISTORY_TURNS:]
+        for turn in history or []
     ]
+    window: list[dict] = []
+    used = 0
+    for turn in reversed(turns[-HISTORY_MAX_TURNS:]):
+        cost = len(turn["question"]) + len(turn["answer"])
+        if window and used + cost > HISTORY_BUDGET_CHARS:
+            break
+        window.insert(0, turn)
+        used += cost
+    return turns[: len(turns) - len(window)], window
 
 
-def _history_block(history: list[dict]) -> str:
+def _history_block(turns: list[dict]) -> str:
     return "\n\n".join(
         f"Q{i}: {turn['question']}\nA{i}: {turn['answer']}"
-        for i, turn in enumerate(recent_history(history), 1)
+        for i, turn in enumerate(turns, 1)
     )
 
 
-def _history_messages(history: list[dict] | None) -> list[dict]:
+def _history_messages(window: list[dict] | None) -> list[dict]:
     messages = []
-    for turn in recent_history(history):
+    for turn in window or []:
         messages.append({"role": "user", "content": turn["question"]})
         messages.append({"role": "assistant", "content": turn["answer"]})
     return messages
 
 
-def condense(query: str, history: list[dict]) -> dict:
-    """Follow-up + recent turns → standalone question (unchanged if no history)."""
-    turns = recent_history(history)
-    if not turns:
-        return {"standalone": query, "reason": "no history"}
+def summarize(summary: str, turns: list[dict]) -> str:
+    """Fold turns that left the window into the rolling summary."""
+    block = _history_block(turns)
     raw = ollama_chat(
         [
-            {"role": "system", "content": CONDENSE_SYSTEM},
+            {"role": "system", "content": SUMMARY_SYSTEM},
             {
                 "role": "user",
                 "content": (
-                    "Earlier conversation (oldest first):\n\n"
-                    f"{_history_block(turns)}\n\n"
-                    f"Follow-up question: {query}"
+                    f"Current summary:\n{summary or '(empty)'}\n\n"
+                    f"Turns to fold in (oldest first):\n\n{block}"
                 ),
             },
+        ],
+        format="json",
+        name="llm.summarize",
+    )
+    data = _parse_json_content(raw)
+    new = str(data.get("summary") or "").strip()
+    # never drop the folded turns silently, even if the model returns nothing
+    return _clip(new or "\n\n".join(filter(None, [summary, block])), SUMMARY_MAX_CHARS)
+
+
+def condense(query: str, window: list[dict], summary: str = "") -> dict:
+    """Follow-up + summary + recent turns → standalone question."""
+    if not window and not summary:
+        return {"standalone": query, "reason": "no history"}
+    parts = []
+    if summary:
+        parts.append(f"Summary of earlier conversation:\n{summary}")
+    if window:
+        parts.append(f"Recent conversation (oldest first):\n\n{_history_block(window)}")
+    parts.append(f"Follow-up question: {query}")
+    raw = ollama_chat(
+        [
+            {"role": "system", "content": CONDENSE_SYSTEM},
+            {"role": "user", "content": "\n\n".join(parts)},
         ],
         format="json",
         name="llm.condense",
@@ -257,7 +296,8 @@ def extract_resolved_name(phrase: str, hits) -> dict:
     for h in hits:
         p = h.payload
         label = "slide" if p.get("type") == "screen_shot" else "speech"
-        snippets.append(f"[{label}] ({p.get('timestamp', '')})\n{p.get('text', '')}")
+        text = _clip(p.get("text"), SNIPPET_MAX_CHARS)
+        snippets.append(f"[{label}] ({p.get('timestamp', '')})\n{text}")
     raw = ollama_chat(
         [
             {"role": "system", "content": RESOLVE_EXTRACT_SYSTEM},
@@ -382,18 +422,34 @@ def build_prompt(
             label = "slide" if p.get("type") == "screen_shot" else "speech"
             lid = p.get("lecture_id")
             loc = f"{lid} " if lid else ""
-            parts.append(
-                f"[{label}] {loc}({p.get('timestamp', '')})\n{p.get('text', '')}"
-            )
+            text = _clip(p.get("text"), SNIPPET_MAX_CHARS)
+            parts.append(f"[{label}] {loc}({p.get('timestamp', '')})\n{text}")
     return "\n\n".join(parts)
 
 
-def answer(prompt: str, history: list[dict] | None = None) -> str:
-    """history: earlier turns of the dialog, sent as prior user/assistant messages."""
+def answer(prompt: str, window: list[dict] | None = None, summary: str = "") -> str:
+    """
+    window: recent turns, sent as prior user/assistant messages.
+    summary: rolling summary of older turns, sent as an extra system message.
+    """
+    summary_msgs = (
+        [
+            {
+                "role": "system",
+                "content": (
+                    "Summary of earlier conversation (context only, not lecture "
+                    f"content):\n{summary}"
+                ),
+            }
+        ]
+        if summary
+        else []
+    )
     raw = ollama_chat(
         [
             {"role": "system", "content": ANSWER_SYSTEM},
-            *_history_messages(history),
+            *summary_msgs,
+            *_history_messages(window),
             {"role": "user", "content": prompt},
         ],
         temperature=ANSWER_TEMPERATURE,
