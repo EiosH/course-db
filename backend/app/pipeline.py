@@ -629,10 +629,7 @@ def answer_query(
             plan = (result.preprobe or {}).get("plan") or {}
             ctx = result.course_ctx or {}
             span.update(
-                output={
-                    "answer": result.answer_text,
-                    "standalone_query": result.standalone_query,
-                },
+                output={"answer": result.answer_text},
                 metadata={
                     **(metadata or {}),
                     "standalone_query": result.standalone_query,
