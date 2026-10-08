@@ -34,6 +34,11 @@ def parse_args():
         help="chunk + embed + upsert; default skips ingest and searches existing data",
     )
     parser.add_argument(
+        "--ingest-new",
+        action="store_true",
+        help="only embed + upsert lectures whose (course_id, lecture_id) is not in the collection yet",
+    )
+    parser.add_argument(
         "--backfill-bm25-phrases",
         action="store_true",
         help="rebuild BM25 sparse vectors with phrase tokens from existing payloads (no dense re-embed)",
@@ -122,6 +127,45 @@ def ingest_docs(client):
             COLLECTION_NAME, field, field_schema=PayloadSchemaType.FLOAT
         )
 
+    upsert_chunks(client, chunks, vectors, first_id=0)
+
+
+def ingest_new_docs(client):
+    if not client.collection_exists(COLLECTION_NAME):
+        print("collection missing, falling back to full ingest")
+        ingest_docs(client)
+        return
+
+    existing = set()
+    max_id = -1
+    offset = None
+    while True:
+        points, offset = client.scroll(
+            collection_name=COLLECTION_NAME,
+            limit=1000,
+            offset=offset,
+            with_payload=["course_id", "lecture_id"],
+        )
+        for p in points:
+            existing.add((p.payload.get("course_id"), p.payload.get("lecture_id")))
+            max_id = max(max_id, p.id)
+        if offset is None:
+            break
+
+    chunks = [
+        c for c in load_all_lecture_chunks()
+        if (c["course_id"], c["lecture_id"]) not in existing
+    ]
+    if not chunks:
+        print("no new lectures to ingest")
+        return
+    new_lectures = sorted({f"{c['course_id']}/{c['lecture_id']}" for c in chunks})
+    print(f"new lectures: {', '.join(new_lectures)} ({len(chunks)} chunks)")
+
+    upsert_chunks(client, chunks, embed([c["text"] for c in chunks]), first_id=max_id + 1)
+
+
+def upsert_chunks(client, chunks, vectors, first_id):
     total = len(chunks)
     for start in range(0, total, UPSERT_BATCH):
         batch = chunks[start : start + UPSERT_BATCH]
@@ -129,7 +173,7 @@ def ingest_docs(client):
             COLLECTION_NAME,
             points=[
                 PointStruct(
-                    id=start + j,
+                    id=first_id + start + j,
                     vector={
                         "dense": vectors[start + j],
                         # BM25 用带短语整体 token 的文本；payload.text 仍是干净原文
@@ -172,6 +216,8 @@ def main():
 
     if args.ingest:
         ingest_docs(client)
+    elif args.ingest_new:
+        ingest_new_docs(client)
     else:
         print("skip ingest, search existing collection")
 
