@@ -13,6 +13,7 @@ from config import (
     NO_HIT_NOW_REPLY,
     NO_HIT_REPLY,
     PREPROBE_MIN_CONFIDENCE,
+    REFLECT_SYSTEM,
     RESOLVE_EXTRACT_SYSTEM,
     SNIPPET_MAX_CHARS,
     STIFF_REFUSAL_RE,
@@ -455,7 +456,18 @@ def answer(prompt: str, window: list[dict] | None = None, summary: str = "") -> 
         temperature=ANSWER_TEMPERATURE,
         name="llm.answer",
     )
-    text = (raw or "").strip()
+    candidate = (raw or "").strip()
+
+    # 固定一轮反思：对候选答案做一次独立校验修正后输出（不循环）
+    reflected = ollama_chat(
+        [
+            {"role": "system", "content": REFLECT_SYSTEM},
+            {"role": "user", "content": f"{prompt}\n\nDraft answer:\n{candidate}"},
+        ],
+        temperature=ANSWER_TEMPERATURE,
+        name="llm.reflect",
+    )
+    text = (reflected or "").strip() or candidate
     if STIFF_REFUSAL_RE.match(text):
         return STIFF_REFUSAL_REPLY
     return text
