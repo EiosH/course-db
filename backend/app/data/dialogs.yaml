@@ -22,216 +22,412 @@ user_courses:
     lecturer: Eric J. Fredericks
     lecture_id: [lec01, lec02, lec03, lec04, lec05, lec06, lec07, lec08, lec09, lec10]
   - course_id: CSC421
-    quarter: 2025-Fall
-    lecturer: Unknown
+    quarter: 2026-Fall
+    lecturer: Peter
     lecture_id: [lec01]
   - course_id: CSC435
-    quarter: 2025-Fall
-    lecturer: Unknown
-    lecture_id: [lec02]
+    quarter: 2026-Fall
+    lecturer: Tom
+    lecture_id: [lec02, lec03, lec04]
 
 dialogs:
-  - id: at-20min
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "What did the instructor say at 20min?"
-      - "What was on the slide at that moment?"
-      - "What did he say a few minutes after that?"
+  # - id: at-20min
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "What did the instructor say at 20min?"
+  #     - "What was on the slide at that moment?"
+  #     - "What did he say a few minutes after that?"
 
-  - id: dynamic-dispatch
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "What did the instructor say about Dynamic dispatch?"
-      - "How is it different from static dispatch?"
-      - "Can you give me an example from the lecture?"
+  # - id: dynamic-dispatch
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "What did the instructor say about Dynamic dispatch?"
+  #     - "How is it different from static dispatch?"
+  #     - "Can you give me an example from the lecture?"
 
-  - id: class-before-last-2h56
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "What did the instructor say around 2:56：00 in the class before last?"
-      - "What topic was he explaining then?"
-      - "Did he talk about the same topic in this lecture?"
+  # - id: class-before-last-2h56
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "What did the instructor say around 2:56：00 in the class before last?"
+  #     - "What topic was he explaining then?"
+  #     - "Did he talk about the same topic in this lecture?"
 
-  - id: call-by-name-previous
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "What did the instructor say about Call by name in the previous courses?"
-      - "How does it compare to call by value?"
-      - "Which lecture covered it in the most detail?"
+  # - id: call-by-name-previous
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "What did the instructor say about Call by name in the previous courses?"
+  #     - "How does it compare to call by value?"
+  #     - "Which lecture covered it in the most detail?"
 
-  - id: dynamic-dispatch-quizzes
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "what quizzes about Dynamic dispatch did the instructor mention in the other lectures?"
-      - "What was the answer to the first one?"
-      - "Explain why that answer is correct."
+  # - id: dynamic-dispatch-quizzes
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "what quizzes about Dynamic dispatch did the instructor mention in the other lectures?"
+  #     - "What was the answer to the first one?"
+  #     - "Explain why that answer is correct."
 
-  - id: right-now
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "What is the instructor explaining right now?"
-      - "What does monomorphic mean?"
-      - "How do type parameters help with that?"
-      - "Summarize what he covered in the 10 minutes before this."
+  # - id: right-now
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "What is the instructor explaining right now?"
+  #     - "What does monomorphic mean?"
+  #     - "How do type parameters help with that?"
+  #     - "Summarize what he covered in the 10 minutes before this."
 
-  - id: quiz-q6-questions
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "What was question 1 on the L-Values and Argument Passing quiz?"
-      - "So what's the answer, and why?"
-      - "What about question 2?"
-      - "Which lecture explained L-values?"
+  # - id: quiz-q6-questions
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "What was question 1 on the L-Values and Argument Passing quiz?"
+  #     - "So what's the answer, and why?"
+  #     - "What about question 2?"
+  #     - "Which lecture explained L-values?"
 
-  - id: midterm-logistics
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "When is the midterm and what does it cover?"
-      - "Will the material from that night be on it?"
-      - "How much are the study guides worth?"
-      - "When is the next homework due after the midterm?"
+  # - id: midterm-logistics
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "When is the midterm and what does it cover?"
+  #     - "Will the material from that night be on it?"
+  #     - "How much are the study guides worth?"
+  #     - "When is the next homework due after the midterm?"
 
-  - id: closures-across-lectures
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "Which lecture first introduced closures?"
-      - "What problem do closures solve, in the instructor's words?"
-      - "Did he come back to them when talking about JavaScript?"
-      - "Compare the two explanations."
+  # - id: closures-across-lectures
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "Which lecture first introduced closures?"
+  #     - "What problem do closures solve, in the instructor's words?"
+  #     - "Did he come back to them when talking about JavaScript?"
+  #     - "Compare the two explanations."
 
-  - id: topic-switch-and-unknown
-    timestamp: "01:22:09"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec08
-    turns:
-      - "What did the instructor say about tail recursion?"
-      - "Why couldn't his example be tail recursive?"
-      - "Did he mention Rust anywhere?"
-      - "Why does he like it?"
-      - "Did he cover coroutines in this course?"
+  # - id: topic-switch-and-unknown
+  #   timestamp: "01:22:09"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec08
+  #   turns:
+  #     - "What did the instructor say about tail recursion?"
+  #     - "Why couldn't his example be tail recursive?"
+  #     - "Did he mention Rust anywhere?"
+  #     - "Why does he like it?"
+  #     - "Did he cover coroutines in this course?"
 
-  - id: homework
-    timestamp: "00:23:31"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec05
-    turns:
-      - "Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g"
-      - "Why are other answers wrong?"
-      - "What does the instructor want us to learn from this quiz?"
-      - "Why does he use Scala instead of Java?"
-      - "Is it a good language to learn?"
-      - "What are the benefits of using C++?"
-      - "Are there any downsides?"
-      - "Can you explain the previous question again?"
-      - "Thanks for the explanation!"
+  # - id: homework
+  #   timestamp: "00:23:31"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec05
+  #   turns:
+  #     - "Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g"
+  #     - "Why are other answers wrong?"
+  #     - "What does the instructor want us to learn from this quiz?"
+  #     - "Why does he use Scala instead of Java?"
+  #     - "Is it a good language to learn?"
+  #     - "What are the benefits of using C++?"
+  #     - "Are there any downsides?"
+  #     - "Can you explain the previous question again?"
+  #     - "Thanks for the explanation!"
 
-  - id: quiz-list-length
-    timestamp: "00:19:12"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec05
-    turns:
-      - "Consider the following Scala function: def f [X] (xs:List[X]) : List[X] =   xs match     case Nil => Nil     case y::ys => y::(y::(f (ys)))   end match end f. If this function is executed on a list of length N, what is the length of the resulting list? Options: N, 2N, N-1, 2N-1, 2(N-1)"
-      - "I picked 2N-1. Why is that wrong?"
-      - "What if the second case were y::f(ys) instead?"
-      - "And what would the original version return for List(1,2,3)?"
-      - "Did the instructor go over this question in class?"
-      - "Is this function tail recursive?"
-      - "How would I rewrite it to be tail recursive?"
-      - "Is recursion actually used in industry, or is it just academic?"
-      - "Go back to the first question and explain it like I'm a beginner."
-      - "ok got it"
+  # - id: quiz-list-length
+  #   timestamp: "00:19:12"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec05
+  #   turns:
+  #     - "Consider the following Scala function: def f [X] (xs:List[X]) : List[X] =   xs match     case Nil => Nil     case y::ys => y::(y::(f (ys)))   end match end f. If this function is executed on a list of length N, what is the length of the resulting list? Options: N, 2N, N-1, 2N-1, 2(N-1)"
+  #     - "I picked 2N-1. Why is that wrong?"
+  #     - "What if the second case were y::f(ys) instead?"
+  #     - "And what would the original version return for List(1,2,3)?"
+  #     - "Did the instructor go over this question in class?"
+  #     - "Is this function tail recursive?"
+  #     - "How would I rewrite it to be tail recursive?"
+  #     - "Is recursion actually used in industry, or is it just academic?"
+  #     - "Go back to the first question and explain it like I'm a beginner."
+  #     - "ok got it"
 
-  - id: quiz-option-adt
-    timestamp: "00:09:57"
-    current_quarter: 2026-Spring
-    current_course: CSC477
+  # - id: quiz-option-adt
+  #   timestamp: "00:09:57"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec03
+  #   turns:
+  #     - "Consider the following algebraic data type: enum Option[+T]:   case None   case Some(value: T) end Option. What type (if any) does this expression have? import Option.* List (None, Some (List (Some (1), None, Some (2)))) Options: Option[List[Option[List[Int]]]], List[Option[List[Option[Int]]]], List[Option[Option[List[Int]]]], List[List[Option[Option[Int]]]], This expression fails static type checking, so is rejected by the compiler"
+  #     - "Why doesn't it fail type checking? None and Some look like different types."
+  #     - "What does the + in Option[+T] mean?"
+  #     - "Which lecture explained that plus sign in the most detail?"
+  #     - "How is this different from using null in Java?"
+  #     - "Why did Java have null in the first place then?"
+  #     - "Is Kotlin better than Scala for this?"
+  #     - "Wait, which option was correct again? Just give me the number."
+  #     - "这个和 Rust 的 Option 是一回事吗？"
+
+  # - id: quiz-static-dynamic-types
+  #   timestamp: "00:15:14"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec09
+  #   turns:
+  #     - "Consider this Scala code: class Animal; class Bird extends Animal; val a: Animal = new Animal(); val b: Bird = new Bird(); val c: Animal = new Bird(); val d: Animal = b; val e = c; val f = b. What are the static and dynamic types of a, b, c, d, e, and f?"
+  #     - "Why is the static type of e Animal and not Bird?"
+  #     - "So if both classes override toString, which one runs for e.toString()?"
+  #     - "True or False: given val a: A = new B() and val b: B = new B() where B overrides f, the values returned by a.f and b.f are the same regardless of how f is implemented. Explain."
+  #     - "What would change in C++ if f were not virtual?"
+  #     - "Is that why the instructor said C++ is dangerous?"
+  #     - "Which is faster, static or dynamic dispatch?"
+  #     - "Should I just avoid inheritance then?"
+  #     - "Summarize everything we discussed in 3 bullet points."
+
+  # - id: quiz-js-reassign
+  #   timestamp: "00:58:28"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec10
+  #   turns:
+  #     - "Consider the following JavaScript program: var f; f = function () { console.log ('1'); }; f = function () { console.log ('2'); f (); }; f (); What is printed to the console when this program is executed? Options: 1 on the first line and 2 on the second line; 2 on the first line and 1 on the second line; 2 on the first line and nothing else; The program does not terminate"
+  #     - "But I ran it in my browser and got a stack overflow error, so it does terminate, right?"
+  #     - "How would I change it so it prints 2 and then 1?"
+  #     - "Would the same thing happen in Scala with a var?"
+  #     - "What about with val?"
+  #     - "What did the instructor say about var versus let in JavaScript?"
+  #     - "Why do people still use JavaScript if it's this weird?"
+  #     - "Should I learn TypeScript instead?"
+  #     - "Sorry, can you redo your answer to my second question but shorter?"
+  #     - "Thanks, that's all."
+
+  # - id: quiz-map-filter
+  #   timestamp: "00:19:10"
+  #   current_quarter: 2026-Spring
+  #   current_course: CSC477
+  #   current_lecture: lec05
+  #   turns:
+  #     - "What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).map ((x:Int) => x*2).filter ((x:Int) => (x%2) == 0) Options: List(2,4,6,8,10), List(4,8,12,16,20), List(1,2,3,4,5,6,7,8,9,10), List(2,4,6,8,10,12,14,16,18,20)"
+  #     - "Why isn't it List(2,4,6,8,10)? I thought filter removes half of them."
+  #     - "What if I swap the map and the filter?"
+  #     - "Can you write the original version using a fold instead?"
+  #     - "Is foldLeft or foldRight better here?"
+  #     - "Will something like this be on the final exam?"
+  #     - "How should I study for it?"
+  #     - "Can you make me 3 similar practice questions?"
+  #     - "What's the answer to the last one?"
+  #     - "Thanks for the explanation!"
+
+  # ---------- CSC435 Distributed Systems 1 ----------
+
+  - id: quiz-pubsub-coupling
+    timestamp: "00:27:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec04
+    turns:
+      - "In the context of publish-subscribe architectures, which is an example of a temporally coupled and referentially decoupled system? Options: Linda tuple spaces blog; Electronic mail; Instant messaging; D2L notification system"
+      - "What is one of the crucial challenges of building publish-subscribe systems? Options: Creating easy to use interfaces between the publisher and subscriber layers; Naming the event/content and identifying/matching which subscriber should receive it; Properly encapsulating the resources of the subscriber as objects; Deciding if the publisher is the client or the server"
+      - "In the context of publish-subscribe architectures, which is an example of a temporally decoupled and referentially coupled system? Options: Linda tuple spaces blog; Instant messaging; Electronic mail; D2L notification system"
+      - "In the context of publish-subscribe architectures, which is an example of a temporally decoupled and referentially decoupled system? Options: Instant messaging; Electronic mail; Linda tuple spaces blog; D2L notification system"
+      - "For questions 1 to 4 I picked D2L notification system, naming/matching subscribers, electronic mail, and Linda tuple spaces blog. Which ones did I get wrong?"
+
+
+  - id: pa2-overview
+    timestamp: "00:41:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
     current_lecture: lec03
     turns:
-      - "Consider the following algebraic data type: enum Option[+T]:   case None   case Some(value: T) end Option. What type (if any) does this expression have? import Option.* List (None, Some (List (Some (1), None, Some (2)))) Options: Option[List[Option[List[Int]]]], List[Option[List[Option[Int]]]], List[Option[Option[List[Int]]]], List[List[Option[Option[Int]]]], This expression fails static type checking, so is rejected by the compiler"
-      - "Why doesn't it fail type checking? None and Some look like different types."
-      - "What does the + in Option[+T] mean?"
-      - "Which lecture explained that plus sign in the most detail?"
-      - "How is this different from using null in Java?"
-      - "Why did Java have null in the first place then?"
-      - "Is Kotlin better than Scala for this?"
-      - "Wait, which option was correct again? Just give me the number."
-      - "这个和 Rust 的 Option 是一回事吗？"
+      - "What is Programming Assignment 2 about?"
+      - "What are the two operations the application has to support?"
+      - "Which programming languages are we allowed to use?"
+      - "When is it due?"
+      - "How is the grade split between the code, the readme and the report?"
+      - "What will programming assignments 3 and 4 add on top of this?"
 
-  - id: quiz-static-dynamic-types
-    timestamp: "00:15:14"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec09
+  - id: pa2-valid-words
+    timestamp: "00:36:30"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec03
     turns:
-      - "Consider this Scala code: class Animal; class Bird extends Animal; val a: Animal = new Animal(); val b: Bird = new Bird(); val c: Animal = new Bird(); val d: Animal = b; val e = c; val f = b. What are the static and dynamic types of a, b, c, d, e, and f?"
-      - "Why is the static type of e Animal and not Bird?"
-      - "So if both classes override toString, which one runs for e.toString()?"
-      - "True or False: given val a: A = new B() and val b: B = new B() where B overrides f, the values returned by a.f and b.f are the same regardless of how f is implemented. Explain."
-      - "What would change in C++ if f were not virtual?"
-      - "Is that why the instructor said C++ is dangerous?"
-      - "Which is faster, static or dynamic dispatch?"
-      - "Should I just avoid inheritance then?"
-      - "Summarize everything we discussed in 3 bullet points."
+      - "What counts as a valid word in the file retrieval engine?"
+      - "Would CAT be indexed? What about moon-light?"
+      - "How should document11_csc.txt be split into words?"
+      - "Is the search case sensitive?"
+      - "Why doesn't he want us to do stemming or lowercasing?"
 
-  - id: quiz-js-reassign
-    timestamp: "00:58:28"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec10
+  - id: pa2-index-design
+    timestamp: "01:06:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec03
     turns:
-      - "Consider the following JavaScript program: var f; f = function () { console.log ('1'); }; f = function () { console.log ('2'); f (); }; f (); What is printed to the console when this program is executed? Options: 1 on the first line and 2 on the second line; 2 on the first line and 1 on the second line; 2 on the first line and nothing else; The program does not terminate"
-      - "But I ran it in my browser and got a stack overflow error, so it does terminate, right?"
-      - "How would I change it so it prints 2 and then 1?"
-      - "Would the same thing happen in Scala with a var?"
-      - "What about with val?"
-      - "What did the instructor say about var versus let in JavaScript?"
-      - "Why do people still use JavaScript if it's this weird?"
-      - "Should I learn TypeScript instead?"
-      - "Sorry, can you redo your answer to my second question but shorter?"
-      - "Thanks, that's all."
+      - "What is the instructor explaining right now?"
+      - "What are the keys and values in the term inverted index?"
+      - "Why do we also need a document map?"
+      - "How should I assign document IDs?"
+      - "How can I crawl the folder without using recursion?"
+      - "What did he say a few minutes before this about the file system as a function?"
 
-  - id: quiz-map-filter
-    timestamp: "00:19:10"
-    current_quarter: 2026-Spring
-    current_course: CSC477
-    current_lecture: lec05
+  - id: pa2-and-query
+    timestamp: "01:26:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec03
     turns:
-      - "What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).map ((x:Int) => x*2).filter ((x:Int) => (x%2) == 0) Options: List(2,4,6,8,10), List(4,8,12,16,20), List(1,2,3,4,5,6,7,8,9,10), List(2,4,6,8,10,12,14,16,18,20)"
-      - "Why isn't it List(2,4,6,8,10)? I thought filter removes half of them."
-      - "What if I swap the map and the filter?"
-      - "Can you write the original version using a fold instead?"
-      - "Is foldLeft or foldRight better here?"
-      - "Will something like this be on the final exam?"
-      - "How should I study for it?"
-      - "Can you make me 3 similar practice questions?"
-      - "What's the answer to the last one?"
-      - "Thanks for the explanation!"
+      - "How does a multi-term search query work in this assignment?"
+      - "If a document has cats 2 times, dogs 3 times and tigers 5 times, what is its score for cats AND dogs AND tigers?"
+      - "What if two documents end up with the same total frequency?"
+      - "What happens if someone types search cats AND or dogs?"
+      - "How many results should the search return?"
+      - "Can you write me the intersection step in Java?"
+
+  - id: pa2-performance
+    timestamp: "00:48:30"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec03
+    turns:
+      - "What do we have to measure in the performance evaluation?"
+      - "What's the difference between wall time and CPU time?"
+      - "Which one should I report?"
+      - "Should I report the dataset sizes in megabytes or mebibytes?"
+      - "Is the processing engine compute intensive, memory intensive or IO intensive?"
+      - "Why would indexing throughput change with dataset size if the code is the same?"
+
+  - id: csc435-quiz-logistics
+    timestamp: "00:08:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec03
+    turns:
+      - "How much are the quizzes worth?"
+      - "I missed quiz 1. Can I make it up?"
+      - "When can I see the answers to quiz 1?"
+      - "What does quiz 2 cover?"
+      - "And what about quiz 3?"
+      - "Will the exam reuse quiz questions?"
+
+  - id: rest-vs-objects
+    timestamp: "02:36:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec03
+    turns:
+      - "What did the instructor say about REST?"
+      - "What are the four REST operations and what does each one do?"
+      - "How does Amazon S3 identify a bucket and an object?"
+      - "What are the pros and cons of REST versus an object-oriented interface?"
+      - "Was Dropbox really built on top of S3?"
+      - "How is MVC different from application layering?"
+
+  - id: coordination-models
+    timestamp: "00:20:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec04
+    turns:
+      - "What are temporal and referential coupling?"
+      - "Give me the example he used for each of the four coordination models."
+      - "Which model does email belong to, and why?"
+      - "How do polling and interrupts relate to the event bus?"
+      - "Did he talk about polling and interrupts in the previous lecture too?"
+
+  - id: pubsub-and-middleware
+    timestamp: "00:33:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec04
+    turns:
+      - "What's the difference between topic-based and content-based subscription?"
+      - "Which one is harder to implement and why?"
+      - "What do the in, read and out operations do in Linda tuple spaces?"
+      - "Why use publish-subscribe instead of a layered architecture?"
+      - "Why is a broker better than wrapping every legacy component directly?"
+      - "What did he say about AI replacing software engineers?"
+
+  - id: client-server-tiers
+    timestamp: "01:01:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec04
+    turns:
+      - "What examples did he give for the different two-tiered configurations?"
+      - "Which configuration is Google's cloud gaming service?"
+      - "Are modern websites configuration B or C?"
+      - "Why does a deeper tiered architecture make the client wait longer?"
+      - "How does this relate to the three layers in Programming Assignment 2?"
+
+  - id: file-sharing-and-p2p
+    timestamp: "01:41:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec04
+    turns:
+      - "What's the difference between the upload/download model and the remote access model?"
+      - "If I change 100 MB in a 4 GB file, how much data moves in each model?"
+      - "How does NFS use the virtual file system layer?"
+      - "How does BitTorrent find who has the data?"
+      - "Who runs the super peers?"
+      - "Do we need to know how Chord works for the exam?"
+      - "What's the difference between vertical distribution and vertical scalability?"
+
+  - id: csc435-topic-switch-and-unknown
+    timestamp: "02:26:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec04
+    turns:
+      - "What is the instructor talking about right now?"
+      - "Who validates transactions in a blockchain?"
+      - "Why did Apple switch to ARM?"
+      - "Did he cover Kubernetes in this course?"
+      - "What about Raft or Paxos?"
+      - "这门课的 quiz 每周什么时候发布、什么时候截止？"
+
+  - id: gitlab-ssh-and-keys
+    timestamp: "00:26:00"
+    current_quarter: 2026-Fall
+    current_course: CSC435
+    current_lecture: lec02
+    turns:
+      - "How do I set up SSH access to the GitLab server?"
+      - "Which key type does he tell us to generate?"
+      - "How does Alice prove a message came from her using public and private keys?"
+      - "Why can't you reverse a hash function?"
+      - "What did he say is usually the weakest link in security?"
+
+  # ---------- CSC421 Algorithms ----------
+
+  - id: csc421-runtime-basics
+    timestamp: "00:58:00"
+    current_quarter: 2026-Fall
+    current_course: CSC421
+    current_lecture: lec01
+    turns:
+      - "How many swaps does the swap-based sorting algorithm need in the worst case?"
+      - "Why does the number of comparisons not depend on the input, but the swaps do?"
+      - "Why is a logarithmic runtime so good?"
+      - "What is n + n/2 + n/4 + ... equal to?"
+      - "Will he ask us to prove these formulas on the exam?"
+      - "When are his office hours?"

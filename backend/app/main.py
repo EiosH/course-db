@@ -6,6 +6,9 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
     Document,
+    FieldCondition,
+    Filter,
+    MatchValue,
     Modifier,
     PayloadSchemaType,
     PointStruct,
@@ -135,21 +138,18 @@ def ingest_new_docs(client):
         ingest_docs(client)
         return
 
+    # facet reads the keyword indexes only, no payload scan
     existing = set()
-    max_id = -1
-    offset = None
-    while True:
-        points, offset = client.scroll(
-            collection_name=COLLECTION_NAME,
-            limit=1000,
-            offset=offset,
-            with_payload=["course_id", "lecture_id"],
+    for course in client.facet(COLLECTION_NAME, "course_id", limit=10_000).hits:
+        lectures = client.facet(
+            COLLECTION_NAME,
+            "lecture_id",
+            facet_filter=Filter(
+                must=[FieldCondition(key="course_id", match=MatchValue(value=course.value))]
+            ),
+            limit=10_000,
         )
-        for p in points:
-            existing.add((p.payload.get("course_id"), p.payload.get("lecture_id")))
-            max_id = max(max_id, p.id)
-        if offset is None:
-            break
+        existing.update((course.value, lec.value) for lec in lectures.hits)
 
     chunks = load_all_lecture_chunks(skip=existing)
     if not chunks:
@@ -158,7 +158,9 @@ def ingest_new_docs(client):
     new_lectures = sorted({f"{c['course_id']}/{c['lecture_id']}" for c in chunks})
     print(f"new lectures: {', '.join(new_lectures)} ({len(chunks)} chunks)")
 
-    upsert_chunks(client, chunks, embed([c["text"] for c in chunks]), first_id=max_id + 1)
+    # ids are append-only 0..n-1, so the next free id is the point count
+    next_id = client.count(COLLECTION_NAME, exact=True).count
+    upsert_chunks(client, chunks, embed([c["text"] for c in chunks]), first_id=next_id)
 
 
 def upsert_chunks(client, chunks, vectors, first_id):
