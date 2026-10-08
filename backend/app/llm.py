@@ -118,15 +118,16 @@ def ollama_chat(
     timeout=OLLAMA_CHAT_TIMEOUT,
     temperature=OLLAMA_TEMPERATURE,
     model: str | None = None,
+    think: bool = False,
     name: str = "llm",
 ):
-    """Call Ollama /api/chat with retries; think=False avoids qwen thinking overhead."""
+    """Call Ollama /api/chat with retries; think defaults off to avoid qwen thinking overhead."""
     model = model or OLLAMA_MODEL
     payload = {
         "model": model,
         "messages": messages,
         "stream": False,
-        "think": False,
+        "think": think,
         "options": {
             "temperature": temperature,
             "seed": OLLAMA_SEED,

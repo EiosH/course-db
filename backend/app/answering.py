@@ -454,20 +454,22 @@ def answer(prompt: str, window: list[dict] | None = None, summary: str = "") -> 
             {"role": "user", "content": prompt},
         ],
         temperature=ANSWER_TEMPERATURE,
+        think=True,
         name="llm.answer",
     )
     candidate = (raw or "").strip()
 
     # 固定一轮反思：对候选答案做一次独立校验修正后输出（不循环）
-    reflected = ollama_chat(
-        [
-            {"role": "system", "content": REFLECT_SYSTEM},
-            {"role": "user", "content": f"{prompt}\n\nDraft answer:\n{candidate}"},
-        ],
-        temperature=ANSWER_TEMPERATURE,
-        name="llm.reflect",
-    )
-    text = (reflected or "").strip() or candidate
+    # reflected = ollama_chat(
+    #     [
+    #         {"role": "system", "content": REFLECT_SYSTEM},
+    #         {"role": "user", "content": f"{prompt}\n\nDraft answer:\n{candidate}"},
+    #     ],
+    #     temperature=ANSWER_TEMPERATURE,
+    #     name="llm.reflect",
+    # )
+    # text = (reflected or "").strip() or candidate
+    text = candidate
     if STIFF_REFUSAL_RE.match(text):
         return STIFF_REFUSAL_REPLY
     return text
