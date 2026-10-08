@@ -341,7 +341,8 @@ class ConsoleReporter:
         if ctx:
             print(
                 f"course:   {ctx.get('course_id')} / {ctx.get('quarter')} / "
-                f"{ctx.get('lecturer')} (lecture_ids={ctx.get('lecture_ids')})"
+                f"{ctx.get('lecturer')} (lecture_ids={ctx.get('lecture_ids')}, "
+                f"now={ctx.get('timestamp')})"
             )
         print("query_plan:")
         print(format_query_plan(result.preprobe) or "(none)")
@@ -371,7 +372,7 @@ class ConsoleReporter:
             if not result.final_hits:
                 print(
                     "warning: timestamp filter matched 0 chunks — "
-                    "re-run with --ingest to rebuild start_sec/end_sec indexes"
+                    "re-run with --rebuild to rebuild start_sec/end_sec indexes"
                 )
         else:
             n_cand = (

@@ -16,7 +16,10 @@ from config import (
     TRANSCRIPT_MAX_CHARS,
     TRANSCRIPT_MAX_GAP_SEC,
 )
-from time_utils import ts_to_sec
+from time_utils import normalize_ts_hms, ts_to_sec
+
+SESSION_KEYS = ("timestamp", "current_quarter", "current_course", "current_lecture")
+COURSE_KEYS = ("course_id", "quarter", "lecturer", "lecture_id")
 
 
 @dataclass(frozen=True)
@@ -25,48 +28,88 @@ class Dialog:
 
     id: str | None  # None = anonymous single-turn entry
     turns: list[str]
+    # SESSION_KEYS + user_courses (the file-level enrollment list)
+    session: dict
 
 
 def load_dialogs(path: str | Path | None = None) -> list[Dialog]:
-    """
-    Eval input: data/dialogs.yaml by default, or a legacy .txt file
-    (one single-turn question per line, optional "1. " numbering).
-    """
+    """Eval input: data/dialogs.yaml by default."""
     path = Path(path) if path else DIALOGS_PATH
-    text = path.read_text(encoding="utf-8")
-    if path.suffix.lower() == ".txt":
-        return [Dialog(None, [q]) for q in _txt_questions(text)]
-    return parse_dialogs(yaml.safe_load(text) or [], source=path.name)
+    return parse_dialogs(
+        yaml.safe_load(path.read_text(encoding="utf-8")) or {}, source=path.name
+    )
 
 
-def _txt_questions(text: str) -> list[str]:
-    out = []
-    for line in text.splitlines():
-        line = re.sub(r"^\d+\.\s*", "", line.strip())
-        if line:
-            out.append(line)
-    return out
+def _parse_user_courses(raw, source: str) -> list[dict]:
+    if not isinstance(raw, list) or not raw:
+        raise ValueError(f"{source}: 'user_courses' must be a non-empty list")
+    courses = []
+    for i, c in enumerate(raw, 1):
+        where = f"{source} user_courses item {i}"
+        if not isinstance(c, dict) or any(not c.get(k) for k in COURSE_KEYS):
+            raise ValueError(f"{where}: needs {', '.join(COURSE_KEYS)}")
+        lids = c["lecture_id"]
+        if not isinstance(lids, list):
+            raise ValueError(f"{where}: lecture_id must be a list")
+        courses.append({**c, "lecture_id": [str(x) for x in lids]})
+    return courses
+
+
+def _parse_session(item: dict, courses: list[dict], where: str) -> dict:
+    """Required per-dialog session, validated against the enrollment list."""
+    unknown = set(item) - {"id", "turns", *SESSION_KEYS}
+    if unknown:
+        raise ValueError(
+            f"{where}: unknown keys {sorted(unknown)}; "
+            f"allowed: id, turns, {', '.join(SESSION_KEYS)}"
+        )
+    session = {}
+    for key in SESSION_KEYS:
+        value = item.get(key)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                f'{where}: {key} is required and must be a quoted string, e.g. "01:22:09"'
+            )
+        session[key] = value.strip()
+    try:
+        session["timestamp"] = normalize_ts_hms(session["timestamp"])
+    except ValueError as e:
+        raise ValueError(f"{where}: {e}") from None
+
+    course = next(
+        (c for c in courses if c["course_id"] == session["current_course"]), None
+    )
+    if course is None:
+        raise ValueError(
+            f"{where}: current_course {session['current_course']!r} not in user_courses"
+        )
+    if session["current_lecture"] not in course["lecture_id"]:
+        raise ValueError(
+            f"{where}: current_lecture {session['current_lecture']!r} "
+            f"not in {session['current_course']} lectures"
+        )
+    return {**session, "user_courses": courses}
 
 
 def parse_dialogs(raw, *, source: str = "dialogs") -> list[Dialog]:
     """
-    Each item is either a question string (single turn) or
-    {id, turns: [question, ...]}. Multi-turn dialogs need a unique id.
+    Top level: {user_courses: [...], dialogs: [...]}.
+    Each dialog: {id, turns: [question, ...], timestamp, current_quarter,
+    current_course, current_lecture}. Multi-turn dialogs need a unique id.
     """
-    if not isinstance(raw, list):
-        raise ValueError(f"{source}: top level must be a list of dialogs")
+    if not isinstance(raw, dict) or "dialogs" not in raw:
+        raise ValueError(f"{source}: top level must be {{user_courses, dialogs}}")
+    courses = _parse_user_courses(raw.get("user_courses"), source)
+    items = raw["dialogs"]
+    if not isinstance(items, list) or not items:
+        raise ValueError(f"{source}: 'dialogs' must be a non-empty list")
     dialogs: list[Dialog] = []
     seen_ids: set[str] = set()
-    for i, item in enumerate(raw, 1):
-        where = f"{source} item {i}"
-        if isinstance(item, str):
-            if not item.strip():
-                raise ValueError(f"{where}: empty question")
-            dialogs.append(Dialog(None, [item.strip()]))
-            continue
+    for i, item in enumerate(items, 1):
+        where = f"{source} dialog {i}"
         if not isinstance(item, dict) or "turns" not in item:
             raise ValueError(
-                f"{where}: expected a question string or {{id, turns}} "
+                f"{where}: expected {{id, turns, timestamp, ...}} "
                 "(quote questions that contain ': ')"
             )
         turns = item["turns"]
@@ -82,7 +125,8 @@ def parse_dialogs(raw, *, source: str = "dialogs") -> list[Dialog]:
             if dialog_id in seen_ids:
                 raise ValueError(f"{where}: duplicate id {dialog_id!r}")
             seen_ids.add(dialog_id)
-        dialogs.append(Dialog(dialog_id, [t.strip() for t in turns]))
+        session = _parse_session(item, courses, where)
+        dialogs.append(Dialog(dialog_id, [t.strip() for t in turns], session))
     return dialogs
 
 
@@ -219,8 +263,10 @@ def iter_lecture_dirs(lectures_dir: str | Path | None = None) -> list[Path]:
     return found
 
 
-def load_all_lecture_chunks(lectures_dir: str | Path | None = None) -> list[dict]:
-    """Load every lecture folder under data/lectures/ (each with its own meta)."""
+def load_all_lecture_chunks(
+    lectures_dir: str | Path | None = None, skip: set[tuple[str, str]] = frozenset()
+) -> list[dict]:
+    """Load every lecture folder under data/lectures/ except (course_id, lecture_id) in skip."""
     chunks = []
     dirs = iter_lecture_dirs(lectures_dir)
     if not dirs:
@@ -235,6 +281,8 @@ def load_all_lecture_chunks(lectures_dir: str | Path | None = None) -> list[dict
                 **meta,
                 "course_id": meta.get("course_id") or d.parent.name,
             }
+        if (meta["course_id"], lecture_id) in skip:
+            continue
         doc = d / "doc.txt"
         vtt = d / "transcript.vtt"
         n_ss = n_tr = 0

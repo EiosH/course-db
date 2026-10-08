@@ -2,7 +2,6 @@
 App config package.
 
 - config.models   — Ollama / embed / rerank / Qdrant / Langfuse
-- config.mock     — MOCK_SESSION (enrollment + playback)
 - config.prompts  — LLM system prompts
 - this module     — paths, retrieval limits, regex helpers
 
@@ -20,14 +19,16 @@ REPO_ROOT = APP_DIR.parent.parent
 load_dotenv(REPO_ROOT / ".env")
 load_dotenv(APP_DIR / ".env")  # optional local override
 
-from config.mock import *  # noqa: E402,F401,F403
 from config.models import *  # noqa: E402,F401,F403
 from config.prompts import *  # noqa: E402,F401,F403
 
 DATA_DIR = APP_DIR / "data"
 OUTPUT_DIR = DATA_DIR / "out"
 LECTURES_DIR = DATA_DIR / "lectures"  # <course_id>/<lecture_id>/{doc,transcript,meta}
-DIALOGS_PATH = DATA_DIR / "dialogs.yaml"
+DIALOGS_PATH = DATA_DIR / "dialogs.yaml"  # 评估对话 + 选课清单 + 每段对话的会话信息
+
+# meta.json 没写 lecture_max_ts 时的默认视频最长时长
+DEFAULT_LECTURE_MAX_TS = "03:30:00"
 
 TIME_WINDOW_SEC = 120  # 时间戳约束：±2 分钟
 

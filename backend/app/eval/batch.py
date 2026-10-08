@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from loaders import Dialog, load_dialogs
+from loaders import SESSION_KEYS, Dialog, load_dialogs
 from pipeline import answer_query
 from tracing import flush as langfuse_flush
 from tracing import observation, trace_attributes
@@ -18,6 +18,8 @@ def _run_dialog(client, dialog: Dialog, start_index: int, run_id: str, reporters
     trace_meta = {"eval_run": run_id, "n_turns": str(n_turns)}
     if dialog.id is not None:
         trace_meta["dialog_id"] = dialog.id
+    session_meta = {k: dialog.session[k] for k in SESSION_KEYS}
+    trace_meta.update(session_meta)
     tags = ["eval", "multi_turn" if n_turns > 1 else "single_turn"]
 
     history: list[dict] = []
@@ -25,7 +27,7 @@ def _run_dialog(client, dialog: Dialog, start_index: int, run_id: str, reporters
     with observation(
         name=dialog.id or "single_turn",
         as_type="chain",
-        input={"dialog_id": dialog.id, "turns": dialog.turns},
+        input={"dialog_id": dialog.id, "session": session_meta, "turns": dialog.turns},
     ) as root, trace_attributes(
         # all dialogs of one run share a session
         root, session_id=run_id, tags=tags, metadata=trace_meta
@@ -42,6 +44,7 @@ def _run_dialog(client, dialog: Dialog, start_index: int, run_id: str, reporters
                 query,
                 history=history,
                 memory=memory,
+                session=dialog.session,
                 name=f"turn {turn}",
                 metadata={"turn": turn, "index": ref.index},
             )

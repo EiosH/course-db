@@ -129,14 +129,17 @@ def _condense(state: dict) -> dict:
     return {**state, "raw_query": query, "query": standalone}
 
 
-def _plan_course_route(query: str) -> dict:
+def _plan_course_route(query: str, session: dict) -> dict:
     with observation(
         name="course_route",
         as_type="span",
         require_parent=True,
-        input={"query": query},
+        input={
+            "query": query,
+            "session": {k: v for k, v in session.items() if k != "user_courses"},
+        },
     ) as obs:
-        course_ctx = route_course(query)
+        course_ctx = route_course(query, session)
         print(
             f"course_route: {course_ctx['course_id']} / {course_ctx['quarter']} / "
             f"{course_ctx['lecturer']!r} lecture_ids={course_ctx.get('lecture_ids')} "
@@ -193,7 +196,8 @@ def _plan(state: dict) -> dict:
     Sequential after this: preprobe → rewrite → recall.
     """
     query = state["query"]
-    session_ctx = session_course_ctx()
+    session = state["session"]
+    session_ctx = session_course_ctx(session)
     with observation(
         name="plan",
         as_type="span",
@@ -202,7 +206,9 @@ def _plan(state: dict) -> dict:
     ) as obs:
         parent = obs
         with ThreadPoolExecutor(max_workers=4) as pool:
-            f_route = submit_with_parent(pool, parent, _plan_course_route, query)
+            f_route = submit_with_parent(
+                pool, parent, _plan_course_route, query, session
+            )
             f_time = submit_with_parent(
                 pool, parent, _plan_time_part, query, session_ctx
             )
@@ -589,6 +595,7 @@ def answer_query(
     query: str,
     history: list[dict] | None = None,
     *,
+    session: dict,
     memory: dict | None = None,
     name: str = "answer_query",
     metadata: dict | None = None,
@@ -599,6 +606,8 @@ def answer_query(
     history: ALL earlier turns of the same dialog, oldest first, each
     {"question": standalone question, "answer": answer text}.
     memory: result.memory from the previous turn (None on the first turn).
+    session: {timestamp, current_quarter, current_course, current_lecture,
+    user_courses} — loaders.Dialog.session.
     The LLM sees the rolling summary + a budgeted window of recent turns;
     that same view is what gets traced as this turn's input.
     name / metadata: this turn's Langfuse observation. Opened inside another
@@ -622,6 +631,7 @@ def answer_query(
                 "query": query,
                 "history": window,
                 "summary": summary,
+                "session": session,
             }
         )
         result.memory = memory
@@ -641,6 +651,7 @@ def answer_query(
                     "quarter": ctx.get("quarter"),
                     "lecture_id": ctx.get("lecture_id"),
                     "lecture_ids": ctx.get("lecture_ids"),
+                    "timestamp": ctx.get("timestamp"),
                     "resolve": plan.get("resolve"),
                     "probe_hard_constraints": plan.get("probe_hard_constraints"),
                     "course_general": bool(

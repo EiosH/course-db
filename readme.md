@@ -97,7 +97,8 @@ BM25 词袋会把 `Question` 与 `9` 拆开，易与侧边栏 `[9]`、其它 `Qu
 cd backend/app
 python main.py --backfill-bm25-phrases   # 旧库只补 BM25 短语 token
 python main.py --inspect-phrase "Question 9"  # 对比词袋 BM25 vs 短语 token
-python main.py --ingest                  # 全量重建（含短语 token）
+python main.py --ingest                  # 只入库新增的 lecture（库里已有的跳过）
+python main.py --rebuild                 # 删库全量重建（含短语 token）
 python main.py                           # 跑 data/dialogs.yaml 问答（结果看控制台 + Langfuse）
 python main.py --dialogs path/to/q.txt   # 旧格式：每行一个单轮问题
 python main.py --excel --txt             # 额外写 data/out/ 下的 Excel / txt

@@ -31,12 +31,12 @@ def parse_args():
     parser.add_argument(
         "--ingest",
         action="store_true",
-        help="chunk + embed + upsert; default skips ingest and searches existing data",
+        help="embed + upsert only lectures whose (course_id, lecture_id) is not in the collection yet",
     )
     parser.add_argument(
-        "--ingest-new",
+        "--rebuild",
         action="store_true",
-        help="only embed + upsert lectures whose (course_id, lecture_id) is not in the collection yet",
+        help="drop the collection and re-ingest every lecture",
     )
     parser.add_argument(
         "--backfill-bm25-phrases",
@@ -46,8 +46,7 @@ def parse_args():
     parser.add_argument(
         "--dialogs",
         metavar="PATH",
-        help="eval input: dialogs .yaml (default data/dialogs.yaml) "
-        "or legacy .txt with one question per line",
+        help="eval input: dialogs .yaml (default data/dialogs.yaml)",
     )
     parser.add_argument(
         "--excel",
@@ -152,10 +151,7 @@ def ingest_new_docs(client):
         if offset is None:
             break
 
-    chunks = [
-        c for c in load_all_lecture_chunks()
-        if (c["course_id"], c["lecture_id"]) not in existing
-    ]
+    chunks = load_all_lecture_chunks(skip=existing)
     if not chunks:
         print("no new lectures to ingest")
         return
@@ -214,9 +210,9 @@ def main():
         backfill_bm25_phrases(client)
         return
 
-    if args.ingest:
+    if args.rebuild:
         ingest_docs(client)
-    elif args.ingest_new:
+    elif args.ingest:
         ingest_new_docs(client)
     else:
         print("skip ingest, search existing collection")

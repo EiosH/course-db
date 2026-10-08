@@ -1,4 +1,8 @@
-"""Resolve which lecture(s) of the current course a question is about."""
+"""Resolve which lecture(s) of the current course a question is about.
+
+`session` = {timestamp, current_quarter, current_course, current_lecture,
+user_courses} — one dialog's entry in data/dialogs.yaml (see loaders.Dialog).
+"""
 
 from __future__ import annotations
 
@@ -6,16 +10,7 @@ import json
 import re
 from pathlib import Path
 
-from config import (
-    COURSE_ROUTE_MODEL,
-    CURRENT_COURSE,
-    CURRENT_LECTURE,
-    CURRENT_QUARTER,
-    DEFAULT_LECTURE_MAX_TS,
-    LECTURES_DIR,
-    MOCK_SESSION,
-    USER_COURSES,
-)
+from config import COURSE_ROUTE_MODEL, DEFAULT_LECTURE_MAX_TS, LECTURES_DIR
 from config.prompts import COURSE_ROUTE_SYSTEM
 from llm import ollama_chat
 
@@ -30,13 +25,6 @@ def _load_lecture_meta(course_id: str, lecture_id: str) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def _courses() -> list[dict]:
-    courses = list(USER_COURSES.get("courses") or [])
-    if not courses:
-        raise RuntimeError("MOCK_SESSION.user_courses.courses is empty")
-    return courses
-
-
 def _lecture_ids(course: dict) -> list[str]:
     raw = course.get("lecture_id") or []
     if isinstance(raw, str):
@@ -44,25 +32,13 @@ def _lecture_ids(course: dict) -> list[str]:
     return [str(x) for x in raw]
 
 
-def _find_course(course_id: str) -> dict | None:
-    for c in _courses():
-        if c.get("course_id") == course_id:
+def _current_course(session: dict) -> dict:
+    for c in session["user_courses"]:
+        if c.get("course_id") == session["current_course"]:
             return c
-    return None
-
-
-def _current_course() -> dict:
-    course = _find_course(CURRENT_COURSE)
-    if not course:
-        raise RuntimeError(
-            f"current_course={CURRENT_COURSE!r} not found in user_courses.courses"
-        )
-    return course
-
-
-def _current_lecture_catalog() -> list[str]:
-    """lecture_id values allowed for routing — current_course only."""
-    return _lecture_ids(_current_course())
+    raise RuntimeError(
+        f"current_course={session['current_course']!r} not found in user_courses"
+    )
 
 
 def _normalize_lecture_ids(raw) -> list[str]:
@@ -81,6 +57,7 @@ def _normalize_lecture_ids(raw) -> list[str]:
 def build_course_ctx(
     course: dict,
     lecture_ids: list[str],
+    session: dict,
     *,
     reason: str = "",
 ) -> dict:
@@ -89,8 +66,9 @@ def build_course_ctx(
     Empty lecture_ids → whole current course (no lecture_id filter).
     course_id / quarter / lecturer always come from the current-course enrollment row.
     """
-    allowed = set(_lecture_ids(course))
     catalog = _lecture_ids(course)
+    allowed = set(catalog)
+    current = session["current_lecture"]
     lids = [x for x in _normalize_lecture_ids(lecture_ids) if x in allowed]
     # Model dumped the full catalog → treat as whole-course (no lecture_id pin)
     if lids and allowed and set(lids) >= allowed:
@@ -98,36 +76,27 @@ def build_course_ctx(
     if lids:
         primary = lids[0]
     else:
-        primary = (
-            CURRENT_LECTURE
-            if CURRENT_LECTURE in allowed
-            else (catalog[0] if catalog else CURRENT_LECTURE)
-        )
-    meta = _load_lecture_meta(course.get("course_id", "") or CURRENT_COURSE, primary)
+        primary = current if current in allowed else (catalog[0] if catalog else current)
+    meta = _load_lecture_meta(course["course_id"], primary)
     return {
         "lecture_id": primary,  # primary (e.g. playback / max_ts)
         "lecture_ids": lids,
-        "course_id": course.get("course_id") or CURRENT_COURSE,
+        "course_id": course["course_id"],
         "quarter": course.get("quarter") or meta.get("quarter", ""),
         "lecturer": course.get("lecturer") or meta.get("lecturer", ""),
         "lecture_max_ts": meta.get("lecture_max_ts", DEFAULT_LECTURE_MAX_TS),
-        "timestamp": MOCK_SESSION["timestamp"],
+        "timestamp": session["timestamp"],
         "reason": reason,
     }
 
 
-def _default_ctx(reason: str = "current course/lecture") -> dict:
-    course = _current_course()
-    lids = _lecture_ids(course)
-    lecture_id = (
-        CURRENT_LECTURE if CURRENT_LECTURE in lids else (lids[0] if lids else CURRENT_LECTURE)
-    )
-    return build_course_ctx(course, [lecture_id], reason=reason)
-
-
-def session_course_ctx(reason: str = "session baseline") -> dict:
+def session_course_ctx(session: dict, reason: str = "session baseline") -> dict:
     """Current course + current lecture without LLM — for parallel plan siblings."""
-    return _default_ctx(reason)
+    course = _current_course(session)
+    lids = _lecture_ids(course)
+    current = session["current_lecture"]
+    lecture_id = current if current in lids else (lids[0] if lids else current)
+    return build_course_ctx(course, [lecture_id], session, reason=reason)
 
 
 def _parse_json(raw: str) -> dict:
@@ -137,15 +106,15 @@ def _parse_json(raw: str) -> dict:
     return json.loads(raw)
 
 
-def route_course(query: str) -> dict:
+def route_course(query: str, session: dict) -> dict:
     """
     Always scoped to current_course.
     - use_current → [current_lecture]
     - named lecture(s) → those ids
     - whole-course (null/empty/full catalog) → [] (course_id filter only)
     """
-    course = _current_course()
-    allowed = _current_lecture_catalog()
+    course = _current_course(session)
+    allowed = _lecture_ids(course)
     catalog = {
         "course_id": course["course_id"],
         "quarter": course["quarter"],
@@ -158,9 +127,9 @@ def route_course(query: str) -> dict:
             {
                 "role": "user",
                 "content": (
-                    f"current_quarter: {CURRENT_QUARTER}\n"
-                    f"current_course: {CURRENT_COURSE}\n"
-                    f"current_lecture: {CURRENT_LECTURE}\n"
+                    f"current_quarter: {session['current_quarter']}\n"
+                    f"current_course: {session['current_course']}\n"
+                    f"current_lecture: {session['current_lecture']}\n"
                     f"catalog: {json.dumps(catalog, ensure_ascii=False)}\n"
                     f"question: {query}"
                 ),
@@ -177,7 +146,7 @@ def route_course(query: str) -> dict:
         use_current = use_current.strip().lower() in ("1", "true", "yes")
 
     if use_current:
-        return _default_ctx(reason or "no other lecture referenced")
+        return session_course_ctx(session, reason or "no other lecture referenced")
 
     allowed_set = set(allowed)
     requested = _normalize_lecture_ids(data.get("lecture_ids"))
@@ -185,4 +154,4 @@ def route_course(query: str) -> dict:
         requested = _normalize_lecture_ids(data.get("lecture_id"))
 
     lids = [x for x in requested if x in allowed_set]
-    return build_course_ctx(course, lids, reason=reason)
+    return build_course_ctx(course, lids, session, reason=reason)

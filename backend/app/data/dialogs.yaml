@@ -1,158 +1,237 @@
 # 批量评估输入（python main.py 默认读取本文件）
 #
-# 每一项是一段对话，按顺序执行；同一段对话里的各轮共享上下文。
+# user_courses：选课清单，所有对话共用。
+#   材料目录: data/lectures/<course_id>/<lecture_id>/{doc.txt, transcript.vtt, meta.json}
 #
-# 单轮：直接写问题
-#   - "What did the instructor say at 20min?"
-#
-# 多轮：写 id + turns。多轮必须有 id，结果里序号列显示为 id#轮次
-#   - id: call-by-name
+# dialogs：每一项是一段对话，按顺序执行；同一段对话里的各轮共享上下文。
+#   每段对话必须写明会话信息（学生此刻在看哪门课、哪一讲、播放到哪）：
+#   - id: call-by-name           # 多轮必须有 id，结果里序号列显示为 id#轮次
+#     timestamp: "01:22:09"      # 当前播放进度，必须加引号
+#     current_quarter: 2026-Spring
+#     current_course: CSC477     # 必须在 user_courses 里
+#     current_lecture: lec08     # 必须在该课程的 lecture_id 里
 #     turns:
 #       - "What did the instructor say about call by name?"
 #       - "Give me an example of it."
-#       - "What about in lec03?"
 #
 # 问题里有 ": "（冒号加空格）时必须加引号，建议统一加双引号。
 
-- id: at-20min
-  turns:
-    - "What did the instructor say at 20min?"
-    - "What was on the slide at that moment?"
-    - "What did he say a few minutes after that?"
+user_courses:
+  - course_id: CSC477
+    quarter: 2026-Spring
+    lecturer: Eric J. Fredericks
+    lecture_id: [lec01, lec02, lec03, lec04, lec05, lec06, lec07, lec08, lec09, lec10]
+  - course_id: CSC421
+    quarter: 2025-Fall
+    lecturer: Unknown
+    lecture_id: [lec01]
+  - course_id: CSC435
+    quarter: 2025-Fall
+    lecturer: Unknown
+    lecture_id: [lec02]
 
-- id: dynamic-dispatch
-  turns:
-    - "What did the instructor say about Dynamic dispatch?"
-    - "How is it different from static dispatch?"
-    - "Can you give me an example from the lecture?"
+dialogs:
+  - id: at-20min
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "What did the instructor say at 20min?"
+      - "What was on the slide at that moment?"
+      - "What did he say a few minutes after that?"
 
-- id: class-before-last-2h56
-  turns:
-    - "What did the instructor say around 2:56：00 in the class before last?"
-    - "What topic was he explaining then?"
-    - "Did he talk about the same topic in this lecture?"
+  - id: dynamic-dispatch
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "What did the instructor say about Dynamic dispatch?"
+      - "How is it different from static dispatch?"
+      - "Can you give me an example from the lecture?"
 
-- id: call-by-name-previous
-  turns:
-    - "What did the instructor say about Call by name in the previous courses?"
-    - "How does it compare to call by value?"
-    - "Which lecture covered it in the most detail?"
+  - id: class-before-last-2h56
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "What did the instructor say around 2:56：00 in the class before last?"
+      - "What topic was he explaining then?"
+      - "Did he talk about the same topic in this lecture?"
 
-- id: dynamic-dispatch-quizzes
-  turns:
-    - "what quizzes about Dynamic dispatch did the instructor mention in the other lectures?"
-    - "What was the answer to the first one?"
-    - "Explain why that answer is correct."
+  - id: call-by-name-previous
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "What did the instructor say about Call by name in the previous courses?"
+      - "How does it compare to call by value?"
+      - "Which lecture covered it in the most detail?"
 
-- id: right-now
-  turns:
-    - "What is the instructor explaining right now?"
-    - "What does monomorphic mean?"
-    - "How do type parameters help with that?"
-    - "Summarize what he covered in the 10 minutes before this."
+  - id: dynamic-dispatch-quizzes
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "what quizzes about Dynamic dispatch did the instructor mention in the other lectures?"
+      - "What was the answer to the first one?"
+      - "Explain why that answer is correct."
 
-- id: quiz-q6-questions
-  turns:
-    - "What was question 1 on the L-Values and Argument Passing quiz?"
-    - "So what's the answer, and why?"
-    - "What about question 2?"
-    - "Which lecture explained L-values?"
+  - id: right-now
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "What is the instructor explaining right now?"
+      - "What does monomorphic mean?"
+      - "How do type parameters help with that?"
+      - "Summarize what he covered in the 10 minutes before this."
 
-- id: midterm-logistics
-  turns:
-    - "When is the midterm and what does it cover?"
-    - "Will the material from that night be on it?"
-    - "How much are the study guides worth?"
-    - "When is the next homework due after the midterm?"
+  - id: quiz-q6-questions
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "What was question 1 on the L-Values and Argument Passing quiz?"
+      - "So what's the answer, and why?"
+      - "What about question 2?"
+      - "Which lecture explained L-values?"
 
-- id: closures-across-lectures
-  turns:
-    - "Which lecture first introduced closures?"
-    - "What problem do closures solve, in the instructor's words?"
-    - "Did he come back to them when talking about JavaScript?"
-    - "Compare the two explanations."
+  - id: midterm-logistics
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "When is the midterm and what does it cover?"
+      - "Will the material from that night be on it?"
+      - "How much are the study guides worth?"
+      - "When is the next homework due after the midterm?"
 
-- id: topic-switch-and-unknown
-  turns:
-    - "What did the instructor say about tail recursion?"
-    - "Why couldn't his example be tail recursive?"
-    - "Did he mention Rust anywhere?"
-    - "Why does he like it?"
-    - "Did he cover coroutines in this course?"
+  - id: closures-across-lectures
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "Which lecture first introduced closures?"
+      - "What problem do closures solve, in the instructor's words?"
+      - "Did he come back to them when talking about JavaScript?"
+      - "Compare the two explanations."
 
+  - id: topic-switch-and-unknown
+    timestamp: "01:22:09"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec08
+    turns:
+      - "What did the instructor say about tail recursion?"
+      - "Why couldn't his example be tail recursive?"
+      - "Did he mention Rust anywhere?"
+      - "Why does he like it?"
+      - "Did he cover coroutines in this course?"
 
+  - id: homework
+    timestamp: "00:23:31"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec05
+    turns:
+      - "Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g"
+      - "Why are other answers wrong?"
+      - "What does the instructor want us to learn from this quiz?"
+      - "Why does he use Scala instead of Java?"
+      - "Is it a good language to learn?"
+      - "What are the benefits of using C++?"
+      - "Are there any downsides?"
+      - "Can you explain the previous question again?"
+      - "Thanks for the explanation!"
 
-- id:  homework
-  turns:
-    - "Which types should replace ?1, ?2, and ?3 in the following Scala function? def g [X,Y] (xs:?1, f:?2) : ?3 =   xs match     case Nil   => Nil     case y::ys => f(y) :: g(ys, f)   end match end g"
-    - "Why are other answers wrong?"
-    - "What does the instructor want us to learn from this quiz?"
-    - "Why does he use Scala instead of Java?"
-    - "Is it a good language to learn?"
-    - "What are the benefits of using C++?"
-    - "Are there any downsides?"
-    - "Can you explain the previous question again?"
-    - "Thanks for the explanation!"
+  - id: quiz-list-length
+    timestamp: "00:19:12"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec05
+    turns:
+      - "Consider the following Scala function: def f [X] (xs:List[X]) : List[X] =   xs match     case Nil => Nil     case y::ys => y::(y::(f (ys)))   end match end f. If this function is executed on a list of length N, what is the length of the resulting list? Options: N, 2N, N-1, 2N-1, 2(N-1)"
+      - "I picked 2N-1. Why is that wrong?"
+      - "What if the second case were y::f(ys) instead?"
+      - "And what would the original version return for List(1,2,3)?"
+      - "Did the instructor go over this question in class?"
+      - "Is this function tail recursive?"
+      - "How would I rewrite it to be tail recursive?"
+      - "Is recursion actually used in industry, or is it just academic?"
+      - "Go back to the first question and explain it like I'm a beginner."
+      - "ok got it"
 
-- id: quiz-list-length
-  turns:
-    - "Consider the following Scala function: def f [X] (xs:List[X]) : List[X] =   xs match     case Nil => Nil     case y::ys => y::(y::(f (ys)))   end match end f. If this function is executed on a list of length N, what is the length of the resulting list? Options: N, 2N, N-1, 2N-1, 2(N-1)"
-    - "I picked 2N-1. Why is that wrong?"
-    - "What if the second case were y::f(ys) instead?"
-    - "And what would the original version return for List(1,2,3)?"
-    - "Did the instructor go over this question in class?"
-    - "Is this function tail recursive?"
-    - "How would I rewrite it to be tail recursive?"
-    - "Is recursion actually used in industry, or is it just academic?"
-    - "Go back to the first question and explain it like I'm a beginner."
-    - "ok got it"
+  - id: quiz-option-adt
+    timestamp: "00:09:57"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec03
+    turns:
+      - "Consider the following algebraic data type: enum Option[+T]:   case None   case Some(value: T) end Option. What type (if any) does this expression have? import Option.* List (None, Some (List (Some (1), None, Some (2)))) Options: Option[List[Option[List[Int]]]], List[Option[List[Option[Int]]]], List[Option[Option[List[Int]]]], List[List[Option[Option[Int]]]], This expression fails static type checking, so is rejected by the compiler"
+      - "Why doesn't it fail type checking? None and Some look like different types."
+      - "What does the + in Option[+T] mean?"
+      - "Which lecture explained that plus sign in the most detail?"
+      - "How is this different from using null in Java?"
+      - "Why did Java have null in the first place then?"
+      - "Is Kotlin better than Scala for this?"
+      - "Wait, which option was correct again? Just give me the number."
+      - "这个和 Rust 的 Option 是一回事吗？"
 
-- id: quiz-option-adt
-  turns:
-    - "Consider the following algebraic data type: enum Option[+T]:   case None   case Some(value: T) end Option. What type (if any) does this expression have? import Option.* List (None, Some (List (Some (1), None, Some (2)))) Options: Option[List[Option[List[Int]]]], List[Option[List[Option[Int]]]], List[Option[Option[List[Int]]]], List[List[Option[Option[Int]]]], This expression fails static type checking, so is rejected by the compiler"
-    - "Why doesn't it fail type checking? None and Some look like different types."
-    - "What does the + in Option[+T] mean?"
-    - "Which lecture explained that plus sign in the most detail?"
-    - "How is this different from using null in Java?"
-    - "Why did Java have null in the first place then?"
-    - "Is Kotlin better than Scala for this?"
-    - "Wait, which option was correct again? Just give me the number."
-    - "这个和 Rust 的 Option 是一回事吗？"
+  - id: quiz-static-dynamic-types
+    timestamp: "00:15:14"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec09
+    turns:
+      - "Consider this Scala code: class Animal; class Bird extends Animal; val a: Animal = new Animal(); val b: Bird = new Bird(); val c: Animal = new Bird(); val d: Animal = b; val e = c; val f = b. What are the static and dynamic types of a, b, c, d, e, and f?"
+      - "Why is the static type of e Animal and not Bird?"
+      - "So if both classes override toString, which one runs for e.toString()?"
+      - "True or False: given val a: A = new B() and val b: B = new B() where B overrides f, the values returned by a.f and b.f are the same regardless of how f is implemented. Explain."
+      - "What would change in C++ if f were not virtual?"
+      - "Is that why the instructor said C++ is dangerous?"
+      - "Which is faster, static or dynamic dispatch?"
+      - "Should I just avoid inheritance then?"
+      - "Summarize everything we discussed in 3 bullet points."
 
-- id: quiz-static-dynamic-types
-  turns:
-    - "Consider this Scala code: class Animal; class Bird extends Animal; val a: Animal = new Animal(); val b: Bird = new Bird(); val c: Animal = new Bird(); val d: Animal = b; val e = c; val f = b. What are the static and dynamic types of a, b, c, d, e, and f?"
-    - "Why is the static type of e Animal and not Bird?"
-    - "So if both classes override toString, which one runs for e.toString()?"
-    - "True or False: given val a: A = new B() and val b: B = new B() where B overrides f, the values returned by a.f and b.f are the same regardless of how f is implemented. Explain."
-    - "What would change in C++ if f were not virtual?"
-    - "Is that why the instructor said C++ is dangerous?"
-    - "Which is faster, static or dynamic dispatch?"
-    - "Should I just avoid inheritance then?"
-    - "Summarize everything we discussed in 3 bullet points."
+  - id: quiz-js-reassign
+    timestamp: "00:58:28"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec10
+    turns:
+      - "Consider the following JavaScript program: var f; f = function () { console.log ('1'); }; f = function () { console.log ('2'); f (); }; f (); What is printed to the console when this program is executed? Options: 1 on the first line and 2 on the second line; 2 on the first line and 1 on the second line; 2 on the first line and nothing else; The program does not terminate"
+      - "But I ran it in my browser and got a stack overflow error, so it does terminate, right?"
+      - "How would I change it so it prints 2 and then 1?"
+      - "Would the same thing happen in Scala with a var?"
+      - "What about with val?"
+      - "What did the instructor say about var versus let in JavaScript?"
+      - "Why do people still use JavaScript if it's this weird?"
+      - "Should I learn TypeScript instead?"
+      - "Sorry, can you redo your answer to my second question but shorter?"
+      - "Thanks, that's all."
 
-- id: quiz-js-reassign
-  turns:
-    - "Consider the following JavaScript program: var f; f = function () { console.log ('1'); }; f = function () { console.log ('2'); f (); }; f (); What is printed to the console when this program is executed? Options: 1 on the first line and 2 on the second line; 2 on the first line and 1 on the second line; 2 on the first line and nothing else; The program does not terminate"
-    - "But I ran it in my browser and got a stack overflow error, so it does terminate, right?"
-    - "How would I change it so it prints 2 and then 1?"
-    - "Would the same thing happen in Scala with a var?"
-    - "What about with val?"
-    - "What did the instructor say about var versus let in JavaScript?"
-    - "Why do people still use JavaScript if it's this weird?"
-    - "Should I learn TypeScript instead?"
-    - "Sorry, can you redo your answer to my second question but shorter?"
-    - "Thanks, that's all."
-
-- id: quiz-map-filter
-  turns:
-    - "What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).map ((x:Int) => x*2).filter ((x:Int) => (x%2) == 0) Options: List(2,4,6,8,10), List(4,8,12,16,20), List(1,2,3,4,5,6,7,8,9,10), List(2,4,6,8,10,12,14,16,18,20)"
-    - "Why isn't it List(2,4,6,8,10)? I thought filter removes half of them."
-    - "What if I swap the map and the filter?"
-    - "Can you write the original version using a fold instead?"
-    - "Is foldLeft or foldRight better here?"
-    - "Will something like this be on the final exam?"
-    - "How should I study for it?"
-    - "Can you make me 3 similar practice questions?"
-    - "What's the answer to the last one?"
-    - "Thanks for the explanation!"
+  - id: quiz-map-filter
+    timestamp: "00:19:10"
+    current_quarter: 2026-Spring
+    current_course: CSC477
+    current_lecture: lec05
+    turns:
+      - "What is the result of evaluating the following Scala code? List (1,2,3,4,5,6,7,8,9,10).map ((x:Int) => x*2).filter ((x:Int) => (x%2) == 0) Options: List(2,4,6,8,10), List(4,8,12,16,20), List(1,2,3,4,5,6,7,8,9,10), List(2,4,6,8,10,12,14,16,18,20)"
+      - "Why isn't it List(2,4,6,8,10)? I thought filter removes half of them."
+      - "What if I swap the map and the filter?"
+      - "Can you write the original version using a fold instead?"
+      - "Is foldLeft or foldRight better here?"
+      - "Will something like this be on the final exam?"
+      - "How should I study for it?"
+      - "Can you make me 3 similar practice questions?"
+      - "What's the answer to the last one?"
+      - "Thanks for the explanation!"

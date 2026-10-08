@@ -1,6 +1,6 @@
 """Lecture timestamp normalization and conversion helpers."""
 
-from config import DEFAULT_LECTURE_MAX_TS, TIMESTAMP
+from config import DEFAULT_LECTURE_MAX_TS
 
 
 def normalize_ts_hms(ts: str) -> str:
@@ -56,11 +56,13 @@ def normalize_rewrite_timestamps(
 
 
 def timestamp_constraint_value(constraints, *, course_ctx: dict | None = None):
-    default_ts = (course_ctx or {}).get("timestamp") or TIMESTAMP
+    now_ts = (course_ctx or {}).get("timestamp")
     lecture_max_ts = (course_ctx or {}).get("lecture_max_ts")
     for c in constraints:
         if c.get("field") == "timestamp":
-            raw = c.get("value", default_ts)
+            raw = c.get("value") or now_ts
+            if not raw:
+                return None
             return canonicalize_anchor_timestamp(
                 str(raw), lecture_max_ts=lecture_max_ts
             )
@@ -77,8 +79,7 @@ def resolve_time_mode(rewritten: dict, *, course_ctx: dict | None = None) -> str
     )
     if ts is None:
         return "none"
-    now_ts = (course_ctx or {}).get("timestamp") or TIMESTAMP
-    if ts == now_ts:
+    if ts == (course_ctx or {}).get("timestamp"):
         return "now"
     return "anchor"
 

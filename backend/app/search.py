@@ -24,7 +24,6 @@ from config import (
     BM25_LIMIT,
     BM25_MODEL,
     COLLECTION_NAME,
-    CURRENT_COURSE,
     DENSE_LIMIT,
     PREPROBE_BM25_LIMIT,
     PREPROBE_DENSE_LIMIT,
@@ -33,30 +32,17 @@ from config import (
     RERANK_TOP_K,
     TIME_NEAR_TOP_K,
     TIME_WINDOW_SEC,
-    USER_COURSES,
 )
 from llm import embed, get_reranker
 from time_utils import time_distance, timestamp_constraint_value, ts_to_sec
 
 
-def _current_course_row() -> dict:
-    """Enrollment row for MOCK current_course — source of truth for course filters."""
-    for c in USER_COURSES.get("courses") or []:
-        if c.get("course_id") == CURRENT_COURSE:
-            return c
-    return {"course_id": CURRENT_COURSE}
-
-
 def course_must(course_ctx: dict) -> list:
     """Always pin to the session current course (not other subjects)."""
-    row = _current_course_row()
-    course_id = row.get("course_id") or CURRENT_COURSE
-    quarter = row.get("quarter") or course_ctx.get("quarter") or ""
-    lecturer = row.get("lecturer") or course_ctx.get("lecturer") or ""
     return [
-        FieldCondition(key="course_id", match=MatchValue(value=course_id)),
-        FieldCondition(key="quarter", match=MatchValue(value=quarter)),
-        FieldCondition(key="lecturer", match=MatchValue(value=lecturer)),
+        FieldCondition(key="course_id", match=MatchValue(value=course_ctx["course_id"])),
+        FieldCondition(key="quarter", match=MatchValue(value=course_ctx.get("quarter") or "")),
+        FieldCondition(key="lecturer", match=MatchValue(value=course_ctx.get("lecturer") or "")),
     ]
 
 
@@ -87,7 +73,6 @@ def lecture_id_constraint(course_ctx: dict) -> dict | None:
 
 def with_lecture_constraint(constraints, course_ctx: dict) -> list:
     """Pin current course (+ optional lecture_ids) into hard_constraints for retrieval/UI."""
-    row = _current_course_row()
     out = [
         c
         for c in (constraints or [])
@@ -98,17 +83,17 @@ def with_lecture_constraint(constraints, course_ctx: dict) -> list:
         {
             "field": "course_id",
             "operator": "eq",
-            "value": row.get("course_id") or CURRENT_COURSE,
+            "value": course_ctx["course_id"],
         },
         {
             "field": "quarter",
             "operator": "eq",
-            "value": row.get("quarter") or course_ctx.get("quarter") or "",
+            "value": course_ctx.get("quarter") or "",
         },
         {
             "field": "lecturer",
             "operator": "eq",
-            "value": row.get("lecturer") or course_ctx.get("lecturer") or "",
+            "value": course_ctx.get("lecturer") or "",
         },
     ] + out
     c = lecture_id_constraint(course_ctx)
