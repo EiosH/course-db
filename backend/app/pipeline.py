@@ -250,10 +250,12 @@ def _plan(state: dict) -> dict:
 
 
 def _uses_outline(state: dict) -> bool:
-    return bool(
-        (state.get("plan") or {}).get("outline_question")
-        and (state.get("course_ctx") or {}).get("outline")
-    )
+    if not (state.get("plan") or {}).get("outline_question"):
+        return False
+    if not (state.get("course_ctx") or {}).get("outline"):
+        print("outline: question detected but no outline for this lecture; fall back to retrieval")
+        return False
+    return True
 
 
 def _skip_retrieval(state: dict) -> dict:
@@ -261,6 +263,7 @@ def _skip_retrieval(state: dict) -> dict:
     print("outline: skip retrieval")
     return {
         **state,
+        "outline": state["course_ctx"]["outline"],
         "preprobe": {**_empty_preprobe(), "plan": state.get("plan")},
         "rewritten": {},
         "q": "",
@@ -554,13 +557,13 @@ def _answer(state: dict) -> dict:
             "lecture_ids": (state.get("course_ctx") or {}).get("lecture_ids"),
             "history_turns": len(state.get("history") or []),
             "has_summary": bool(state.get("summary")),
-            "outline": _uses_outline(state),
+            "outline": bool(state.get("outline")),
         },
     ) as obs:
         rewritten = state["rewritten"]
         hits = state["final_hits"]
         course_general = bool(rewritten.get("course_general_knowledge"))
-        outline = state["course_ctx"]["outline"] if _uses_outline(state) else ""
+        outline = state.get("outline") or ""
         prompt = build_prompt(
             state["query"],
             hits,
