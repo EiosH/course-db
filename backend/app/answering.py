@@ -201,7 +201,7 @@ def plan_resolve_part(query: str, course_ctx: dict) -> dict:
 
 
 def plan_knowledge(query: str, course_ctx: dict) -> dict:
-    """course_general_knowledge flag."""
+    """course_general_knowledge + outline_question flags."""
     raw = ollama_chat(
         [
             {"role": "system", "content": knowledge_plan_system(course_ctx)},
@@ -213,6 +213,7 @@ def plan_knowledge(query: str, course_ctx: dict) -> dict:
     data = _parse_json_content(raw)
     return {
         "course_general_knowledge": bool(data.get("course_general_knowledge")),
+        "outline_question": bool(data.get("outline_question")),
         "reason": str(data.get("reason") or "").strip(),
     }
 
@@ -236,6 +237,7 @@ def assemble_plan(
         "course_general_knowledge": bool(
             knowledge_part.get("course_general_knowledge")
         ),
+        "outline_question": bool(knowledge_part.get("outline_question")),
         "resolve": resolve_part.get("resolve"),
         "reason": " | ".join(reasons),
     }
@@ -402,8 +404,15 @@ def build_prompt(
     *,
     course_general: bool = False,
     course_ctx: dict | None = None,
+    outline: str = "",
 ):
     parts = [f"Student question: {question}"]
+    if outline:
+        parts.append(
+            "Answer from the course outline below. Do not invent topics "
+            f"that are not in it.\n\nCourse outline:\n{outline.strip()}"
+        )
+        return "\n\n".join(parts)
     if course_ctx:
         parts.append(f"Routing note: {answer_scope_note(course_ctx)}")
     if course_general:

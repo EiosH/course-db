@@ -238,6 +238,7 @@ def _plan(state: dict) -> dict:
         print(
             f"plan: time_mode={plan.get('time_mode')} "
             f"course_general={bool(plan.get('course_general_knowledge'))} "
+            f"outline_q={bool(plan.get('outline_question'))} "
             f"resolve={plan.get('resolve')!r} "
             f"hard_cs={plan.get('hard_constraints')} "
             f"probe_cs={plan.get('probe_hard_constraints')} "
@@ -246,6 +247,32 @@ def _plan(state: dict) -> dict:
         if obs is not None:
             obs.update(output={"course_ctx": course_ctx, "plan": plan})
         return {**state, "course_ctx": course_ctx, "plan": plan}
+
+
+def _uses_outline(state: dict) -> bool:
+    return bool(
+        (state.get("plan") or {}).get("outline_question")
+        and (state.get("course_ctx") or {}).get("outline")
+    )
+
+
+def _skip_retrieval(state: dict) -> dict:
+    """Outline questions: answer from course_ctx.outline, no search."""
+    print("outline: skip retrieval")
+    return {
+        **state,
+        "preprobe": {**_empty_preprobe(), "plan": state.get("plan")},
+        "rewritten": {},
+        "q": "",
+        "constraints": [],
+        "time_mode": "none",
+        "ts_value": None,
+        "ss_dense": [],
+        "ss_bm25": [],
+        "tr_dense": [],
+        "tr_bm25": [],
+        "final_hits": [],
+    }
 
 
 def _preprobe(state: dict) -> dict:
@@ -527,18 +554,21 @@ def _answer(state: dict) -> dict:
             "lecture_ids": (state.get("course_ctx") or {}).get("lecture_ids"),
             "history_turns": len(state.get("history") or []),
             "has_summary": bool(state.get("summary")),
+            "outline": _uses_outline(state),
         },
     ) as obs:
         rewritten = state["rewritten"]
         hits = state["final_hits"]
         course_general = bool(rewritten.get("course_general_knowledge"))
+        outline = state["course_ctx"]["outline"] if _uses_outline(state) else ""
         prompt = build_prompt(
             state["query"],
             hits,
             course_general=course_general,
             course_ctx=state.get("course_ctx") or {},
+            outline=outline,
         )
-        if hits or course_general:
+        if hits or course_general or outline:
             text = answer(
                 prompt,
                 window=state.get("history"),
@@ -571,19 +601,25 @@ def _to_result(state: dict) -> QueryResult:
     )
 
 
-# condense → plan (parallel: course_route | time | resolve | knowledge) → preprobe → rewrite → retrieve → answer
+# condense → plan (parallel: course_route | time | resolve | knowledge)
+#   → outline question: skip retrieval
+#   → else: preprobe → rewrite → retrieve
+# → answer
 _CHAIN = (
     RunnableLambda(_condense)
     | RunnableLambda(_plan)
-    | RunnableLambda(_preprobe)
-    | RunnableLambda(_prepare)
     | RunnableBranch(
-        (lambda s: s["time_mode"] == "now", RunnableLambda(_retrieve_now)),
-        (
-            lambda s: bool(s["ts_value"]),
-            RunnableLambda(_hybrid_recall) | RunnableLambda(_finalize_time),
+        (_uses_outline, RunnableLambda(_skip_retrieval)),
+        RunnableLambda(_preprobe)
+        | RunnableLambda(_prepare)
+        | RunnableBranch(
+            (lambda s: s["time_mode"] == "now", RunnableLambda(_retrieve_now)),
+            (
+                lambda s: bool(s["ts_value"]),
+                RunnableLambda(_hybrid_recall) | RunnableLambda(_finalize_time),
+            ),
+            RunnableLambda(_hybrid_recall) | RunnableLambda(_finalize_rerank),
         ),
-        RunnableLambda(_hybrid_recall) | RunnableLambda(_finalize_rerank),
     )
     | RunnableLambda(_answer)
     | RunnableLambda(_to_result)
@@ -653,6 +689,7 @@ def answer_query(
                     "lecture_ids": ctx.get("lecture_ids"),
                     "timestamp": ctx.get("timestamp"),
                     "resolve": plan.get("resolve"),
+                    "outline_question": bool(plan.get("outline_question")),
                     "probe_hard_constraints": plan.get("probe_hard_constraints"),
                     "course_general": bool(
                         result.rewritten.get("course_general_knowledge")

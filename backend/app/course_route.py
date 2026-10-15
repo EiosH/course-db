@@ -78,6 +78,10 @@ def build_course_ctx(
     else:
         primary = current if current in allowed else (catalog[0] if catalog else current)
     meta = _load_lecture_meta(course["course_id"], primary)
+    outlines = course.get("outlines") or {}
+    outline = "\n\n".join(
+        f"[{lid}]\n{outlines[lid]}" for lid in (lids or catalog) if outlines.get(lid)
+    )
     return {
         "lecture_id": primary,  # primary (e.g. playback / max_ts)
         "lecture_ids": lids,
@@ -85,6 +89,7 @@ def build_course_ctx(
         "quarter": course.get("quarter") or meta.get("quarter", ""),
         "lecturer": course.get("lecturer") or meta.get("lecturer", ""),
         "lecture_max_ts": meta.get("lecture_max_ts", DEFAULT_LECTURE_MAX_TS),
+        "outline": outline,
         "timestamp": session["timestamp"],
         "reason": reason,
     }

@@ -40,6 +40,16 @@ def load_dialogs(path: str | Path | None = None) -> list[Dialog]:
     )
 
 
+def _mock_outlines(course_id: str, lecture_ids: list[str]) -> dict[str, str]:
+    """Mock: {lecture_id: text} from data/lectures/<course>/<lecture>/outline.txt."""
+    outlines = {}
+    for lid in lecture_ids:
+        path = LECTURES_DIR / course_id / lid / "outline.txt"
+        if path.exists():
+            outlines[lid] = path.read_text(encoding="utf-8").strip()
+    return outlines
+
+
 def _parse_user_courses(raw, source: str) -> list[dict]:
     if not isinstance(raw, list) or not raw:
         raise ValueError(f"{source}: 'user_courses' must be a non-empty list")
@@ -51,7 +61,10 @@ def _parse_user_courses(raw, source: str) -> list[dict]:
         lids = c["lecture_id"]
         if not isinstance(lids, list):
             raise ValueError(f"{where}: lecture_id must be a list")
-        courses.append({**c, "lecture_id": [str(x) for x in lids]})
+        lids = [str(x) for x in lids]
+        courses.append(
+            {**c, "lecture_id": lids, "outlines": _mock_outlines(c["course_id"], lids)}
+        )
     return courses
 
 

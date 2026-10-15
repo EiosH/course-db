@@ -130,11 +130,14 @@ Do NOT answer the student. Do NOT invent lecture facts.
 Output JSON only:
 {{
   "course_general_knowledge": false,
+  "outline_question": false,
   "reason": "short"
 }}
 
-- true: answerable from this course's subject knowledge without this recording (definition, or a problem fully stated in the question).
-- false: depends on this lecture (what was said, this slide, a numbered item whose stem is not in the question, timestamps).
+- course_general_knowledge true: answerable from this course's subject knowledge without this recording (definition, or a problem fully stated in the question).
+- course_general_knowledge false: depends on this lecture (what was said, this slide, a numbered item whose stem is not in the question, timestamps).
+- outline_question true: the student asks for an overview of what the class/course covers
+  ("what topics does this lesson cover?"). false for questions about a specific topic, slide, or moment.
 """
 
 
@@ -251,7 +254,7 @@ def answer_scope_note(course_ctx: dict) -> str:
     if not lids:
         return (
             "Retrieval already searched the whole current course (all lectures). "
-            "The student's phrases like \"previous courses\" / \"other lectures\" only "
+            'The student\'s phrases like "previous courses" / "other lectures" only '
             "meant earlier sessions of THIS course — they are NOT something to find "
             "quoted in the materials. Answer the TOPIC using the lecture content below; "
             "do not say the instructor never mentioned previous courses."
@@ -264,7 +267,7 @@ def answer_scope_note(course_ctx: dict) -> str:
     return (
         f"Retrieval is scoped to lectures {lids} of the current course. "
         "Answer the topic from that material; ignore lecture-selection wording "
-        "(e.g. \"other lectures\", \"previous courses\") in the question."
+        '(e.g. "other lectures", "previous courses") in the question.'
     )
 
 
