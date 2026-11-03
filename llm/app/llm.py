@@ -114,6 +114,11 @@ def _strip_think(text: str) -> str:
     return text.strip()
 
 
+def _assistant_text(message: dict) -> str:
+    """Final user-visible reply from an OpenAI-style message dict."""
+    return _strip_think(message.get("content") or "")
+
+
 def _post_chat(messages, *, format, timeout, temperature, model, think, name):
     if LLM_BACKEND == "vllm":
         payload = {
@@ -133,7 +138,18 @@ def _post_chat(messages, *, format, timeout, temperature, model, think, name):
         )
         r.raise_for_status()
         data = r.json()
-        content = _strip_think(data["choices"][0]["message"].get("content") or "")
+        choice = data["choices"][0]
+        message = choice.get("message") or {}
+        content = _assistant_text(message)
+        if not content:
+            # Qwen3 + reasoning-parser: thinking can burn max_tokens so
+            # content is "" while reasoning/reasoning_content is filled.
+            reasoning = message.get("reasoning") or message.get("reasoning_content")
+            print(
+                f"warning: {name} empty content "
+                f"(finish={choice.get('finish_reason')}, think={think}, "
+                f"reasoning_chars={len(reasoning or '')})"
+            )
         return content, _usage(data, name)
 
     payload = {
@@ -156,7 +172,7 @@ def _post_chat(messages, *, format, timeout, temperature, model, think, name):
     )
     r.raise_for_status()
     data = r.json()
-    return data["message"]["content"].strip(), _usage(data, name)
+    return _assistant_text(data.get("message") or {}), _usage(data, name)
 
 
 def ollama_chat(
@@ -185,6 +201,8 @@ def ollama_chat(
             "format": format,
             "num_ctx": LLM_CONTEXT_WINDOW,
             "backend": LLM_BACKEND,
+            "think": think,
+            "max_tokens": LLM_MAX_TOKENS,
         },
     ) as gen:
         last_err = None
@@ -199,8 +217,26 @@ def ollama_chat(
                     think=think,
                     name=name,
                 )
+                # Thinking often exhausts max_tokens before the final answer.
+                # One non-think retry keeps MySQL/Langfuse from storing "".
+                if not content and think:
+                    print(f"warning: {name} empty with think=True; retry think=False")
+                    content, usage = _post_chat(
+                        messages,
+                        format=format,
+                        timeout=timeout,
+                        temperature=temperature,
+                        model=model,
+                        think=False,
+                        name=name,
+                    )
                 if gen is not None:
                     gen.update(output=content, usage_details=usage or None)
+                    if not content:
+                        gen.update(
+                            level="WARNING",
+                            status_message="empty model content",
+                        )
                 return content
             except (
                 requests.exceptions.ReadTimeout,
