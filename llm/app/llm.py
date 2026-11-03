@@ -212,6 +212,7 @@ def ollama_chat(
                     print(
                         f"{LLM_BACKEND} chat timeout/error "
                         f"(attempt {attempt}/{OLLAMA_CHAT_RETRIES}), "
+                        f"{type(e).__name__}: {e}; "
                         f"retry in {wait}s..."
                     )
                     time.sleep(wait)

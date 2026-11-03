@@ -33,6 +33,7 @@ services:
       - qdrant
     env_file:
       - .env
+    gpus: all
     extra_hosts:
       # Linux: reach host vLLM / Ollama from inside the container
       - "host.docker.internal:host-gateway"
@@ -40,6 +41,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       LECTURES_DIR: /data/lectures
       EMBED_DEVICE: ${EMBED_DEVICE:-cpu}
+      RERANK_DEVICE: ${RERANK_DEVICE:-cpu}
       # Override .env 127.0.0.1 — that only works when Python runs on the host
       VLLM_BASE_URL: http://host.docker.internal:8000/v1
       OLLAMA_URL: http://host.docker.internal:11434
@@ -56,6 +58,7 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    gpus: all
     extra_hosts:
       # Linux: reach host vLLM / Ollama (vLLM must listen on 0.0.0.0, not 127.0.0.1)
       - "host.docker.internal:host-gateway"
@@ -63,6 +66,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       LECTURES_DIR: /data/lectures
       EMBED_DEVICE: ${EMBED_DEVICE:-cpu}
+      RERANK_DEVICE: ${RERANK_DEVICE:-cpu}
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_DATABASE: ${MYSQL_DATABASE:-course_db}
