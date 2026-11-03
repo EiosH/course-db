@@ -4,6 +4,7 @@ import json
 import re
 
 from config import (
+    ANSWER_MAX_TOKENS,
     ANSWER_SYSTEM,
     ANSWER_TEMPERATURE,
     CONDENSE_SYSTEM,
@@ -465,6 +466,7 @@ def answer(prompt: str, window: list[dict] | None = None, summary: str = "") -> 
         temperature=ANSWER_TEMPERATURE,
         think=True,
         name="llm.answer",
+        max_tokens=ANSWER_MAX_TOKENS,
     )
     candidate = (raw or "").strip()
 

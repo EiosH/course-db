@@ -11,8 +11,10 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.8:27b")
 VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://127.0.0.1:8000/v1").rstrip("/")
 VLLM_MODEL = os.getenv("VLLM_MODEL", "nvidia/Qwen3.8-Flash-Next-FP4-Local")
-# Completion cap. Prompt budget is still LLM_CONTEXT_WINDOW; the server allows 32768 total.
+# Completion cap for plan/rewrite/JSON. Prompt budget is still LLM_CONTEXT_WINDOW.
 LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "2048"))
+# answer() needs more room (outline recap + quizzes); thinking also eats this budget.
+ANSWER_MAX_TOKENS = int(os.getenv("ANSWER_MAX_TOKENS", "8192"))
 
 # Qdrant dense vectors are 1024-d (Qwen3-Embedding-4B Matryoshka truncate).
 # Full model output is 2560-d; truncate to match the existing collection.

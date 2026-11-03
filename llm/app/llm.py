@@ -6,6 +6,7 @@ import time
 import requests
 
 from config import (
+    ANSWER_MAX_TOKENS,
     CHAT_MODEL,
     CONTEXT_WARN_RATIO,
     EMBED_BATCH,
@@ -139,14 +140,24 @@ def _assistant_text(message: dict, *, think: bool) -> str:
     return _reasoning_text(message)
 
 
-def _post_chat(messages, *, format, timeout, temperature, model, think, name):
+def _post_chat(
+    messages,
+    *,
+    format,
+    timeout,
+    temperature,
+    model,
+    think,
+    name,
+    max_tokens: int,
+):
     if LLM_BACKEND == "vllm":
         payload = {
             "model": model,
             "messages": messages,
             "temperature": temperature,
             "seed": OLLAMA_SEED,
-            "max_tokens": LLM_MAX_TOKENS,
+            "max_tokens": max_tokens,
             "chat_template_kwargs": {"enable_thinking": bool(think)},
         }
         if format is not None:
@@ -160,13 +171,14 @@ def _post_chat(messages, *, format, timeout, temperature, model, think, name):
         data = r.json()
         choice = data["choices"][0]
         message = choice.get("message") or {}
+        finish = choice.get("finish_reason")
         content = _assistant_text(message, think=think)
         raw_content = message.get("content")
         reasoning = _reasoning_text(message)
         if not content:
             print(
                 f"warning: {name} empty assistant text "
-                f"(finish={choice.get('finish_reason')}, think={think}, "
+                f"(finish={finish}, think={think}, max_tokens={max_tokens}, "
                 f"content_chars={len(raw_content or '')}, "
                 f"reasoning_chars={len(reasoning)})"
             )
@@ -175,7 +187,12 @@ def _post_chat(messages, *, format, timeout, temperature, model, think, name):
                 f"warning: {name} used reasoning fallback "
                 f"(content empty, reasoning_chars={len(reasoning)})"
             )
-        return content, _usage(data, name)
+        elif finish == "length":
+            print(
+                f"warning: {name} truncated at max_tokens={max_tokens} "
+                f"(think={think}, chars={len(content)})"
+            )
+        return content, _usage(data, name), finish
 
     payload = {
         "model": model,
@@ -186,6 +203,7 @@ def _post_chat(messages, *, format, timeout, temperature, model, think, name):
             "temperature": temperature,
             "seed": OLLAMA_SEED,
             "num_ctx": LLM_CONTEXT_WINDOW,
+            "num_predict": max_tokens,
         },
     }
     if format is not None:
@@ -197,7 +215,15 @@ def _post_chat(messages, *, format, timeout, temperature, model, think, name):
     )
     r.raise_for_status()
     data = r.json()
-    return _assistant_text(data.get("message") or {}, think=think), _usage(data, name)
+    # Ollama: done_reason may be "length" when capped.
+    finish = data.get("done_reason") or ("stop" if data.get("done") else None)
+    content = _assistant_text(data.get("message") or {}, think=think)
+    if finish == "length":
+        print(
+            f"warning: {name} truncated at num_predict={max_tokens} "
+            f"(think={think}, chars={len(content)})"
+        )
+    return content, _usage(data, name), finish
 
 
 def ollama_chat(
@@ -209,9 +235,12 @@ def ollama_chat(
     model: str | None = None,
     think: bool = False,
     name: str = "llm",
+    max_tokens: int | None = None,
 ):
     """Chat with retries. Backend is LLM_BACKEND (vllm or ollama)."""
     model = model or CHAT_MODEL
+    # Structured JSON stays on the smaller cap; free-form answers pass ANSWER_MAX_TOKENS.
+    max_tokens = LLM_MAX_TOKENS if max_tokens is None else max_tokens
 
     # require_parent=True: never open a standalone root trace for an LLM call.
     with observation(
@@ -227,13 +256,13 @@ def ollama_chat(
             "num_ctx": LLM_CONTEXT_WINDOW,
             "backend": LLM_BACKEND,
             "think": think,
-            "max_tokens": LLM_MAX_TOKENS,
+            "max_tokens": max_tokens,
         },
     ) as gen:
         last_err = None
         for attempt in range(1, OLLAMA_CHAT_RETRIES + 1):
             try:
-                content, usage = _post_chat(
+                content, usage, finish = _post_chat(
                     messages,
                     format=format,
                     timeout=timeout,
@@ -241,11 +270,16 @@ def ollama_chat(
                     model=model,
                     think=think,
                     name=name,
+                    max_tokens=max_tokens,
                 )
-                # Thinking can burn the token budget; retry once without it.
-                if not content and think:
-                    print(f"warning: {name} empty with think=True; retry think=False")
-                    content, usage = _post_chat(
+                # Thinking burns the budget (empty or truncated) → one plain retry.
+                if think and (not content or finish == "length"):
+                    why = "empty" if not content else "truncated"
+                    print(
+                        f"warning: {name} {why} with think=True; "
+                        f"retry think=False max_tokens={max_tokens}"
+                    )
+                    content, usage, finish = _post_chat(
                         messages,
                         format=format,
                         timeout=timeout,
@@ -253,6 +287,7 @@ def ollama_chat(
                         model=model,
                         think=False,
                         name=name,
+                        max_tokens=max_tokens,
                     )
                 if gen is not None:
                     gen.update(output=content, usage_details=usage or None)
@@ -260,6 +295,11 @@ def ollama_chat(
                         gen.update(
                             level="WARNING",
                             status_message="empty model content",
+                        )
+                    elif finish == "length":
+                        gen.update(
+                            level="WARNING",
+                            status_message=f"truncated at max_tokens={max_tokens}",
                         )
                 return content
             except (
