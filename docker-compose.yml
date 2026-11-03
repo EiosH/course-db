@@ -45,8 +45,15 @@ services:
       # Override .env 127.0.0.1 — that only works when Python runs on the host
       VLLM_BASE_URL: http://host.docker.internal:8000/v1
       OLLAMA_URL: http://host.docker.internal:11434
+      HF_HOME: /cache/huggingface
+      TRANSFORMERS_CACHE: /cache/huggingface
+      HUGGINGFACE_HUB_CACHE: /cache/huggingface
     volumes:
       - ./data/lectures:/data/lectures
+      # Live code: git pull / edit without rebuild
+      - ./ingest/app:/app
+      # Persist model weights across container recreate
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/data/hf-cache:/cache/huggingface
 
   llm:
     container_name: llm
@@ -74,6 +81,11 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-course}
       VLLM_BASE_URL: http://host.docker.internal:8000/v1
       OLLAMA_URL: http://host.docker.internal:11434
+      HF_HOME: /cache/huggingface
+      TRANSFORMERS_CACHE: /cache/huggingface
+      HUGGINGFACE_HUB_CACHE: /cache/huggingface
     volumes:
       - ./data/lectures:/data/lectures
-      - ./llm/app/data:/app/data
+      # Live code: git pull / edit without rebuild (covers data/ too)
+      - ./llm/app:/app
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/data/hf-cache:/cache/huggingface
