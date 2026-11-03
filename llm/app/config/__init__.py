@@ -45,7 +45,9 @@ RERANK_MIN_SCORE = 0.0  # Qwen3-Reranker: yes/no logit diff，>0 表示相关
 
 # 多轮记忆：最近几轮原文（窗口）+ 更早轮次的滚动摘要
 HISTORY_MAX_TURNS = 5  # 窗口最多几轮原文；实际轮数还受 HISTORY_BUDGET_CHARS 限制
-HISTORY_ANSWER_CHARS = 1500  # 窗口 / 摘要输入里每轮答案的截断长度
+# Must stay large enough that numbered items in a long assistant answer (e.g. a
+# set of practice tests after an outline recap) still reach condense / answer.
+HISTORY_ANSWER_CHARS = 8000  # 窗口 / 摘要输入里每轮答案的截断长度
 SUMMARY_MAX_CHARS = 1600  # 滚动摘要上限
 
 # 上下文预算：按字符估 token（英文约 4 字符/token，中文约 1~1.5 字/token）

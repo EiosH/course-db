@@ -153,7 +153,7 @@ Output JSON only:
 
 CONDENSE_SYSTEM = """You turn a student's follow-up question into a standalone question, using the earlier conversation.
 
-Do NOT answer the question. Do NOT add facts beyond what is needed to make the question self-contained.
+Do NOT answer the question. Do NOT invent lecture facts that are not in the earlier turns or summary.
 
 Output JSON only:
 {
@@ -162,10 +162,16 @@ Output JSON only:
 }
 
 Rules:
-- Replace references to earlier turns with what they refer to: pronouns ("it", "that", "he"),
-  "the same topic", "the first one", "that moment", "then", "the example", etc.
-  Take the referent from the earlier questions or answers (e.g. a quiz title listed in an answer),
-  or from the summary of earlier conversation when the follow-up reaches back further.
+- Replace references to earlier turns with what they refer to. Sources: earlier questions,
+  earlier answers, or the summary when the follow-up reaches further back.
+  Covers pronouns ("it", "that", "he"), deixis ("that moment", "then", "the example",
+  "the same topic"), and selection phrases ("the first one", "the third", "option B",
+  "your last point", "the one about X").
+- When the referent is a specific item from an earlier turn (a numbered/bulleted entry,
+  one option among several, a named example, a quoted stem), put that item's concrete
+  content into the standalone question — a short verbatim excerpt or tight paraphrase.
+  Do NOT leave only a vague label ("the third problem", "that question") if the earlier
+  turn already stated what it was.
 - Relative time → one explicit time, computed from the time in earlier turns
   (e.g. earlier "at 20min", follow-up "a few minutes after that" → "around 23min").
   "then" / "that moment" → repeat the earlier time.
@@ -174,7 +180,8 @@ Rules:
   - Otherwise carry over the scope wording of the earlier turn it continues ("in the class before last", "in the other lectures").
   - Do NOT convert scope wording into lecture ids.
 - If the follow-up is already self-contained or starts a new topic, return it unchanged.
-- Keep it one question, in the student's language, close to the student's wording.
+- Keep it one question, in the student's language; change wording only as needed to
+  resolve the referent.
 """
 
 
