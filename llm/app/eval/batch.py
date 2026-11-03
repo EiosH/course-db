@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from conversation_store import answer_session_turn, ensure_schema, mock_session_id
+from conversation_store import (
+    HistoryIncompleteError,
+    answer_session_turn,
+    ensure_schema,
+    mock_session_id,
+)
 from loaders import SESSION_KEYS, Dialog, load_dialogs
 from tracing import flush as langfuse_flush
 from tracing import observation, trace_attributes
@@ -50,50 +55,57 @@ def _run_dialog(client, dialog: Dialog, start_index: int, run_id: str, reporters
         # Eval batch Langfuse session; each dialog still has its own root trace.
         root, session_id=run_id, tags=tags, metadata=trace_meta
     ):
-        for turn, query in enumerate(dialog.turns, 1):
-            ref = TurnRef(
-                index=start_index + turn - 1,
-                dialog_id=dialog.id,
-                turn=turn,
-                n_turns=n_turns,
-            )
-            result = answer_session_turn(
-                client,
-                query,
-                conv_session_id,
-                session=dialog.session,
-                name=f"turn {turn}",
-                metadata={
-                    "turn": turn,
-                    "index": ref.index,
-                    "conversation_session_id": conv_session_id,
-                },
-            )
-            # answer_session_turn already flushed the turn subtree.
-            memory = result.memory
-            recorded.append(
-                {"question": result.standalone_query, "answer": result.answer_text}
-            )
-            for r in reporters:
-                r.record(ref, result)
-            if root is not None:
-                root.update(
-                    output={
-                        "conversation_session_id": conv_session_id,
-                        "turns": [
-                            {
-                                "question": q,
-                                "standalone_query": h["question"],
-                                "answer": h["answer"],
-                            }
-                            for q, h in zip(dialog.turns, recorded)
-                        ],
-                        "summary": (memory or {}).get("summary", ""),
-                    }
+        try:
+            for turn, query in enumerate(dialog.turns, 1):
+                ref = TurnRef(
+                    index=start_index + turn - 1,
+                    dialog_id=dialog.id,
+                    turn=turn,
+                    n_turns=n_turns,
                 )
-                print(f"langfuse: trace_id={root.trace_id} turn={turn}/{n_turns}")
-                # Push root progress for this turn (children already flushed).
+                result = answer_session_turn(
+                    client,
+                    query,
+                    conv_session_id,
+                    session=dialog.session,
+                    name=f"turn {turn}",
+                    metadata={
+                        "turn": turn,
+                        "index": ref.index,
+                        "conversation_session_id": conv_session_id,
+                    },
+                )
+                # answer_session_turn already flushed the turn subtree.
+                memory = result.memory
+                recorded.append(
+                    {"question": result.standalone_query, "answer": result.answer_text}
+                )
+                for r in reporters:
+                    r.record(ref, result)
+                if root is not None:
+                    root.update(
+                        output={
+                            "conversation_session_id": conv_session_id,
+                            "turns": [
+                                {
+                                    "question": q,
+                                    "standalone_query": h["question"],
+                                    "answer": h["answer"],
+                                }
+                                for q, h in zip(dialog.turns, recorded)
+                            ],
+                            "summary": (memory or {}).get("summary", ""),
+                        }
+                    )
+                    print(f"langfuse: trace_id={root.trace_id} turn={turn}/{n_turns}")
+                    # Push root progress for this turn (children already flushed).
+                    langfuse_flush()
+        except HistoryIncompleteError as e:
+            print(f"warning: abort dialog {dialog.id or 'single_turn'}: {e}")
+            if root is not None:
+                root.update(level="WARNING", status_message=str(e))
                 langfuse_flush()
+            raise SystemExit(1) from e
     return n_turns
 
 

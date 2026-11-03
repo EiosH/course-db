@@ -114,9 +114,29 @@ def _strip_think(text: str) -> str:
     return text.strip()
 
 
-def _assistant_text(message: dict) -> str:
-    """Final user-visible reply from an OpenAI-style message dict."""
-    return _strip_think(message.get("content") or "")
+def _reasoning_text(message: dict) -> str:
+    reasoning = message.get("reasoning")
+    if reasoning is None:
+        reasoning = message.get("reasoning_content")
+    return _strip_think(str(reasoning or ""))
+
+
+def _assistant_text(message: dict, *, think: bool) -> str:
+    """
+    Final user-visible reply from an OpenAI-style message dict.
+
+    Prefer `content`. Only fall back to `reasoning` / `reasoning_content` when
+    thinking was off — vLLM Qwen3 `--reasoning-parser` often misroutes the
+    whole answer there with `content` null. While thinking is on, empty
+    content means the caller should retry without think (do not treat the
+    reasoning dump as the answer).
+    """
+    content = _strip_think(message.get("content") or "")
+    if content:
+        return content
+    if think:
+        return ""
+    return _reasoning_text(message)
 
 
 def _post_chat(messages, *, format, timeout, temperature, model, think, name):
@@ -140,15 +160,20 @@ def _post_chat(messages, *, format, timeout, temperature, model, think, name):
         data = r.json()
         choice = data["choices"][0]
         message = choice.get("message") or {}
-        content = _assistant_text(message)
+        content = _assistant_text(message, think=think)
+        raw_content = message.get("content")
+        reasoning = _reasoning_text(message)
         if not content:
-            # Qwen3 + reasoning-parser: thinking can burn max_tokens so
-            # content is "" while reasoning/reasoning_content is filled.
-            reasoning = message.get("reasoning") or message.get("reasoning_content")
             print(
-                f"warning: {name} empty content "
+                f"warning: {name} empty assistant text "
                 f"(finish={choice.get('finish_reason')}, think={think}, "
-                f"reasoning_chars={len(reasoning or '')})"
+                f"content_chars={len(raw_content or '')}, "
+                f"reasoning_chars={len(reasoning)})"
+            )
+        elif not (raw_content or "").strip() and reasoning:
+            print(
+                f"warning: {name} used reasoning fallback "
+                f"(content empty, reasoning_chars={len(reasoning)})"
             )
         return content, _usage(data, name)
 
@@ -172,7 +197,7 @@ def _post_chat(messages, *, format, timeout, temperature, model, think, name):
     )
     r.raise_for_status()
     data = r.json()
-    return _assistant_text(data.get("message") or {}), _usage(data, name)
+    return _assistant_text(data.get("message") or {}, think=think), _usage(data, name)
 
 
 def ollama_chat(
@@ -217,8 +242,7 @@ def ollama_chat(
                     think=think,
                     name=name,
                 )
-                # Thinking often exhausts max_tokens before the final answer.
-                # One non-think retry keeps MySQL/Langfuse from storing "".
+                # Thinking can burn the token budget; retry once without it.
                 if not content and think:
                     print(f"warning: {name} empty with think=True; retry think=False")
                     content, usage = _post_chat(

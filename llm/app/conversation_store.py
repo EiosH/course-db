@@ -33,9 +33,26 @@ CREATE TABLE IF NOT EXISTS conversation (
 _schema_ready = False
 
 
+class HistoryIncompleteError(RuntimeError):
+    """Prior turn(s) in MySQL have an empty answer; multi-turn cannot continue."""
+
+
 def mock_session_id() -> str:
     """Temporary session id until a real client/session layer exists."""
     return uuid.uuid4().hex
+
+
+def _require_history_answers(history: list[dict]) -> None:
+    """Abort if any earlier turn is missing an answer — do not keep going blind."""
+    for i, turn in enumerate(history, 1):
+        if (turn.get("answer") or "").strip():
+            continue
+        q = (turn.get("question") or "").strip()
+        q_preview = q if len(q) <= 80 else q[:77] + "..."
+        raise HistoryIncompleteError(
+            f"history turn {i}/{len(history)} has empty answer "
+            f"(question={q_preview!r}); refusing to continue this session"
+        )
 
 
 def _connect():
@@ -99,6 +116,7 @@ def load_session(session_id: str) -> tuple[list[dict], dict | None]:
         f"mysql: load session={session_id[:8]}… turns={len(history)} "
         f"summarized_turns={memory['summarized_turns']}"
     )
+    _require_history_answers(history)
     return history, memory
 
 
@@ -117,6 +135,11 @@ def append_turn(
     """
     if not session_id:
         raise ValueError("session_id is required")
+    if not (answer or "").strip():
+        raise RuntimeError(
+            f"refusing to persist empty answer "
+            f"(session={session_id[:8]}… question={(question or '')[:80]!r})"
+        )
     summary = (memory or {}).get("summary") or ""
     summarized_turns = int((memory or {}).get("summarized_turns") or 0)
     ensure_schema()
