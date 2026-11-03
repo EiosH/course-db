@@ -1,25 +1,33 @@
-"""Ollama embed/chat and local reranker helpers."""
+"""Embed, chat (Ollama or vLLM), and local reranker helpers."""
 
+import re
 import time
 
 import requests
 
 from config import (
+    CHAT_MODEL,
     CONTEXT_WARN_RATIO,
     EMBED_BATCH,
+    EMBED_DEVICE,
+    EMBED_DIM,
     EMBED_MODEL,
+    LLM_BACKEND,
     LLM_CONTEXT_WINDOW,
+    LLM_MAX_TOKENS,
     OLLAMA_CHAT_RETRIES,
     OLLAMA_CHAT_TIMEOUT,
-    OLLAMA_MODEL,
     OLLAMA_SEED,
     OLLAMA_TEMPERATURE,
     OLLAMA_URL,
+    RERANK_DEVICE,
     RERANK_MODEL,
+    VLLM_BASE_URL,
 )
 from tracing import observation
 
 _reranker = None
+_embedder = None
 
 
 def get_reranker():
@@ -27,80 +35,68 @@ def get_reranker():
     if _reranker is None:
         from sentence_transformers import CrossEncoder
 
-        print(f"loading rerank model {RERANK_MODEL}...")
-        _reranker = CrossEncoder(RERANK_MODEL, trust_remote_code=True)
+        where = RERANK_DEVICE or "auto"
+        print(f"loading rerank model {RERANK_MODEL} on {where}...")
+        kwargs = {"trust_remote_code": True}
+        if RERANK_DEVICE:
+            kwargs["device"] = RERANK_DEVICE
+        _reranker = CrossEncoder(RERANK_MODEL, **kwargs)
     return _reranker
 
 
-def embed(texts, *, retries: int = 5):
-    """Embed texts via Ollama in batches.
+def get_embedder():
+    global _embedder
+    if _embedder is None:
+        from sentence_transformers import SentenceTransformer
 
-    Retries transient failures (Windows socket buffer / ephemeral-port
-    exhaustion after long runs is a common cause of Ollama 400s).
+        where = EMBED_DEVICE or "cpu"
+        print(f"loading embed model {EMBED_MODEL} on {where}...")
+        kwargs = {"processor_kwargs": {"padding_side": "left"}}
+        if EMBED_DEVICE:
+            kwargs["device"] = EMBED_DEVICE
+        _embedder = SentenceTransformer(EMBED_MODEL, **kwargs)
+    return _embedder
+
+
+def embed(texts, *, retries: int = 5, is_query: bool = False):
+    """Embed texts locally with Qwen3-Embedding-4B. `retries` unused; kept for callers.
+
+    Queries should pass is_query=True so the model's query instruction prompt is applied.
     """
+    del retries
+    if not texts:
+        return []
+    model = get_embedder()
     out = []
     total = len(texts)
-    session = requests.Session()
-    try:
-        for i in range(0, total, EMBED_BATCH):
-            batch = texts[i : i + EMBED_BATCH]
-            last_err = None
-            for attempt in range(1, retries + 1):
-                try:
-                    r = session.post(
-                        f"{OLLAMA_URL}/api/embed",
-                        json={"model": EMBED_MODEL, "input": batch},
-                        timeout=300,
-                    )
-                    if not r.ok:
-                        # Socket exhaustion often surfaces as HTTP 400 from Ollama.
-                        transient = r.status_code in (400, 429, 500, 502, 503)
-                        msg = f"Ollama embed {r.status_code}: {r.text}"
-                        if transient and attempt < retries:
-                            wait = min(30, 2 ** attempt)
-                            print(
-                                f"embed error (attempt {attempt}/{retries}), "
-                                f"retry in {wait}s: {msg[:200]}"
-                            )
-                            time.sleep(wait)
-                            last_err = RuntimeError(msg)
-                            continue
-                        raise RuntimeError(msg)
-                    out.extend(r.json()["embeddings"])
-                    last_err = None
-                    break
-                except (
-                    requests.exceptions.ReadTimeout,
-                    requests.exceptions.ConnectionError,
-                ) as e:
-                    last_err = e
-                    if attempt < retries:
-                        wait = min(30, 2 ** attempt)
-                        print(
-                            f"embed timeout/error "
-                            f"(attempt {attempt}/{retries}), "
-                            f"retry in {wait}s..."
-                        )
-                        time.sleep(wait)
-            if last_err is not None:
-                raise last_err
-            done = min(i + EMBED_BATCH, total)
-            print(f"embed {done}/{total}")
-            # Brief pause every ~1k chunks to let Windows reclaim sockets.
-            if done % 1024 < EMBED_BATCH and done < total:
-                time.sleep(0.5)
-    finally:
-        session.close()
+    encode_kwargs = {
+        "normalize_embeddings": True,
+        "show_progress_bar": False,
+        "truncate_dim": EMBED_DIM,
+    }
+    if is_query:
+        encode_kwargs["prompt_name"] = "query"
+    for i in range(0, total, EMBED_BATCH):
+        batch = texts[i : i + EMBED_BATCH]
+        vecs = model.encode(batch, **encode_kwargs)
+        out.extend(vecs.tolist())
+        done = min(i + EMBED_BATCH, total)
+        print(f"embed {done}/{total}")
     return out
 
 
 def _usage(data: dict, name: str) -> dict:
-    """Token counts from an Ollama response; warns when nearing the context window."""
+    """Token counts from an Ollama or OpenAI response; warns near the context window."""
     usage = {}
-    if data.get("prompt_eval_count") is not None:
-        usage["input"] = data["prompt_eval_count"]
-    if data.get("eval_count") is not None:
-        usage["output"] = data["eval_count"]
+    openai = data.get("usage") if isinstance(data.get("usage"), dict) else None
+    if openai and openai.get("prompt_tokens") is not None:
+        usage["input"] = openai["prompt_tokens"]
+        usage["output"] = openai.get("completion_tokens") or 0
+    else:
+        if data.get("prompt_eval_count") is not None:
+            usage["input"] = data["prompt_eval_count"]
+        if data.get("eval_count") is not None:
+            usage["output"] = data["eval_count"]
     total = usage.get("input", 0) + usage.get("output", 0)
     if total >= LLM_CONTEXT_WINDOW * CONTEXT_WARN_RATIO:
         print(
@@ -111,18 +107,35 @@ def _usage(data: dict, name: str) -> dict:
     return usage
 
 
-def ollama_chat(
-    messages,
-    *,
-    format=None,
-    timeout=OLLAMA_CHAT_TIMEOUT,
-    temperature=OLLAMA_TEMPERATURE,
-    model: str | None = None,
-    think: bool = False,
-    name: str = "llm",
-):
-    """Call Ollama /api/chat with retries; think defaults off to avoid qwen thinking overhead."""
-    model = model or OLLAMA_MODEL
+def _strip_think(text: str) -> str:
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.S)
+    if "</think>" in text:
+        text = text.split("</think>", 1)[1]
+    return text.strip()
+
+
+def _post_chat(messages, *, format, timeout, temperature, model, think, name):
+    if LLM_BACKEND == "vllm":
+        payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "seed": OLLAMA_SEED,
+            "max_tokens": LLM_MAX_TOKENS,
+            "chat_template_kwargs": {"enable_thinking": bool(think)},
+        }
+        if format is not None:
+            payload["response_format"] = {"type": "json_object"}
+        r = requests.post(
+            f"{VLLM_BASE_URL}/chat/completions",
+            json=payload,
+            timeout=timeout,
+        )
+        r.raise_for_status()
+        data = r.json()
+        content = _strip_think(data["choices"][0]["message"].get("content") or "")
+        return content, _usage(data, name)
+
     payload = {
         "model": model,
         "messages": messages,
@@ -136,6 +149,28 @@ def ollama_chat(
     }
     if format is not None:
         payload["format"] = format
+    r = requests.post(
+        f"{OLLAMA_URL}/api/chat",
+        json=payload,
+        timeout=timeout,
+    )
+    r.raise_for_status()
+    data = r.json()
+    return data["message"]["content"].strip(), _usage(data, name)
+
+
+def ollama_chat(
+    messages,
+    *,
+    format=None,
+    timeout=OLLAMA_CHAT_TIMEOUT,
+    temperature=OLLAMA_TEMPERATURE,
+    model: str | None = None,
+    think: bool = False,
+    name: str = "llm",
+):
+    """Chat with retries. Backend is LLM_BACKEND (vllm or ollama)."""
+    model = model or CHAT_MODEL
 
     # require_parent=True: never open a standalone root trace for an LLM call.
     with observation(
@@ -149,20 +184,21 @@ def ollama_chat(
             "seed": OLLAMA_SEED,
             "format": format,
             "num_ctx": LLM_CONTEXT_WINDOW,
+            "backend": LLM_BACKEND,
         },
     ) as gen:
         last_err = None
         for attempt in range(1, OLLAMA_CHAT_RETRIES + 1):
             try:
-                r = requests.post(
-                    f"{OLLAMA_URL}/api/chat",
-                    json=payload,
+                content, usage = _post_chat(
+                    messages,
+                    format=format,
                     timeout=timeout,
+                    temperature=temperature,
+                    model=model,
+                    think=think,
+                    name=name,
                 )
-                r.raise_for_status()
-                data = r.json()
-                content = data["message"]["content"].strip()
-                usage = _usage(data, name)
                 if gen is not None:
                     gen.update(output=content, usage_details=usage or None)
                 return content
@@ -174,7 +210,7 @@ def ollama_chat(
                 if attempt < OLLAMA_CHAT_RETRIES:
                     wait = 5 * attempt
                     print(
-                        f"ollama chat timeout/error "
+                        f"{LLM_BACKEND} chat timeout/error "
                         f"(attempt {attempt}/{OLLAMA_CHAT_RETRIES}), "
                         f"retry in {wait}s..."
                     )

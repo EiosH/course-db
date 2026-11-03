@@ -1,7 +1,7 @@
 """
 App config package.
 
-- config.models   — Ollama / embed / rerank / Qdrant / Langfuse
+- config.models   — chat backend / embed / rerank / Qdrant / Langfuse
 - config.prompts  — LLM system prompts
 - this module     — paths, retrieval limits, regex helpers
 

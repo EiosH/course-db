@@ -1,0 +1,313 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+skip ingest, search existing collection
+course_route: CSC435 / 2026-Fall / 'Tom' lecture_ids=['lec04'] (The question asks about a specific concept (publish-subscribe architectures) without referencing a specific past lecture or the entire course history, implying it relates to the current lecture content.)
+plan: time_mode=none course_general=True outline_q=False resolve=None hard_cs=[{'field': 'course_id', 'operator': 'eq', 'value': 'CSC435'}, {'field': 'quarter', 'operator': 'eq', 'value': '2026-Fall'}, {'field': 'lecturer', 'operator': 'eq', 'value': 'Tom'}, {'field': 'lecture_id', 'operator': 'in', 'value': ['lec04']}] probe_cs=[] (The question asks for a conceptual example from the lecture content without referencing a specific timestamp or current playback moment. | The question is self-contained with specific options and does not rely on vague references like 'the example' or 'this' that require resolution from lecture context. | The question asks to identify a specific system example based on standard definitions of coupling in publish-subscribe architectures, which is general subject knowledge.)
+preprobe: skip (The question asks for a conceptual example from the lecture content without referencing a specific timestamp or current playback moment. | The question is self-contained with specific options and does not rely on vague references like 'the example' or 'this' that require resolution from lecture context. | The question asks to identify a specific system example based on standard definitions of coupling in publish-subscribe architectures, which is general subject knowledge.)
+hybrid_recall: constraints=[{'field': 'course_id', 'operator': 'eq', 'value': 'CSC435'}, {'field': 'quarter', 'operator': 'eq', 'value': '2026-Fall'}, {'field': 'lecturer', 'operator': 'eq', 'value': 'Tom'}, {'field': 'lecture_id', 'operator': 'in', 'value': ['lec04']}]
+loading embed model Qwen/Qwen3-Embedding-4B on cuda...
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights: 100%|██████████| 398/398 [00:00<00:00, 12905.35it/s]
+embed 1/1
+embed 1/1
+loading rerank model Qwen/Qwen3-Reranker-0.6B on cuda...
+Loading weights:   0%|          | 0/310 [00:00<?, ?it/s]Loading weights:  72%|███████▏  | 223/310 [00:00<00:00, 2229.90it/s]Loading weights: 100%|██████████| 310/310 [00:00<00:00, 2390.46it/s]
+Default prompt name is set to 'query'. This prompt applies unless overridden by `prompt`, `prompt_name`, or a method-specific prompt, including an empty prompt.
+
+dialog:   quiz-pubsub-coupling (turn 1/2)
+query:    In the context of publish-subscribe architectures, which is an example of a temporally coupled and referentially decoupled system? Options: Linda tuple spaces blog; Electronic mail; Instant messaging; D2L notification system
+course:   CSC435 / 2026-Fall / Tom (lecture_ids=['lec04'], now=00:27:00)
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [
+    {
+      "field": "course_id",
+      "operator": "eq",
+      "value": "CSC435"
+    },
+    {
+      "field": "quarter",
+      "operator": "eq",
+      "value": "2026-Fall"
+    },
+    {
+      "field": "lecturer",
+      "operator": "eq",
+      "value": "Tom"
+    },
+    {
+      "field": "lecture_id",
+      "operator": "in",
+      "value": [
+        "lec04"
+      ]
+    }
+  ],
+  "probe_hard_constraints": [],
+  "course_general_knowledge": true,
+  "resolve": null,
+  "reason": "The question asks for a conceptual example from the lecture content without referencing a specific timestamp or current playback moment. | The question is self-contained with specific options and does not rely on vague references like 'the example' or 'this' that require resolution from lecture context. | The question asks to identify a specific system example based on standard definitions of coupling in publish-subscribe architectures, which is general subject knowledge."
+}
+preprobe:
+skipped
+rewrite:
+{
+  "rewritten_query": "publish-subscribe architectures temporal coupling referential decoupling Linda tuple spaces electronic mail instant messaging D2L notification system",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": [
+    {
+      "field": "course_id",
+      "operator": "eq",
+      "value": "CSC435"
+    },
+    {
+      "field": "quarter",
+      "operator": "eq",
+      "value": "2026-Fall"
+    },
+    {
+      "field": "lecturer",
+      "operator": "eq",
+      "value": "Tom"
+    },
+    {
+      "field": "lecture_id",
+      "operator": "in",
+      "value": [
+        "lec04"
+      ]
+    }
+  ]
+}
+recall screen_shot dense=5 bm25=5 | transcript dense=5 bm25=5
+rerank kept 4/20
+Student question: In the context of publish-subscribe architectures, which is an example of a temporally coupled and referentially decoupled system? Options: Linda tuple spaces blog; Electronic mail; Instant messaging; D2L notification system
+
+Routing note: Retrieval is scoped to lecture lec04 of the current course. Answer from that material; ignore lecture-selection wording in the question.
+
+Course subject knowledge is allowed. Lecture snippets below are optional support — solve the question even if they are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+
+Lecture content:
+
+[slide] lec04 (00:14:52)
+slide, diagram
+
+Coordination
+    Subheading: Temporal and referential coupling
+    Table:
+        |               | Temporally coupled | Temporally decoupled |
+        |---------------|--------------------|----------------------|
+        | Referentially coupled | Direct             | Mailbox              |
+        | Referentially decoupled | Event-based       | Shared data space    |
+
+    Subheading: Event-based and Shared data space
+    Left Diagram:
+        - Three "Component" boxes
+        - One "Event bus" (horizontal arrow)
+        - Arrows labeled "Subscribe" (from components to bus)
+        - Arrow labeled "Publish" (from component to bus)
+        - Arrow labeled "Notification delivery" (from bus to components)
+
+    Right Diagram:
+        - Two "Component" boxes
+        - One "Shared (persistent) data space" (cylinder)
+        - Arrows labeled "Publish" (from component to data space)
+        - Arrow labeled "Subscribe" (from component to data space)
+        - Arrow labeled "Data delivery" (from data space to component)
+
+Publish-subscribe architectures
+
+[slide] lec04 (00:14:57)
+slide, diagram
+
+Coordination
+    Subheading: Temporal and referential coupling
+    Table:
+        |               | Temporally coupled | Temporally decoupled |
+        |---------------|--------------------|----------------------|
+        | Referentially coupled | Direct             | Mailbox              |
+        | Referentially decoupled | Event-based       | Shared data space    |
+
+    Subheading: Event-based and Shared data space
+    Left Diagram:
+        - Three "Component" boxes
+        - One "Event bus" (horizontal arrow)
+        - Arrows labeled "Subscribe" from components to event bus
+        - Arrow labeled "Publish" from one component to event bus
+        - Arrow labeled "Notification delivery" from event bus to components
+
+    Right Diagram:
+        - Three "Component" boxes
+        - One "Shared (persistent) data space" (cylinder)
+        - Arrows labeled "Publish" from one component to data space
+        - Arrows labeled "Subscribe" from one component to data space
+        - Arrow labeled "Data delivery" from data space to components
+
+Publish-subscribe architectures
+
+[speech] lec04 (00:16:33.019 --> 00:18:03.120)
+temporal and referential couplings. And you can have two variants of, you know, temporal couplings. So you can have systems that have components that are temporally coupled versus temporally decoupled, and then components that are referentially coupled and referentially decoupled. This creates now four categories of coordination in distributive systems. So let's start with the first one. So the direct coordination model refers to systems where the components are temporally coupled and referentially coupled. So it means that the components inside the distributive system, and when they communicate with each other, so temporally coupled means that they have to be up and running at the same time, and referentially coupled, you need that component initiates a request. It needs to know exactly what is the destination component. So as an example of the direct coordination model, we can use the cell phone system, right? So for example, if you want to be able to call someone, right, you need to know who you're calling. You cannot just call somebody in the ETA, right? You need to have a destination phone number that you're calling. So that's what it means by referentially coupled. You have to have a destination. And then temporary coupled means that both phones have to be up and running and connected to the network for the call to go through. If one of the phones is not connected to the network or is shut off, the call will not go through. You will get immediately an indication that, hey, you cannot call this number. All right.
+
+[speech] lec04 (00:24:47.140 --> 00:26:06.520)
+The operating system publishes when the data is available and sends a notification, and then the component can use a subscribe function to actually grab the data from the map. It doesn't really work that way, but we can imagine it, you know, at least at an abstract level that it works this way. All right, so this now allows us to introduce these notions here, these two coordination models, allows us to introduce, and I'm going to come back to the Linda. Topal Spaces allows us to introduce the last logical, let's say, architecture that we will cover in this class, which is the publisher-subscriber architecture. So in a publisher-subscriber architecture, this is again a logical way of organizing the distributed application, where our components can be either publishers or subscribers. The subscribers, they can subscribe to the services provided by the publishers, and the publishers will publish information. Now, what's very interesting when compared to the other two architectures is that we need something else to be able to implement the system. We need that event bus, plus maybe the persistency if it's required. So for this, we need to make use of the middleware layer of distributed systems. If you remember from the first lecture when we talked about the distribution transparency goal of distributed systems,
+
+answer:
+D2L notification system.
+
+On the slide, temporally coupled + referentially decoupled corresponds to the **event-based** model. A notification system fits that: the publisher doesn’t need to know the subscribers, but delivery depends on the subscriber being active/listening when the event occurs.
+condense: 'Are you sure? Please think about it.' → 'Are you sure that the D2L notification system is an example of a temporally coupled and referentially decoupled system in the context of publish-subscribe architectures? Please think about it.' (The follow-up questions the correctness of the previous answer, so the specific subject (D2L notification system) and context (publish-subscribe architectures) must be included to make it standalone.)
+course_route: CSC435 / 2026-Fall / 'Tom' lecture_ids=['lec04'] (The question asks for verification of a specific concept (D2L notification system as an example of temporally coupled/referentially decoupled publish-subscribe) without referencing a specific past lecture or the entire course history. It implies the current context or the most recent relevant material.)
+plan: time_mode=none course_general=False outline_q=False resolve=None hard_cs=[{'field': 'course_id', 'operator': 'eq', 'value': 'CSC435'}, {'field': 'quarter', 'operator': 'eq', 'value': '2026-Fall'}, {'field': 'lecturer', 'operator': 'eq', 'value': 'Tom'}, {'field': 'lecture_id', 'operator': 'in', 'value': ['lec04']}] probe_cs=[] (The question asks for conceptual verification of a specific example (D2L notification system) within a theoretical context (publish-subscribe). It does not reference a specific timestamp or current playback moment, so no time filter is needed for main retrieval. | The question refers to a specific named system (D2L notification system) and specific concepts (temporally coupled, referentially decoupled) without using vague pronouns or underspecified references like 'the example' or 'this' that require resolution from context. | The question asks for verification of a specific example (D2L notification system) used in the lecture to illustrate a concept. Determining if this specific example was presented or classified this way in the course requires knowledge of the lecture content, not just general subject knowledge.)
+preprobe: skip (The question asks for conceptual verification of a specific example (D2L notification system) within a theoretical context (publish-subscribe). It does not reference a specific timestamp or current playback moment, so no time filter is needed for main retrieval. | The question refers to a specific named system (D2L notification system) and specific concepts (temporally coupled, referentially decoupled) without using vague pronouns or underspecified references like 'the example' or 'this' that require resolution from context. | The question asks for verification of a specific example (D2L notification system) used in the lecture to illustrate a concept. Determining if this specific example was presented or classified this way in the course requires knowledge of the lecture content, not just general subject knowledge.)
+hybrid_recall: constraints=[{'field': 'course_id', 'operator': 'eq', 'value': 'CSC435'}, {'field': 'quarter', 'operator': 'eq', 'value': '2026-Fall'}, {'field': 'lecturer', 'operator': 'eq', 'value': 'Tom'}, {'field': 'lecture_id', 'operator': 'in', 'value': ['lec04']}]
+embed 1/1
+embed 1/1
+
+dialog:   quiz-pubsub-coupling (turn 2/2)
+query:    Are you sure? Please think about it.
+standalone: Are you sure that the D2L notification system is an example of a temporally coupled and referentially decoupled system in the context of publish-subscribe architectures? Please think about it.
+course:   CSC435 / 2026-Fall / Tom (lecture_ids=['lec04'], now=00:27:00)
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [
+    {
+      "field": "course_id",
+      "operator": "eq",
+      "value": "CSC435"
+    },
+    {
+      "field": "quarter",
+      "operator": "eq",
+      "value": "2026-Fall"
+    },
+    {
+      "field": "lecturer",
+      "operator": "eq",
+      "value": "Tom"
+    },
+    {
+      "field": "lecture_id",
+      "operator": "in",
+      "value": [
+        "lec04"
+      ]
+    }
+  ],
+  "probe_hard_constraints": [],
+  "course_general_knowledge": false,
+  "resolve": null,
+  "reason": "The question asks for conceptual verification of a specific example (D2L notification system) within a theoretical context (publish-subscribe). It does not reference a specific timestamp or current playback moment, so no time filter is needed for main retrieval. | The question refers to a specific named system (D2L notification system) and specific concepts (temporally coupled, referentially decoupled) without using vague pronouns or underspecified references like 'the example' or 'this' that require resolution from context. | The question asks for verification of a specific example (D2L notification system) used in the lecture to illustrate a concept. Determining if this specific example was presented or classified this way in the course requires knowledge of the lecture content, not just general subject knowledge."
+}
+preprobe:
+skipped
+rewrite:
+{
+  "rewritten_query": "D2L notification system publish-subscribe architecture temporal coupling referential decoupling",
+  "time_mode": "none",
+  "course_general_knowledge": false,
+  "hard_constraints": [
+    {
+      "field": "course_id",
+      "operator": "eq",
+      "value": "CSC435"
+    },
+    {
+      "field": "quarter",
+      "operator": "eq",
+      "value": "2026-Fall"
+    },
+    {
+      "field": "lecturer",
+      "operator": "eq",
+      "value": "Tom"
+    },
+    {
+      "field": "lecture_id",
+      "operator": "in",
+      "value": [
+        "lec04"
+      ]
+    }
+  ]
+}
+recall screen_shot dense=5 bm25=5 | transcript dense=5 bm25=5
+rerank kept 4/20
+Student question: Are you sure that the D2L notification system is an example of a temporally coupled and referentially decoupled system in the context of publish-subscribe architectures? Please think about it.
+
+Routing note: Retrieval is scoped to lecture lec04 of the current course. Answer from that material; ignore lecture-selection wording in the question.
+
+Lecture content:
+
+[slide] lec04 (00:14:52)
+slide, diagram
+
+Coordination
+    Subheading: Temporal and referential coupling
+    Table:
+        |               | Temporally coupled | Temporally decoupled |
+        |---------------|--------------------|----------------------|
+        | Referentially coupled | Direct             | Mailbox              |
+        | Referentially decoupled | Event-based       | Shared data space    |
+
+    Subheading: Event-based and Shared data space
+    Left Diagram:
+        - Three "Component" boxes
+        - One "Event bus" (horizontal arrow)
+        - Arrows labeled "Subscribe" (from components to bus)
+        - Arrow labeled "Publish" (from component to bus)
+        - Arrow labeled "Notification delivery" (from bus to components)
+
+    Right Diagram:
+        - Two "Component" boxes
+        - One "Shared (persistent) data space" (cylinder)
+        - Arrows labeled "Publish" (from component to data space)
+        - Arrow labeled "Subscribe" (from component to data space)
+        - Arrow labeled "Data delivery" (from data space to component)
+
+Publish-subscribe architectures
+
+[slide] lec04 (00:14:57)
+slide, diagram
+
+Coordination
+    Subheading: Temporal and referential coupling
+    Table:
+        |               | Temporally coupled | Temporally decoupled |
+        |---------------|--------------------|----------------------|
+        | Referentially coupled | Direct             | Mailbox              |
+        | Referentially decoupled | Event-based       | Shared data space    |
+
+    Subheading: Event-based and Shared data space
+    Left Diagram:
+        - Three "Component" boxes
+        - One "Event bus" (horizontal arrow)
+        - Arrows labeled "Subscribe" from components to event bus
+        - Arrow labeled "Publish" from one component to event bus
+        - Arrow labeled "Notification delivery" from event bus to components
+
+    Right Diagram:
+        - Three "Component" boxes
+        - One "Shared (persistent) data space" (cylinder)
+        - Arrows labeled "Publish" from one component to data space
+        - Arrows labeled "Subscribe" from one component to data space
+        - Arrow labeled "Data delivery" from data space to components
+
+Publish-subscribe architectures
+
+[speech] lec04 (00:16:33.019 --> 00:18:03.120)
+temporal and referential couplings. And you can have two variants of, you know, temporal couplings. So you can have systems that have components that are temporally coupled versus temporally decoupled, and then components that are referentially coupled and referentially decoupled. This creates now four categories of coordination in distributive systems. So let's start with the first one. So the direct coordination model refers to systems where the components are temporally coupled and referentially coupled. So it means that the components inside the distributive system, and when they communicate with each other, so temporally coupled means that they have to be up and running at the same time, and referentially coupled, you need that component initiates a request. It needs to know exactly what is the destination component. So as an example of the direct coordination model, we can use the cell phone system, right? So for example, if you want to be able to call someone, right, you need to know who you're calling. You cannot just call somebody in the ETA, right? You need to have a destination phone number that you're calling. So that's what it means by referentially coupled. You have to have a destination. And then temporary coupled means that both phones have to be up and running and connected to the network for the call to go through. If one of the phones is not connected to the network or is shut off, the call will not go through. You will get immediately an indication that, hey, you cannot call this number. All right.
+
+[speech] lec04 (00:18:03.759 --> 00:19:49.680)
+The mailbox coordination model refers to systems where the components are temporally decoupled but referentially coupled. So, temporally decoupled means that the components do not have to be up and running at the same time. the message will still be sent between them but you have to, again, referentially coupled means that a component needs to know with which other component does it need to talk to so as an example, I'm going to use electronic mail, email as a way to describe an example for this model so in the email model, the components represent the people that send emails between each other the system is temporally decoupled because I can send an email to one of my friends, even though they're not connected to their computer right now. The computer is offline. The email gets sent somewhere in the server where it gets stored. So we need some notion of persistency we'll see very shortly. But whenever I send an email, I cannot send the email to the ether. I need to send an email to a destination. The destination could be another email address, could be, for example, an email group. and the email group will then send an email to each of the members of the group but in the end we still need a destination. So this is an example of the mailbox coordination model. Now when we go to systems that are referentially decoupled we have two examples here. We have event-based systems and the shared data space model. So here, what they both have in common is that they have some sort of event bus where the components can actually submit the request directly to the event bus.
+
+answer:
+Yes—based on the lecture’s classification, **D2L notification system** is the best match.
+
+On the slide, **temporally coupled + referentially decoupled** is the **event-based** model. The event-based diagram shows components publishing to an event bus and receiving **notification delivery**, which fits a notification system.
+
+For the other options:
+- **Linda tuple spaces / blog** → shared data space, temporally decoupled + referentially decoupled  
+- **Electronic mail** → mailbox, temporally decoupled + referentially coupled  
+- **Instant messaging** → direct, temporally coupled + referentially coupled
+langfuse: trace_id=cf66f4e4e195a83c0b651d7131fe6544

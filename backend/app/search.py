@@ -244,7 +244,7 @@ def search_dense(client, q, doc_type, constraints, course_ctx, limit=DENSE_LIMIT
     flt = build_filter(doc_type, constraints, course_ctx)
     return client.query_points(
         collection_name=COLLECTION_NAME,
-        query=embed([q])[0],
+        query=embed([q], is_query=True)[0],
         using="dense",
         query_filter=flt,
         limit=limit,

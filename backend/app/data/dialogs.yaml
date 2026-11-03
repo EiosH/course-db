@@ -17,20 +17,30 @@
 # 问题里有 ": "（冒号加空格）时必须加引号，建议统一加双引号。
 
 user_courses:
-  - course_id: CSC477
-    quarter: 2026-Spring
-    lecturer: Eric J. Fredericks
-    lecture_id: [lec01, lec02, lec03, lec04, lec05, lec06, lec07, lec08, lec09, lec10]
-  - course_id: CSC421
-    quarter: 2026-Fall
-    lecturer: Peter
-    lecture_id: [lec01]
+  # - course_id: CSC477
+  #   quarter: 2026-Spring
+  #   lecturer: Eric J. Fredericks
+  #   lecture_id: [lec01, lec02, lec03, lec04, lec05, lec06, lec07, lec08, lec09, lec10]
+  # - course_id: CSC421
+  #   quarter: 2026-Fall
+  #   lecturer: Peter
+  #   lecture_id: [lec01]
   - course_id: CSC435
     quarter: 2026-Fall
     lecturer: Tom
     lecture_id: [lec02, lec03, lec04]
 
 dialogs:
+#  - id: outline
+#     timestamp: "01:22:09"
+#     current_quarter: 2026-Spring
+#     current_course: CSC477
+#     current_lecture: lec02
+#     turns:
+#       - "What did the instructor covered in the last half of this lesson?"
+#       - "Can you give me one quiz questions?"
+#       - "For the question, when did the instructor cover it?"
+
   # - id: at-20min
   #   timestamp: "01:22:09"
   #   current_quarter: 2026-Spring
@@ -245,24 +255,8 @@ dialogs:
     current_lecture: lec04
     turns:
       - "In the context of publish-subscribe architectures, which is an example of a temporally coupled and referentially decoupled system? Options: Linda tuple spaces blog; Electronic mail; Instant messaging; D2L notification system"
-      - "What is one of the crucial challenges of building publish-subscribe systems? Options: Creating easy to use interfaces between the publisher and subscriber layers; Naming the event/content and identifying/matching which subscriber should receive it; Properly encapsulating the resources of the subscriber as objects; Deciding if the publisher is the client or the server"
-      - "In the context of publish-subscribe architectures, which is an example of a temporally decoupled and referentially coupled system? Options: Linda tuple spaces blog; Instant messaging; Electronic mail; D2L notification system"
-      - "In the context of publish-subscribe architectures, which is an example of a temporally decoupled and referentially decoupled system? Options: Instant messaging; Electronic mail; Linda tuple spaces blog; D2L notification system"
-      - "For questions 1 to 4 I picked D2L notification system, naming/matching subscribers, electronic mail, and Linda tuple spaces blog. Which ones did I get wrong?"
+      - "Are you sure? Please think about it."
 
-
-  - id: pa2-overview
-    timestamp: "00:41:00"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec03
-    turns:
-      - "What is Programming Assignment 2 about?"
-      - "What are the two operations the application has to support?"
-      - "Which programming languages are we allowed to use?"
-      - "When is it due?"
-      - "How is the grade split between the code, the readme and the report?"
-      - "What will programming assignments 3 and 4 add on top of this?"
 
   - id: pa2-valid-words
     timestamp: "00:36:30"
@@ -302,132 +296,132 @@ dialogs:
       - "How many results should the search return?"
       - "Can you write me the intersection step in Java?"
 
-  - id: pa2-performance
-    timestamp: "00:48:30"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec03
-    turns:
-      - "What do we have to measure in the performance evaluation?"
-      - "What's the difference between wall time and CPU time?"
-      - "Which one should I report?"
-      - "Should I report the dataset sizes in megabytes or mebibytes?"
-      - "Is the processing engine compute intensive, memory intensive or IO intensive?"
-      - "Why would indexing throughput change with dataset size if the code is the same?"
+  # - id: pa2-performance
+  #   timestamp: "00:48:30"
+  #   current_quarter: 2026-Fall
+  #   current_course: CSC435
+  #   current_lecture: lec03
+  #   turns:
+  #     - "What do we have to measure in the performance evaluation?"
+  #     - "What's the difference between wall time and CPU time?"
+  #     - "Which one should I report?"
+  #     - "Should I report the dataset sizes in megabytes or mebibytes?"
+  #     - "Is the processing engine compute intensive, memory intensive or IO intensive?"
+  #     - "Why would indexing throughput change with dataset size if the code is the same?"
 
-  - id: csc435-quiz-logistics
-    timestamp: "00:08:00"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec03
-    turns:
-      - "How much are the quizzes worth?"
-      - "I missed quiz 1. Can I make it up?"
-      - "When can I see the answers to quiz 1?"
-      - "What does quiz 2 cover?"
-      - "And what about quiz 3?"
-      - "Will the exam reuse quiz questions?"
+  # - id: csc435-quiz-logistics
+  #   timestamp: "00:08:00"
+  #   current_quarter: 2026-Fall
+  #   current_course: CSC435
+  #   current_lecture: lec03
+  #   turns:
+  #     - "How much are the quizzes worth?"
+  #     - "I missed quiz 1. Can I make it up?"
+  #     - "When can I see the answers to quiz 1?"
+  #     - "What does quiz 2 cover?"
+  #     - "And what about quiz 3?"
+  #     - "Will the exam reuse quiz questions?"
 
-  - id: rest-vs-objects
-    timestamp: "02:36:00"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec03
-    turns:
-      - "What did the instructor say about REST?"
-      - "What are the four REST operations and what does each one do?"
-      - "How does Amazon S3 identify a bucket and an object?"
-      - "What are the pros and cons of REST versus an object-oriented interface?"
-      - "Was Dropbox really built on top of S3?"
-      - "How is MVC different from application layering?"
+  # - id: rest-vs-objects
+  #   timestamp: "02:36:00"
+  #   current_quarter: 2026-Fall
+  #   current_course: CSC435
+  #   current_lecture: lec03
+  #   turns:
+  #     - "What did the instructor say about REST?"
+  #     - "What are the four REST operations and what does each one do?"
+  #     - "How does Amazon S3 identify a bucket and an object?"
+  #     - "What are the pros and cons of REST versus an object-oriented interface?"
+  #     - "Was Dropbox really built on top of S3?"
+  #     - "How is MVC different from application layering?"
 
-  - id: coordination-models
-    timestamp: "00:20:00"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec04
-    turns:
-      - "What are temporal and referential coupling?"
-      - "Give me the example he used for each of the four coordination models."
-      - "Which model does email belong to, and why?"
-      - "How do polling and interrupts relate to the event bus?"
-      - "Did he talk about polling and interrupts in the previous lecture too?"
+  # - id: coordination-models
+  #   timestamp: "00:20:00"
+  #   current_quarter: 2026-Fall
+  #   current_course: CSC435
+  #   current_lecture: lec04
+  #   turns:
+  #     - "What are temporal and referential coupling?"
+  #     - "Give me the example he used for each of the four coordination models."
+  #     - "Which model does email belong to, and why?"
+  #     - "How do polling and interrupts relate to the event bus?"
+  #     - "Did he talk about polling and interrupts in the previous lecture too?"
 
-  - id: pubsub-and-middleware
-    timestamp: "00:33:00"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec04
-    turns:
-      - "What's the difference between topic-based and content-based subscription?"
-      - "Which one is harder to implement and why?"
-      - "What do the in, read and out operations do in Linda tuple spaces?"
-      - "Why use publish-subscribe instead of a layered architecture?"
-      - "Why is a broker better than wrapping every legacy component directly?"
-      - "What did he say about AI replacing software engineers?"
+  # - id: pubsub-and-middleware
+  #   timestamp: "00:33:00"
+  #   current_quarter: 2026-Fall
+  #   current_course: CSC435
+  #   current_lecture: lec04
+  #   turns:
+  #     - "What's the difference between topic-based and content-based subscription?"
+  #     - "Which one is harder to implement and why?"
+  #     - "What do the in, read and out operations do in Linda tuple spaces?"
+  #     - "Why use publish-subscribe instead of a layered architecture?"
+  #     - "Why is a broker better than wrapping every legacy component directly?"
+  #     - "What did he say about AI replacing software engineers?"
 
-  - id: client-server-tiers
-    timestamp: "01:01:00"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec04
-    turns:
-      - "What examples did he give for the different two-tiered configurations?"
-      - "Which configuration is Google's cloud gaming service?"
-      - "Are modern websites configuration B or C?"
-      - "Why does a deeper tiered architecture make the client wait longer?"
-      - "How does this relate to the three layers in Programming Assignment 2?"
+  # - id: client-server-tiers
+  #   timestamp: "01:01:00"
+  #   current_quarter: 2026-Fall
+  #   current_course: CSC435
+  #   current_lecture: lec04
+  #   turns:
+  #     - "What examples did he give for the different two-tiered configurations?"
+  #     - "Which configuration is Google's cloud gaming service?"
+  #     - "Are modern websites configuration B or C?"
+  #     - "Why does a deeper tiered architecture make the client wait longer?"
+  #     - "How does this relate to the three layers in Programming Assignment 2?"
 
-  - id: file-sharing-and-p2p
-    timestamp: "01:41:00"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec04
-    turns:
-      - "What's the difference between the upload/download model and the remote access model?"
-      - "If I change 100 MB in a 4 GB file, how much data moves in each model?"
-      - "How does NFS use the virtual file system layer?"
-      - "How does BitTorrent find who has the data?"
-      - "Who runs the super peers?"
-      - "Do we need to know how Chord works for the exam?"
-      - "What's the difference between vertical distribution and vertical scalability?"
+  # - id: file-sharing-and-p2p
+  #   timestamp: "01:41:00"
+  #   current_quarter: 2026-Fall
+  #   current_course: CSC435
+  #   current_lecture: lec04
+  #   turns:
+  #     - "What's the difference between the upload/download model and the remote access model?"
+  #     - "If I change 100 MB in a 4 GB file, how much data moves in each model?"
+  #     - "How does NFS use the virtual file system layer?"
+  #     - "How does BitTorrent find who has the data?"
+  #     - "Who runs the super peers?"
+  #     - "Do we need to know how Chord works for the exam?"
+  #     - "What's the difference between vertical distribution and vertical scalability?"
 
-  - id: csc435-topic-switch-and-unknown
-    timestamp: "02:26:00"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec04
-    turns:
-      - "What is the instructor talking about right now?"
-      - "Who validates transactions in a blockchain?"
-      - "Why did Apple switch to ARM?"
-      - "Did he cover Kubernetes in this course?"
-      - "What about Raft or Paxos?"
-      - "这门课的 quiz 每周什么时候发布、什么时候截止？"
+  # - id: csc435-topic-switch-and-unknown
+  #   timestamp: "02:26:00"
+  #   current_quarter: 2026-Fall
+  #   current_course: CSC435
+  #   current_lecture: lec04
+  #   turns:
+  #     - "What is the instructor talking about right now?"
+  #     - "Who validates transactions in a blockchain?"
+  #     - "Why did Apple switch to ARM?"
+  #     - "Did he cover Kubernetes in this course?"
+  #     - "What about Raft or Paxos?"
+  #     - "这门课的 quiz 每周什么时候发布、什么时候截止？"
 
-  - id: gitlab-ssh-and-keys
-    timestamp: "00:26:00"
-    current_quarter: 2026-Fall
-    current_course: CSC435
-    current_lecture: lec02
-    turns:
-      - "How do I set up SSH access to the GitLab server?"
-      - "Which key type does he tell us to generate?"
-      - "How does Alice prove a message came from her using public and private keys?"
-      - "Why can't you reverse a hash function?"
-      - "What did he say is usually the weakest link in security?"
+  # # - id: gitlab-ssh-and-keys
+  # #   timestamp: "00:26:00"
+  # #   current_quarter: 2026-Fall
+  # #   current_course: CSC435
+  # #   current_lecture: lec02
+  # #   turns:
+  # #     - "How do I set up SSH access to the GitLab server?"
+  # #     - "Which key type does he tell us to generate?"
+  # #     - "How does Alice prove a message came from her using public and private keys?"
+  # #     - "Why can't you reverse a hash function?"
+  # #     - "What did he say is usually the weakest link in security?"
 
-  # ---------- CSC421 Algorithms ----------
+  # # # ---------- CSC421 Algorithms ----------
 
-  - id: csc421-runtime-basics
-    timestamp: "00:58:00"
-    current_quarter: 2026-Fall
-    current_course: CSC421
-    current_lecture: lec01
-    turns:
-      - "How many swaps does the swap-based sorting algorithm need in the worst case?"
-      - "Why does the number of comparisons not depend on the input, but the swaps do?"
-      - "Why is a logarithmic runtime so good?"
-      - "What is n + n/2 + n/4 + ... equal to?"
-      - "Will he ask us to prove these formulas on the exam?"
-      - "When are his office hours?"
+  # # - id: csc421-runtime-basics
+  # #   timestamp: "00:58:00"
+  # #   current_quarter: 2026-Fall
+  # #   current_course: CSC421
+  # #   current_lecture: lec01
+  # #   turns:
+  # #     - "How many swaps does the swap-based sorting algorithm need in the worst case?"
+  # #     - "Why does the number of comparisons not depend on the input, but the swaps do?"
+  # #     - "Why is a logarithmic runtime so good?"
+  # #     - "What is n + n/2 + n/4 + ... equal to?"
+  # #     - "Will he ask us to prove these formulas on the exam?"
+  # #     - "When are his office hours?"

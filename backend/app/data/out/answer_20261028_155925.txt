@@ -1,0 +1,149 @@
+quiz-pubsub-coupling#1. 原问题: In the context of publish-subscribe architectures, which is an example of a temporally coupled and referentially decoupled system? Options: Linda tuple spaces blog; Electronic mail; Instant messaging; D2L notification system
+query_plan:
+{
+  "time_mode": "none",
+  "hard_constraints": [
+    {
+      "field": "course_id",
+      "operator": "eq",
+      "value": "CSC435"
+    },
+    {
+      "field": "quarter",
+      "operator": "eq",
+      "value": "2026-Fall"
+    },
+    {
+      "field": "lecturer",
+      "operator": "eq",
+      "value": "Tom"
+    },
+    {
+      "field": "lecture_id",
+      "operator": "in",
+      "value": [
+        "lec04"
+      ]
+    }
+  ],
+  "probe_hard_constraints": [],
+  "course_general_knowledge": true,
+  "resolve": null,
+  "reason": "The question asks for a conceptual example from the lecture content without referencing a specific timestamp or the current playback moment. | The question is self-contained with specific options and does not rely on vague references like 'this example' or 'that slide'. | The question asks to identify a specific system example based on standard distributed systems definitions (temporal coupling vs. referential decoupling) which is general subject knowledge for this course, not dependent on specific lecture narration."
+}
+
+preprobe:
+skipped
+
+preprobe hits:
+(none)
+
+rewrite:
+{
+  "rewritten_query": "publish-subscribe architecture temporal coupling referential decoupling Linda tuple spaces electronic mail instant messaging D2L notification system",
+  "time_mode": "none",
+  "course_general_knowledge": true,
+  "hard_constraints": [
+    {
+      "field": "course_id",
+      "operator": "eq",
+      "value": "CSC435"
+    },
+    {
+      "field": "quarter",
+      "operator": "eq",
+      "value": "2026-Fall"
+    },
+    {
+      "field": "lecturer",
+      "operator": "eq",
+      "value": "Tom"
+    },
+    {
+      "field": "lecture_id",
+      "operator": "in",
+      "value": [
+        "lec04"
+      ]
+    }
+  ]
+}
+
+prompt:
+Student question: In the context of publish-subscribe architectures, which is an example of a temporally coupled and referentially decoupled system? Options: Linda tuple spaces blog; Electronic mail; Instant messaging; D2L notification system
+
+Routing note: Retrieval is scoped to lecture lec04 of the current course. Answer from that material; ignore lecture-selection wording in the question.
+
+Course subject knowledge is allowed. Lecture snippets below are optional support — solve the question even if they are missing or only loosely related. Do not invent this lecture's slides, quotes, or homework items.
+
+Lecture content:
+
+[slide] lec04 (00:15:36)
+slide, diagram
+
+Coordination
+    Subheading: Temporal and referential coupling
+    Table:
+        |               | Temporally coupled | Temporally decoupled |
+        |---------------|--------------------|----------------------|
+        | Referentially coupled | Direct             | Mailbox              |
+        | Referentially decoupled | Event-based       | Shared data space    |
+
+    Subheading: Event-based and Shared data space
+    Left Diagram:
+        - Three "Component" boxes
+        - One "Event bus" (horizontal arrow)
+        - Arrows labeled "Subscribe" from components to event bus
+        - Arrow labeled "Publish" from one component to event bus
+        - Arrow labeled "Notification delivery" from event bus to components
+
+    Right Diagram:
+        - Three "Component" boxes
+        - One "Shared (persistent) data space" (cylinder)
+        - Arrows labeled "Publish" from one component to data space
+        - Arrows labeled "Subscribe" from one component to data space
+        - Arrow labeled "Data delivery" from data space to components
+
+Publish-subscribe architectures
+
+[slide] lec04 (00:15:37)
+slide, diagram
+
+Coordination
+    Subheading: Temporal and referential coupling
+    Table:
+        |               | Temporally coupled | Temporally decoupled |
+        |---------------|--------------------|----------------------|
+        | Referentially coupled | Direct             | Mailbox              |
+        | Referentially decoupled | Event-based       | Shared data space    |
+
+    Subheading: Event-based and Shared data space
+    Left Diagram:
+        - Three "Component" boxes
+        - One "Event bus" (horizontal arrow)
+        - Arrows labeled "Subscribe" from components to event bus
+        - Arrow labeled "Publish" from one component to event bus
+        - Arrow labeled "Notification delivery" from event bus to components
+
+    Right Diagram:
+        - Three "Component" boxes
+        - One "Shared (persistent) data space" (cylinder)
+        - Arrows labeled "Publish" from one component to data space
+        - Arrows labeled "Subscribe" from one component to data space
+        - Arrow labeled "Data delivery" from data space to components
+
+Publish-subscribe architectures
+
+[speech] lec04 (00:16:33.019 --> 00:18:03.120)
+temporal and referential couplings. And you can have two variants of, you know, temporal couplings. So you can have systems that have components that are temporally coupled versus temporally decoupled, and then components that are referentially coupled and referentially decoupled. This creates now four categories of coordination in distributive systems. So let's start with the first one. So the direct coordination model refers to systems where the components are temporally coupled and referentially coupled. So it means that the components inside the distributive system, and when they communicate with each other, so temporally coupled means that they have to be up and running at the same time, and referentially coupled, you need that component initiates a request. It needs to know exactly what is the destination component. So as an example of the direct coordination model, we can use the cell phone system, right? So for example, if you want to be able to call someone, right, you need to know who you're calling. You cannot just call somebody in the ETA, right? You need to have a destination phone number that you're calling. So that's what it means by referentially coupled. You have to have a destination. And then temporary coupled means that both phones have to be up and running and connected to the network for the call to go through. If one of the phones is not connected to the network or is shut off, the call will not go through. You will get immediately an indication that, hey, you cannot call this number. All right.
+
+[speech] lec04 (00:24:47.140 --> 00:26:06.520)
+The operating system publishes when the data is available and sends a notification, and then the component can use a subscribe function to actually grab the data from the map. It doesn't really work that way, but we can imagine it, you know, at least at an abstract level that it works this way. All right, so this now allows us to introduce these notions here, these two coordination models, allows us to introduce, and I'm going to come back to the Linda. Topal Spaces allows us to introduce the last logical, let's say, architecture that we will cover in this class, which is the publisher-subscriber architecture. So in a publisher-subscriber architecture, this is again a logical way of organizing the distributed application, where our components can be either publishers or subscribers. The subscribers, they can subscribe to the services provided by the publishers, and the publishers will publish information. Now, what's very interesting when compared to the other two architectures is that we need something else to be able to implement the system. We need that event bus, plus maybe the persistency if it's required. So for this, we need to make use of the middleware layer of distributed systems. If you remember from the first lecture when we talked about the distribution transparency goal of distributed systems,
+
+答案:
+The **D2L notification system** is the best example.
+
+On the slide, **temporally coupled + referentially decoupled** corresponds to an **event-based** system: components must be active at the same time, but they don’t need to know each other’s identities. Linda tuple spaces are shared data space, email is mailbox-style, and instant messaging is direct.
+
+============================================================
+
