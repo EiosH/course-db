@@ -1,0 +1,4902 @@
+00:00:00.000 --> 00:00:27.100
+Just a second, I'll see if I can set off my own.
+
+00:00:27.100 --> 00:00:29.100
+see if I can set up my own
+
+00:00:57.100 --> 00:01:27.079
+Thank you.
+
+00:01:27.099 --> 00:01:57.079
+Thank you.
+
+00:01:57.099 --> 00:02:27.079
+Thank you.
+
+00:02:27.099 --> 00:02:46.180
+I wanted to know how we can change the Zoom meeting so I want to connect to my own Zoom
+
+00:02:46.180 --> 00:02:49.180
+meeting.
+
+00:02:49.180 --> 00:02:55.180
+All right.
+
+00:02:55.180 --> 00:03:25.159
+So, let's get started.
+
+00:03:25.180 --> 00:03:26.620
+Yeah.
+
+00:03:26.620 --> 00:03:40.340
+It's somehow safe with the headphones, with the Zoom or I know, right?
+
+00:03:40.340 --> 00:03:41.740
+This is right here.
+
+00:03:41.740 --> 00:03:46.340
+So this panel right here is specifically for Zoom.
+
+00:03:46.340 --> 00:03:49.939
+So you will see anything you need to see for Zoom on here.
+
+00:03:49.939 --> 00:03:51.620
+So what were you looking at?
+
+00:03:51.620 --> 00:03:53.520
+I just want to join to the attendees.
+
+00:03:53.520 --> 00:03:54.520
+Yeah.
+
+00:03:54.520 --> 00:03:58.680
+Yeah. Just end this meeting and then you want to start a new meeting?
+
+00:03:58.680 --> 00:04:00.600
+Oh, I see. No, no, I don't. So yeah, I'm good.
+
+00:04:00.600 --> 00:04:01.719
+Okay. Okay, you're good? Okay.
+
+00:04:01.719 --> 00:04:02.280
+Thank you.
+
+00:04:02.280 --> 00:04:04.600
+All right, no problem.
+
+00:04:24.519 --> 00:04:29.859
+All right.
+
+00:04:29.859 --> 00:04:47.019
+Okay, so let's start by going over the syllabus.
+
+00:04:47.019 --> 00:04:54.519
+My name is Salman Barsa and so we're going to learn about algorithms.
+
+00:04:54.519 --> 00:05:05.839
+So, this is a graduate course, but it's very similar to an undergrad algorithms course.
+
+00:05:05.839 --> 00:05:11.819
+It's a little bit different, but it's mainly the same course.
+
+00:05:11.819 --> 00:05:15.539
+So my office is a CDM715.
+
+00:05:15.539 --> 00:05:18.879
+And this is my phone number you can find here.
+
+00:05:18.879 --> 00:05:19.879
+My e-mail.
+
+00:05:19.879 --> 00:05:27.939
+feel free to send me email if you have any questions. So the office hours are on
+
+00:05:27.939 --> 00:05:36.920
+Tuesdays 4 to 5 30 just before the class so there is this zoom meeting room for
+
+00:05:36.920 --> 00:05:42.500
+the office hours if you wanted to join and but if you can also come in person
+
+00:05:42.500 --> 00:05:48.879
+just let me know beforehand if you wanted to come in person for the office
+
+00:05:48.879 --> 00:05:57.519
+hours. So this is an introductory course to design an analysis of algorithms and
+
+00:05:57.519 --> 00:06:03.399
+we will learn about some basic concepts in algorithms like a runtime. What's a
+
+00:06:03.399 --> 00:06:08.500
+runtime? How to compute runtime of algorithms. So we will see some basic but
+
+00:06:08.500 --> 00:06:16.540
+very important algorithms for search, sort, and some graph algorithms. And also we
+
+00:06:16.540 --> 00:06:24.000
+studied different methods or what we call paradigms of algorithm design which
+
+00:06:24.000 --> 00:06:30.580
+are dynamic programming, divide and conquer, greedy method. So this will be
+
+00:06:30.580 --> 00:06:42.100
+covered in the course. So I don't have a specific board but we are mostly on the
+
+00:06:42.100 --> 00:06:48.280
+lecture notes but we have a book here which is freely available and I use it
+
+00:06:48.280 --> 00:06:53.980
+only for homework okay but if you are interested also you can read it and it's
+
+00:06:53.980 --> 00:07:04.140
+very nice and it has a lot of explanations about the algorithms we
+
+00:07:04.140 --> 00:07:10.640
+study but our algorithms are very basic and fundamental you can find them
+
+00:07:10.639 --> 00:07:15.759
+everywhere so if you just search on the internet and there are many resources
+
+00:07:15.759 --> 00:07:22.579
+for them but this book also has a lot of practice questions which is very good
+
+00:07:22.579 --> 00:07:34.079
+it's also freely available so about attendance so attendance will have some
+
+00:07:34.079 --> 00:07:40.560
+positive effect on your grades like so implicit and explicit so implicit is
+
+00:07:40.560 --> 00:07:46.120
+that you always if you attend the class so it's definitely has some effect on
+
+00:07:46.120 --> 00:07:51.240
+your grades but I haven't made the attendance mandatory so it doesn't have
+
+00:07:51.240 --> 00:07:55.740
+a negative effect but it will have some positive effect if you attend the
+
+00:07:55.740 --> 00:08:00.479
+classes so I suggest you just you attend all the sessions mean not only
+
+00:08:00.480 --> 00:08:08.340
+this class also other classes it's very important for you. Alright so the grades
+
+00:08:08.340 --> 00:08:12.920
+are distributed as follows so we will have four or five assignments this will
+
+00:08:12.920 --> 00:08:18.900
+be 40 percent of the grade and so this is the part that you want to make sure
+
+00:08:18.900 --> 00:08:25.060
+that you get this grade so this is something you do at home and so the
+
+00:08:25.060 --> 00:08:29.240
+assignments are also not very difficult so you have a lot of time to do them and
+
+00:08:29.240 --> 00:08:33.860
+And we have midterm exam and final exam.
+
+00:08:33.860 --> 00:08:38.620
+Midterm is on the fifth week, so the fifth session,
+
+00:08:38.620 --> 00:08:43.779
+which would be Tuesday, October 13th.
+
+00:08:43.779 --> 00:08:50.480
+And so you will, so the in-person class will have the midterm
+
+00:08:50.480 --> 00:08:55.659
+in the class and the online students will have to register
+
+00:08:55.659 --> 00:08:57.120
+for a proctored exam.
+
+00:08:57.120 --> 00:08:59.120
+So all of the exams are proctored.
+
+00:08:59.679 --> 00:09:06.360
+So the final exam is on again here at the same time and classroom,
+
+00:09:06.360 --> 00:09:09.759
+but that would be on during the week of exams.
+
+00:09:10.320 --> 00:09:13.879
+So for us that would be November 24th.
+
+00:09:14.519 --> 00:09:20.940
+So again, online students, they have to register for a proctored exam.
+
+00:09:20.940 --> 00:09:31.140
+So the topics we will cover, so we start with some review of the background
+
+00:09:31.140 --> 00:09:41.860
+material. So starting today, we cover some math background and some general
+
+00:09:41.860 --> 00:09:48.880
+introduction to algorithms and later we will see growth of functions and
+
+00:09:48.879 --> 00:09:55.220
+Runtime analysis, so how to compute the runtimes in simple situations.
+
+00:09:55.220 --> 00:10:00.700
+And then we'll start the main part by going over divide and conquer technique.
+
+00:10:00.700 --> 00:10:03.980
+So we'll learn we'll do a conquer algorithm.
+
+00:10:03.980 --> 00:10:06.480
+Then dynamic programming technique.
+
+00:10:06.480 --> 00:10:10.000
+So we'll see a couple of dynamic programming algorithms.
+
+00:10:10.000 --> 00:10:12.820
+And so we see some graph algorithms.
+
+00:10:12.820 --> 00:10:16.340
+So these graph algorithms you have seen before.
+
+00:10:16.340 --> 00:10:19.160
+Most probably in data structures course.
+
+00:10:19.519 --> 00:10:24.139
+And we also discuss if we have time, one or two greedy algorithms.
+
+00:10:24.139 --> 00:10:32.360
+So each time, each session, usually I teach one algorithm.
+
+00:10:33.560 --> 00:10:37.160
+And so for us, it would be two, right?
+
+00:10:37.340 --> 00:10:41.600
+So each one and a half hour, I teach one algorithm.
+
+00:10:41.840 --> 00:10:44.139
+And we also will do some practice.
+
+00:10:44.139 --> 00:10:51.039
+So the first few sessions we do background material and after that you
+
+00:10:51.039 --> 00:10:58.919
+have some proper algorithms. Right so after this course you will be able to
+
+00:10:58.919 --> 00:11:04.899
+use these algorithmic techniques that you've learned in the course and you'll
+
+00:11:04.899 --> 00:11:10.000
+be able to use them in solving many other problems and the techniques and
+
+00:11:10.000 --> 00:11:17.840
+And algorithms, we learned as I said, they are very basic and they are used as parts
+
+00:11:17.840 --> 00:11:19.639
+of bigger algorithms.
+
+00:11:19.639 --> 00:11:27.220
+So these things you should actually know because if you go anywhere later, you want to design
+
+00:11:27.220 --> 00:11:31.419
+bigger algorithms, you have to use these as building blocks.
+
+00:11:31.419 --> 00:11:39.179
+And also, the problems that we study are important problems, so like sort and other problems
+
+00:11:39.179 --> 00:11:44.179
+that you solve these problems themselves are important examples of problems that
+
+00:11:44.179 --> 00:11:49.679
+happen in applications and we actually give some solutions for them.
+
+00:11:49.679 --> 00:11:59.739
+So there's some extra information in syllabus if you're interested. So any questions?
+
+00:11:59.739 --> 00:12:04.179
+Yeah so for the midterm and the final you said it's open
+
+00:12:04.179 --> 00:12:09.179
+But the book is online, so would we have to print it out?
+
+00:12:09.179 --> 00:12:14.179
+Yes, so by open book it means that, for instance, the slides you can print and bring to the class.
+
+00:12:14.179 --> 00:12:17.179
+Slides and a book.
+
+00:12:17.179 --> 00:12:23.179
+But as I said, I won't be teaching that book, but I use it only for the homework assignments.
+
+00:12:23.179 --> 00:12:28.179
+But if you want to bring it, you can bring it.
+
+00:12:28.179 --> 00:12:41.620
+bring it. Other questions? Sorry, can you repeat that again? You said the midterms are the ones
+
+00:12:41.620 --> 00:12:48.599
+that are open book? Yes. So if you look at the syllabus, so both midterm and final are open book.
+
+00:12:49.739 --> 00:12:53.059
+So you can bring book and notes if you want.
+
+00:12:58.179 --> 00:13:16.319
+Okay. Got it. Other questions?
+
+00:13:16.320 --> 00:13:32.580
+So if no questions, let's start. So the material which I go over today, you can
+
+00:13:32.580 --> 00:13:39.320
+find them on D2L. So I always upload the material to D2L before the class.
+
+00:13:46.320 --> 00:14:08.960
+Ok, so what is an algorithm? So most of you have seen algorithms before. So you
+
+00:14:08.960 --> 00:14:15.480
+have passed the Data Structures course, which is prerequisite for this course
+
+00:14:15.480 --> 00:14:26.300
+or before that you might have seen algorithms. In general, we can give quite
+
+00:14:26.300 --> 00:14:34.320
+a simple definition of an algorithm as a precise description of steps to reach
+
+00:14:34.320 --> 00:14:40.620
+the solution of a problem. Right? So sometimes the problems they be
+
+00:14:40.620 --> 00:14:47.379
+they need some mechanical procedure to reach the solution and that the
+
+00:14:47.379 --> 00:14:55.860
+procedure can be described as a sequence of steps and that's basically an
+
+00:14:55.860 --> 00:15:00.360
+algorithm so anything that is a sequence of steps towards doing something for
+
+00:15:00.360 --> 00:15:05.000
+reaching some solution that's an algorithm so you have seen a lot of
+
+00:15:05.000 --> 00:15:11.919
+of these already, even before coming to the university in high school. For
+
+00:15:11.919 --> 00:15:18.759
+instance, you have seen how to multiply two numbers together, right? So if you
+
+00:15:18.759 --> 00:15:27.559
+have two big numbers, so you don't know what the solution is, but you know how to
+
+00:15:27.559 --> 00:15:33.360
+multiply them. So for instance, I have this number and I have another number
+
+00:15:35.000 --> 00:15:41.220
+Okay, so you will just write them under each other and then you know there is a way of
+
+00:15:42.559 --> 00:15:44.559
+computing the product
+
+00:15:44.559 --> 00:15:48.940
+right and that's an example of an algorithm so it's and you know the
+
+00:15:51.139 --> 00:15:52.960
+Steps of
+
+00:15:52.960 --> 00:15:56.399
+Performing this multiplication now it doesn't matter if someone gives you
+
+00:15:57.259 --> 00:16:03.259
+Let's say five digits or 20 digits. It's the same. So you just apply the same procedure
+
+00:16:03.259 --> 00:16:08.679
+to this to this number. So it really how many digits we have is not that much
+
+00:16:08.679 --> 00:16:17.659
+important. Ok, so I will explain more about these terms which are in red. Now
+
+00:16:17.659 --> 00:16:26.059
+an algorithm needs to be correct. So given the problem... so the algorithm
+
+00:16:26.059 --> 00:16:31.700
+should actually have a proof that it correctly solves the problem. Okay so this
+
+00:16:31.700 --> 00:16:41.180
+is a requirement for every algorithm. Now sometimes these proofs are easy and
+
+00:16:41.180 --> 00:16:46.720
+trivial. So for instance when you do the multiplication you're intuitively you
+
+00:16:46.720 --> 00:16:51.400
+know that okay so the solution is going to be correct but sometimes it's not
+
+00:16:51.400 --> 00:16:56.280
+immediate from the algorithm itself that it's actually solving the given problem
+
+00:16:56.280 --> 00:17:00.900
+and it needs to have a proof of correctness. Now all the algorithms we
+
+00:17:00.899 --> 00:17:05.920
+discussed in the course they are correct but we usually don't give proofs of
+
+00:17:05.920 --> 00:17:12.700
+correctness. But it's not hard to actually construct proof of correctness
+
+00:17:12.700 --> 00:17:16.700
+and they actually make sense intuitively that they should be correct.
+
+00:17:16.700 --> 00:17:21.879
+Other than one algorithm which is in the Grady method, so there's an algorithm
+
+00:17:21.879 --> 00:17:27.139
+which actually needs a proof of correctness and I will give that. So
+
+00:17:27.140 --> 00:17:34.660
+So therefore, in real world so in like the algorithms we study here are simple but in
+
+00:17:34.660 --> 00:17:40.759
+general always there is an algorithm and there is a mathematical proof that that algorithm
+
+00:17:40.759 --> 00:17:42.020
+solves the given problem.
+
+00:17:42.020 --> 00:17:43.020
+All right?
+
+00:17:43.020 --> 00:17:45.060
+So it's not enough to give just an algorithm.
+
+00:17:45.060 --> 00:17:49.660
+So one has to actually prove that that algorithm is correct.
+
+00:17:49.660 --> 00:17:53.620
+You will see also example of this.
+
+00:17:53.619 --> 00:17:59.539
+another important thing about algorithms is the run time. So the run time is
+
+00:17:59.539 --> 00:18:06.699
+intuitively how much your algorithm takes to run on an input of certain size.
+
+00:18:06.699 --> 00:18:13.000
+So the input to the algorithm has a size so it's usually denoted N and the run
+
+00:18:13.000 --> 00:18:18.339
+time of an algorithm is computed as a function of N. Now we cannot compute
+
+00:18:18.339 --> 00:18:26.939
+exactly the runtime that the algorithm needs on a certain computer, right?
+
+00:18:26.939 --> 00:18:31.959
+So if you implement the algorithm and run it on a computer, it might need a
+
+00:18:31.959 --> 00:18:36.699
+certain time, but we are not able to compute the exact run times of an
+
+00:18:36.699 --> 00:18:42.980
+algorithm, because it depends on a lot of factors. But we have we can write
+
+00:18:42.980 --> 00:18:48.799
+basically the run times which count the important operations of these algorithms
+
+00:18:48.799 --> 00:18:55.299
+so that we can compare them. So for us the important thing about run time is
+
+00:18:55.299 --> 00:18:59.539
+that we want to compute the run times of functions so that of algorithm so that
+
+00:18:59.539 --> 00:19:04.299
+we can compare two algorithms together. We should be able to say this one
+
+00:19:04.299 --> 00:19:11.759
+has a better run time than the other one. Now let's go over more details about
+
+00:19:11.759 --> 00:19:16.819
+about these terms. So what is the problem? So what type of problem is solved by an
+
+00:19:16.819 --> 00:19:21.900
+algorithm? So these are problems where the solution needs to be computed. So
+
+00:19:21.900 --> 00:19:27.220
+sometimes the problems ask about if certain things exist with certain
+
+00:19:27.220 --> 00:19:31.980
+properties, but if you are not interested in those kind of problems, but
+
+00:19:31.980 --> 00:19:37.420
+if something needs to be computed then usually there is an algorithm for that
+
+00:19:37.420 --> 00:19:44.019
+and you are interested only in those kinds of problems. So examples, as I said,
+
+00:19:44.019 --> 00:19:49.680
+for instance, multiplying two numbers is is a problem that has an algorithm. So
+
+00:19:49.680 --> 00:19:54.420
+another one, let's say, if you want to know the digits of the number pi. So
+
+00:19:54.420 --> 00:19:59.519
+there is actually an algorithm that can compute the digits of pi one by one.
+
+00:19:59.519 --> 00:20:06.000
+Right. So it just wait and you just take it gives you the next digit and then you
+
+00:20:06.000 --> 00:20:10.319
+weight and it gives you the next digit. So it's possible to compute the digits of
+
+00:20:10.319 --> 00:20:19.140
+pi one by one. So for instance sorting an array of numbers, so
+
+00:20:19.140 --> 00:20:23.299
+that's possible, that's an algorithmic problem, so given an array of numbers you
+
+00:20:23.299 --> 00:20:28.700
+want to sort them. So that's a typical algorithmic problem and now we want to
+
+00:20:28.700 --> 00:20:35.640
+do it as fast as possible. So actually we'll give algorithms for that
+
+00:20:35.640 --> 00:20:46.740
+today. So let's say, so this is a sort problem, so sort the following array into
+
+00:20:46.740 --> 00:20:55.400
+increasing order. And now in this problem we want to do it only using swaps, right?
+
+00:20:55.400 --> 00:21:05.300
+So what's a swap is when you exchange two elements in your array? So that's a swap.
+
+00:21:05.299 --> 00:21:16.359
+Now usually in computer science we don't say increasing because you might have
+
+00:21:16.359 --> 00:21:25.019
+repetition so you might have equal a number so we say non decreasing. But here
+
+00:21:25.019 --> 00:21:32.299
+because every number is distinct it's it's okay to say increasing. But in
+
+00:21:32.299 --> 00:21:42.319
+general, for instance, if you have an array like this, so 1, 2, 2, 3, this is not an
+
+00:21:42.319 --> 00:21:50.519
+increasing sequence because so you this here is equal. So increasing always means
+
+00:21:50.519 --> 00:21:58.579
+a strictly increasing. So this would say a non-decreasing sequence but here it
+
+00:21:58.579 --> 00:22:02.960
+doesn't matter because all the numbers are distinct so we say that it's an
+
+00:22:02.960 --> 00:22:11.679
+increasing order, but in general we should say non-decreasing order. Okay, now
+
+00:22:14.319 --> 00:22:22.199
+here is a suggested algorithm now some of you might know a better way of sorting
+
+00:22:22.200 --> 00:22:29.460
+this array using swaps, but let's for now consider this algorithm so we have
+
+00:22:29.460 --> 00:22:35.240
+two steps. So step one, so scan this array from left to right until you see
+
+00:22:35.240 --> 00:22:43.799
+two consecutive numbers which are not in order. Say those are ai and ai plus one.
+
+00:22:43.799 --> 00:22:50.299
+And then so if you don't find such a pair which are not in order, then
+
+00:22:50.299 --> 00:22:54.960
+everything is in order, right? So if you start from left and go right and every
+
+00:22:54.960 --> 00:23:03.019
+two consecutive, they are in order so that the left one is smaller than the
+
+00:23:03.019 --> 00:23:10.539
+right one, then everything is in order. And then the array is sorted. But if you
+
+00:23:10.539 --> 00:23:16.779
+found a pair which are not in order, then swap them. And then go back to the
+
+00:23:16.779 --> 00:23:30.440
+first step. Now this is a totally acceptable algorithm, so it's a precise
+
+00:23:30.440 --> 00:23:40.240
+description of what you need to do. Now we don't know if it eventually sorts the
+
+00:23:40.240 --> 00:23:49.359
+array or not but it's it's a very well define algorithm
+
+00:23:49.359 --> 00:24:13.079
+All right, so let's apply the algorithm to this array.
+
+00:24:19.359 --> 00:24:38.219
+So we start from the left and so if we find it two consecutive one which are
+
+00:24:38.219 --> 00:24:43.519
+nothing all they were stronger now already here five and two they are not
+
+00:24:43.519 --> 00:24:49.680
+in order right. So the first one should be smaller so this is five is larger than
+
+00:24:49.680 --> 00:25:00.139
+two, so I change these two I get two and five. So again I go to step 1 so I start
+
+00:25:00.139 --> 00:25:06.500
+from here, how I check 2 and 5 so these are in order, 5 and 6, these are in order
+
+00:25:06.500 --> 00:25:17.619
+but six and one, these are not in order so I swap them. So one comes here, six comes.
+
+00:25:17.980 --> 00:25:23.299
+Now again if I start from here, again so two and five are in order, five and one
+
+00:25:23.299 --> 00:25:28.839
+are now not in order so swap them.
+
+00:25:28.839 --> 00:25:41.599
+Again, I start from here, 2 and 1, not in order, swap them so I get this, 1, 2, again
+
+00:25:41.599 --> 00:25:49.480
+I start from here, so 1, 2 in order, 2, 5 in order, 5, 6 in order, 3, 6, not in order so
+
+00:25:49.480 --> 00:25:51.059
+you swap them.
+
+00:25:51.059 --> 00:25:56.500
+And you can continue like this.
+
+00:25:56.500 --> 00:26:01.660
+time you start from the left, you go until you find two consecutive numbers
+
+00:26:01.660 --> 00:26:13.059
+which are not in order, you swap it. So, this is an algorithm. So, it's a precise
+
+00:26:13.059 --> 00:26:18.619
+description of what to do in English. So, English is totally fine for algorithms.
+
+00:26:18.619 --> 00:26:23.740
+Actually, almost all of the new algorithms that people develop, they
+
+00:26:23.740 --> 00:26:29.200
+publish in English. So they just write it in English. So it doesn't need to be
+
+00:26:29.200 --> 00:26:40.740
+code or something. Okay, so I talked about the types of problems, and what's
+
+00:26:40.740 --> 00:26:45.400
+the precise description? Now let's see, now as we said the algorithm needs to be
+
+00:26:45.400 --> 00:26:57.019
+correct. So this algorithm that we have, now is this a correct one or not? So a
+
+00:26:57.019 --> 00:27:01.519
+correct, what's a correct algorithm? It's an algorithm to solve the given problem
+
+00:27:01.519 --> 00:27:06.280
+and a mathematical proof that the algorithm solves the given problem. Now
+
+00:27:06.279 --> 00:27:11.500
+Now is this algorithm correct for sorting the array?
+
+00:27:15.500 --> 00:27:20.039
+So what is the argument that this actually eventually sorts the array?
+
+00:27:27.319 --> 00:27:28.059
+Yeah.
+
+00:27:28.059 --> 00:27:32.000
+It takes off but it always stands to make sure that's in order before it continues going on,
+
+00:27:32.000 --> 00:27:34.259
+so eventually it will be in order at some point.
+
+00:27:34.259 --> 00:27:35.000
+Yeah, so.
+
+00:27:36.279 --> 00:27:42.480
+If eventually this stops, the array will be in order, right?
+
+00:27:42.480 --> 00:27:45.160
+So but how do you know that eventually it stops?
+
+00:27:49.059 --> 00:27:51.059
+There would be no pair that's bigger than the other?
+
+00:27:54.180 --> 00:27:58.299
+Yeah, but how do we know that eventually there will
+
+00:27:58.299 --> 00:28:01.539
+be no pair that is not in order?
+
+00:28:01.539 --> 00:28:03.639
+So there has to be some kind of improvement
+
+00:28:03.639 --> 00:28:06.039
+that we're making each time, right?
+
+00:28:06.039 --> 00:28:10.000
+So each time we go over step one, we are making some improvement.
+
+00:28:10.000 --> 00:28:12.799
+So we, and what's that improvement you're making here.
+
+00:28:18.500 --> 00:28:19.039
+Yeah.
+
+00:28:19.039 --> 00:28:22.259
+You raise increasing order.
+
+00:28:22.259 --> 00:28:23.000
+We're doing what?
+
+00:28:23.000 --> 00:28:24.339
+That raise in increasing order.
+
+00:28:25.460 --> 00:28:26.500
+That is sorted.
+
+00:28:30.200 --> 00:28:35.940
+Yeah, you have to say in a more precise way what is raising and increasing order.
+
+00:28:35.940 --> 00:28:46.700
+but an easy way of saying it is that, so first of all,
+
+00:28:46.700 --> 00:28:50.120
+it's possible to prove that the algorithm finishes.
+
+00:28:50.120 --> 00:28:54.680
+So now, when it finishes, then clearly the step one,
+
+00:28:54.680 --> 00:28:56.220
+everything is in order, right?
+
+00:28:56.220 --> 00:28:57.700
+So when it finishes.
+
+00:28:57.700 --> 00:29:05.400
+Now, why it finishes, because, so let
+
+00:29:05.400 --> 00:29:10.640
+go back here because each time we can say that if we do a swap let's say if I
+
+00:29:10.640 --> 00:29:17.320
+swap three and six with each other there I never swap these two numbers again
+
+00:29:17.320 --> 00:29:23.920
+right so each pair of numbers they are swap exactly once I mean at most once
+
+00:29:23.920 --> 00:29:30.180
+so if you swap six and three you you never swap three and six back again
+
+00:29:30.180 --> 00:29:34.800
+because you always swap if it's not in order so the next time you see this pair
+
+00:29:34.799 --> 00:29:41.940
+three and six they will be in order so each pair is wrapped that most once
+
+00:29:44.039 --> 00:29:53.680
+that's the way to know that it's correct yes so each time you go over a step one
+
+00:29:53.680 --> 00:30:01.500
+if you if it's not in order you swap something and you kind of consume one
+
+00:30:01.500 --> 00:30:08.759
+one pair. Yes. And so now how many pairs is there? It's some number, right? So the
+
+00:30:08.759 --> 00:30:16.680
+number of pairs is like n choose two in general, right? So here you have n equal
+
+00:30:16.680 --> 00:30:25.380
+like eight. So you have a choose two. This is something like eight times seven
+
+00:30:25.380 --> 00:30:35.040
+divided by 2. 4 times 7 like 28 many pairs is there and each pair you do once.
+
+00:30:35.040 --> 00:30:42.120
+So the step 1 you do at most 28 times because each time I use if it's not
+
+00:30:42.120 --> 00:30:51.000
+already sorted you do a swap so and you each pair you do once so it at most the
+
+00:30:51.000 --> 00:30:53.460
+the number of pairs, you do a step one.
+
+00:30:53.460 --> 00:30:55.740
+And after that, everything has to be sorted.
+
+00:31:00.259 --> 00:31:08.420
+So one way to know this, say, to measure the sorted,
+
+00:31:08.420 --> 00:31:12.640
+like it's counting each, so after sorting one and two,
+
+00:31:12.640 --> 00:31:16.500
+or the first two digits, whatever it was,
+
+00:31:16.500 --> 00:31:19.740
+then it has a bucket where it keeps it and, like, OK,
+
+00:31:19.740 --> 00:31:23.500
+I have a new n for sorted and then it goes through.
+
+00:31:23.500 --> 00:31:29.859
+And then you measure if the number of sorted in the sorted list is equal to the number
+
+00:31:29.859 --> 00:31:36.240
+of items you have in the original list, that's a way to know, okay, we're done sorted.
+
+00:31:36.240 --> 00:31:46.019
+There might be other ways of showing that this eventually sorts the array, but whatever
+
+00:31:46.019 --> 00:31:49.660
+you do it, you have to say it in a kind of a precise way.
+
+00:31:49.660 --> 00:31:50.920
+So the exact weight.
+
+00:31:50.920 --> 00:31:58.320
+So, for instance, it might be possible to say that, for instance,
+
+00:31:58.320 --> 00:32:00.800
+the numbers move left or something like that.
+
+00:32:00.800 --> 00:32:09.540
+So, in those terms, it's also possible.
+
+00:32:09.540 --> 00:32:15.340
+Now we see another algorithm which is very similar to this one,
+
+00:32:15.340 --> 00:32:19.019
+and the reasoning for that algorithm is a little bit different
+
+00:32:19.019 --> 00:32:25.500
+than this. And you see that this is, in general, it wastes a lot of time because we always
+
+00:32:25.500 --> 00:32:31.940
+come back to the beginning and we go until we find 2 consequently in 1 which are not
+
+00:32:31.940 --> 00:32:38.240
+in order. So, it's not exactly the best algorithm for sorting. And in general, we'll see also
+
+00:32:38.240 --> 00:32:45.200
+the runtime in general. So, it's not the best algorithm, but it's good for like a simple
+
+00:32:45.200 --> 00:32:52.340
+So therefore eventually because you do the swap for each pair of numbers at
+
+00:32:52.340 --> 00:32:59.340
+most to once so you do this step 1 at most a number of times which is the
+
+00:32:59.340 --> 00:33:07.000
+total possible pairs and after that it will be sorted. So therefore step one
+
+00:33:07.000 --> 00:33:14.740
+it's a number of pairs many times is around here. So now in this course as I
+
+00:33:14.740 --> 00:33:20.180
+said we don't usually give proofs of correctness because the algorithms we see
+
+00:33:20.180 --> 00:33:27.740
+are actually intuitively they make sense and so as I said so this is the
+
+00:33:27.740 --> 00:33:33.960
+again the algorithm that is yeah the argument that the algorithm is size
+
+00:33:33.960 --> 00:33:39.400
+correct so we swap each pair at most once so eventually the algorithm stops
+
+00:33:39.400 --> 00:33:50.519
+at the step one because the pairs finish basically. So question? So we won't have to prove why it's right then?
+
+00:33:51.579 --> 00:33:57.960
+What? We won't have to prove why it's right for the most part then? No so and also don't ask about the
+
+00:33:57.960 --> 00:34:03.620
+groups of correctness. So if there's like in homework, you have a, if we ask to
+
+00:34:03.620 --> 00:34:06.840
+write an algorithm for something, you don't need to have proof of correctness,
+
+00:34:06.840 --> 00:34:14.039
+but you have to have the correct algorithm. There's only one algorithm, which
+
+00:34:14.039 --> 00:34:19.760
+is a Grady algorithm, which is not clear that it's correct. We prove that, so
+
+00:34:19.760 --> 00:34:27.840
+sometimes the algorithms are, it's not intuitively, it's not clear
+
+00:34:27.840 --> 00:34:32.220
+why they are correct, so why they are solving the given problem. So in those
+
+00:34:32.220 --> 00:34:35.900
+cases, one has to actually have the proof of correctness. But otherwise, I mean
+
+00:34:35.900 --> 00:34:46.519
+intuitively algorithms make sense. Now let's see what is runtime computation.
+
+00:34:46.519 --> 00:34:56.140
+So now it's basically, as I said, we want to count the time that is taken by the
+
+00:34:56.139 --> 00:35:06.219
+algorithm but usually we count some important steps so that are so we count
+
+00:35:06.219 --> 00:35:12.139
+the steps which are important for us so in this algorithm for instance we want
+
+00:35:12.139 --> 00:35:17.079
+to count the number of swaps right and as we said the number of swaps in this
+
+00:35:17.079 --> 00:35:27.299
+algorithm is equal to the number of pairs at most. So, now on this particular
+
+00:35:27.299 --> 00:35:36.699
+instance, we had for instance this much, at most, many pairs, but in general the
+
+00:35:36.699 --> 00:35:42.019
+algorithm is not for one particular array. It's given for an arbitrary array,
+
+00:35:42.019 --> 00:35:49.019
+array right. So in general we have a situation like this. We have an arbitrary
+
+00:35:49.019 --> 00:35:55.900
+array as input and then the input has a size which again it depends on the
+
+00:35:55.900 --> 00:36:00.940
+problem but here is the size of the array is n, so you have n numbers so
+
+00:36:00.940 --> 00:36:06.500
+that's also the size of the input. The input is always has a size because the
+
+00:36:06.500 --> 00:36:12.739
+input is a general. It's not a fixed array so the algorithms are given on
+
+00:36:12.739 --> 00:36:19.360
+general input and the input has a size. It depends on the problem, so the size
+
+00:36:19.360 --> 00:36:26.539
+depends on the problem. For sorting problem, so the number of elements that
+
+00:36:26.539 --> 00:36:32.599
+you have is the size, is usually the size of the input. So again, this is even, this
+
+00:36:32.599 --> 00:36:37.920
+is not always true, so sometimes size might be something else. Yes?
+
+00:36:37.920 --> 00:36:39.579
+I'm just scratching this up.
+
+00:36:39.579 --> 00:36:48.360
+Okay. So the size of the input is usually denoted n. So like here you have n number.
+
+00:36:48.360 --> 00:36:56.539
+Now if we again repeat what we said for that particular instance, so we have something
+
+00:36:56.539 --> 00:37:07.340
+like this. So now you do the same algorithm on this general a. How many
+
+00:37:07.340 --> 00:37:14.159
+swaps does the algorithm perform on an arbitrary with N elements?
+
+00:37:17.039 --> 00:37:23.539
+So at most it can be like the length of the input array so it can be like 8, 7,
+
+00:37:23.539 --> 00:37:25.559
+then 654321?
+
+00:37:25.559 --> 00:37:29.139
+This one at most, the number of pairs.
+
+00:37:29.139 --> 00:37:30.099
+Okay.
+
+00:37:30.099 --> 00:37:34.539
+So, but I mean just saying that what is the number
+
+00:37:34.539 --> 00:37:39.039
+of operations on arbitrary input, it doesn't make sense
+
+00:37:39.039 --> 00:37:40.440
+because it's not one number.
+
+00:37:40.440 --> 00:37:45.440
+So it's different for different arrays, right?
+
+00:37:45.440 --> 00:37:47.900
+So, for instance, for our algorithm,
+
+00:37:47.900 --> 00:37:53.340
+if the array is already sorted then it takes no swaps
+
+00:37:53.340 --> 00:37:59.820
+you just go over it and sorted is zero. And that actually happens among all the
+
+00:37:59.820 --> 00:38:06.740
+inputs. So it happens that sometimes it's sorted. Now it happens that sometimes
+
+00:38:06.740 --> 00:38:13.880
+you need the most possible number of swaps. Now for an algorithm the runtime
+
+00:38:13.880 --> 00:38:21.380
+is usually it asks about the worst case situation. So what's the maximum number
+
+00:38:21.380 --> 00:38:28.400
+of the operations you do on input of size n. So that's the that's the runtime
+
+00:38:28.400 --> 00:38:35.420
+on input of size n. It's always the maximum. And now here on arrays of size
+
+00:38:35.420 --> 00:38:42.760
+n we do at most the number of swaps which is the number of pairs and that's
+
+00:38:42.760 --> 00:38:48.140
+this number. So this number is n choose 2 is n times n minus 1 divided by 2.
+
+00:38:48.139 --> 00:38:53.980
+That's the number of pairs of, you can create out of n numbers.
+
+00:38:53.980 --> 00:38:57.819
+So that would be when it's like 8, 7, 6, 5 like?
+
+00:38:57.819 --> 00:39:01.079
+This is actually, this is this.
+
+00:39:01.079 --> 00:39:02.159
+Sorry?
+
+00:39:02.159 --> 00:39:04.960
+Yeah, that's a different thing.
+
+00:39:04.960 --> 00:39:07.519
+That's not the worst case?
+
+00:39:07.519 --> 00:39:08.460
+No, the worst case is this.
+
+00:39:08.460 --> 00:39:10.019
+Oh, okay.
+
+00:39:10.019 --> 00:39:15.500
+So 8 times 7 divided by 2.
+
+00:39:15.500 --> 00:39:34.619
+the number of pairs. Right, so therefore this algorithm performs an input of size
+
+00:39:34.619 --> 00:39:44.039
+n at most this much swaps, that's at most. So now sometimes it does less but it
+
+00:39:44.039 --> 00:39:57.900
+cannot be more than this. Okay so the runtime on an array of size N is taken
+
+00:39:57.900 --> 00:40:06.539
+to be the worst case for all arrays of size N. Right? So for inputs of size N the
+
+00:40:06.539 --> 00:40:12.199
+runtime is the worst case over all the inputs of that size N.
+
+00:40:12.199 --> 00:40:20.079
+So therefore the running time is a function for instance T of n. So which
+
+00:40:20.079 --> 00:40:26.019
+assigns to the size of the input which is n the maximum time which is required
+
+00:40:26.019 --> 00:40:37.599
+by the algorithm on input of size n. Now in this situation we have so for our
+
+00:40:37.599 --> 00:40:45.920
+algorithm there, t of n is this function. So for instance n square over 2 minus n
+
+00:40:45.920 --> 00:40:55.679
+over 2 swaps. So if we, because we count the swaps there, but in a different
+
+00:40:55.679 --> 00:41:02.480
+algorithm we're a different problem we might want to count different things,
+
+00:41:02.480 --> 00:41:13.079
+So, therefore the runtime is just a function that assigns to the size of the input, the
+
+00:41:13.079 --> 00:41:21.559
+maximum time that your algorithm takes on that input, so an input of that size.
+
+00:41:21.559 --> 00:41:26.760
+And now, how you compute time, it depends on the algorithm.
+
+00:41:26.760 --> 00:41:30.800
+So sometimes you want to count the number of swaps, sometimes you want to count the
+
+00:41:30.800 --> 00:41:37.760
+number of comparisons and in general we count operations which we think they
+
+00:41:37.760 --> 00:41:44.600
+are bottlenecks. So in the sense that if we count those we have an idea of the
+
+00:41:44.600 --> 00:41:50.600
+how after run time of the algorithm up to some constant. So because we cannot
+
+00:41:50.600 --> 00:41:55.820
+compute exactly all the runtime but up to a constant we are fine. So we'll
+
+00:41:55.820 --> 00:42:05.780
+discuss this more. Okay, so these are just again, and the comments already made. So
+
+00:42:05.780 --> 00:42:11.080
+for our algorithm we count the number of swaps at the time as the time required
+
+00:42:11.080 --> 00:42:15.480
+for the algorithm. So the tn is the maximum number of swaps needed to solve
+
+00:42:15.480 --> 00:42:27.039
+the error. So and what is TN is this. So questions?
+
+00:42:31.079 --> 00:42:37.679
+Right so as I said so for any algorithm we recognize some basic operations and we
+
+00:42:37.679 --> 00:42:43.320
+assume that those basic operations cost to 1 and then we count how many of those
+
+00:42:43.320 --> 00:42:50.220
+operations are done by the algorithm, for instance we have the swaps there in
+
+00:42:50.220 --> 00:42:54.300
+that algorithm, we said that how many swaps we do now in some other algorithm
+
+00:42:54.300 --> 00:42:58.320
+we might actually count the number of comparisons or other things so depending
+
+00:42:58.320 --> 00:43:04.320
+on the algorithm. So here what I'm saying is that the runtime is not exactly the
+
+00:43:04.320 --> 00:43:09.700
+runtime, right. So it's the number of the important operations done by the
+
+00:43:09.699 --> 00:43:17.679
+algorithm. So, and why do we do that? Because all the operations, so if you
+
+00:43:17.679 --> 00:43:21.919
+count everything that the algorithm does, it's then it becomes a tedious
+
+00:43:21.919 --> 00:43:28.179
+computation. So it's hard to actually compute exactly how many basic steps
+
+00:43:28.179 --> 00:43:32.939
+your algorithm does, right. So, for instance, how many memory accesses or
+
+00:43:32.939 --> 00:43:37.359
+additions or all the operations that is done by the algorithm, it's actually
+
+00:43:37.360 --> 00:43:43.019
+hard to count all of those so we actually always find important
+
+00:43:43.019 --> 00:43:48.340
+operations which we think they are the bottleneck and how many of those is
+
+00:43:48.340 --> 00:43:53.079
+needed for for the algorithm so what's the worst case in terms of those
+
+00:43:53.079 --> 00:43:58.360
+operations and that will give us the what we call the order of the runtime so it
+
+00:43:58.360 --> 00:44:06.820
+gives us the runtime up to some constant number some multiplicative constant so
+
+00:44:06.820 --> 00:44:14.620
+So we will talk also about this in the next session, about the order of Runtimes.
+
+00:44:14.620 --> 00:44:22.340
+So Runtime Analysis is very important because Runtime of an algorithm is the most important
+
+00:44:22.340 --> 00:44:26.360
+factor for comparing two algorithms to each other.
+
+00:44:26.360 --> 00:44:35.500
+So in computer science people are always after better and better algorithms for solving the
+
+00:44:35.500 --> 00:44:40.619
+same problem. And the most important factor in one algorithm being better
+
+00:44:40.619 --> 00:44:48.400
+than the other one is that it should be faster. So faster is very important
+
+00:44:48.400 --> 00:44:53.559
+because some of the problems, which are important problems, if you have a very
+
+00:44:53.559 --> 00:44:59.079
+slow algorithm then you can it's basically like having no algorithm. And
+
+00:44:59.079 --> 00:45:07.539
+An algorithm that takes like one year to solve a problem on one million inputs is not useful.
+
+00:45:08.279 --> 00:45:13.960
+But if you have an algorithm which is, for instance, linear in the size of your input,
+
+00:45:14.159 --> 00:45:21.179
+so if the size of your input is n, it takes like ten times n to solve the problem,
+
+00:45:21.639 --> 00:45:22.579
+that's very useful.
+
+00:45:23.360 --> 00:45:26.840
+That's, that's, then you don't need any other algorithm.
+
+00:45:26.840 --> 00:45:36.920
+Now there are many problems which we don't know that if they have actually any efficient algorithms.
+
+00:45:36.920 --> 00:45:45.039
+And there are many problems like sorting that we know different algorithms.
+
+00:45:45.039 --> 00:45:47.680
+Some of them good running time.
+
+00:45:47.680 --> 00:45:52.920
+Some of them not good running.
+
+00:45:52.920 --> 00:46:00.059
+But so running time is very important because I mean that's the most important factor for comparing the algorithms.
+
+00:46:00.059 --> 00:46:03.300
+And there are also other things like space requirements.
+
+00:46:03.300 --> 00:46:09.559
+Now space requirement is also important because sometimes there are algorithms that need a lot of memory.
+
+00:46:09.559 --> 00:46:16.019
+So if your algorithm needs a lot of memory, it's still useless because memory is limited.
+
+00:46:16.019 --> 00:46:21.079
+So there are also other factors but the most important is run time.
+
+00:46:21.079 --> 00:46:35.440
+Okay let's see. Now a little about a pseudo, what we call a pseudo code. So the
+
+00:46:35.440 --> 00:46:39.840
+algorithms that we studied they are intended to be implemented in
+
+00:46:39.840 --> 00:46:43.440
+different programming languages and they have been implemented so maybe like
+
+00:46:43.440 --> 00:46:48.880
+there are thousands of implementations for each of them.
+
+00:46:48.880 --> 00:46:54.720
+so in the different languages we can find implementations and in
+
+00:46:54.720 --> 00:47:01.260
+implementation of an algorithm in these languages it's it's a precise description
+
+00:47:01.260 --> 00:47:06.740
+it's actually a very precise description of of that algorithm so it's of the
+
+00:47:06.740 --> 00:47:12.599
+steps that you need to solve the problem but the code itself is too much precise
+
+00:47:12.599 --> 00:47:24.219
+So it's actually, the code is too detailed and it has special cases to deal with special situations
+
+00:47:24.219 --> 00:47:31.579
+and maybe you have some parts for input-output and different things that you have to manage in your code.
+
+00:47:31.579 --> 00:47:35.400
+So it's not suitable. It's not a human readable.
+
+00:47:35.400 --> 00:47:42.500
+Right? So if you have a Python code of these algorithms we study, it's not that much useful for us.
+
+00:47:42.599 --> 00:47:50.000
+So we want to have something which is somehow between English and the code,
+
+00:47:50.000 --> 00:47:52.440
+so it's more precise than the usual language,
+
+00:47:52.440 --> 00:47:57.799
+but it's also not that much detail as the code itself.
+
+00:47:57.799 --> 00:48:00.400
+So that's what is called a pseudocode.
+
+00:48:00.400 --> 00:48:08.079
+So pseudocode is like a code where you actually allow to use more English language in it.
+
+00:48:08.079 --> 00:48:14.980
+not actually a programming language. It is like a programming language but it's
+
+00:48:14.980 --> 00:48:22.000
+more human readable. Okay so now I'll give you some examples of the pseudo-code.
+
+00:48:22.000 --> 00:48:28.039
+Okay now let's look at the sorting problem. So this is the general sorting
+
+00:48:28.039 --> 00:48:35.099
+problem. So we are given an array A so it has N elements so the N is the size
+
+00:48:35.099 --> 00:48:41.699
+of the input and we want to rearrange the numbers in A so that we have, so we
+
+00:48:41.699 --> 00:48:47.059
+have them in the non-decreasing order. So this is the non-decreasing order.
+
+00:48:47.059 --> 00:48:52.139
+But that's a sorting problem. So the problem is different than the
+
+00:48:52.139 --> 00:48:55.579
+algorithm. Right? So you have the problem you might have like 10 different
+
+00:48:55.579 --> 00:49:00.319
+algorithms to solve the same problem. Now we have this sorting problem and we
+
+00:49:00.320 --> 00:49:05.300
+give many algorithms to solve this. So we already solve one, so I gave one
+
+00:49:05.300 --> 00:49:15.400
+algorithm for this. Now here is another one so this is like in a more structured
+
+00:49:15.400 --> 00:49:23.200
+way in the pseudocode and this is called bubble sort. So we have two loops so it
+
+00:49:23.199 --> 00:49:30.639
+says that go over the array basically so for I equals one to n. So this outside
+
+00:49:30.639 --> 00:49:37.299
+loop is just a loop right so it goes from one to n and inside of that
+
+00:49:37.299 --> 00:49:45.819
+we have another loop which starts from j equals two and goes up to n.
+
+00:49:45.820 --> 00:49:51.820
+now it again considers aj and aj minus 1.
+
+00:49:51.820 --> 00:49:53.820
+So now this inner loop,
+
+00:49:53.820 --> 00:49:59.820
+it looks like that actually starts from the second position.
+
+00:49:59.820 --> 00:50:02.820
+And it looks at aj and aj minus 1.
+
+00:50:02.820 --> 00:50:06.820
+So it does similar to what you had in the previous algorithm.
+
+00:50:06.820 --> 00:50:10.820
+Now, it says that if aj is less than aj minus 1,
+
+00:50:10.820 --> 00:50:13.820
+so if these two are not in order,
+
+00:50:13.820 --> 00:50:23.920
+then this is swap. Right. So these three statements here just swapping the AJ and
+
+00:50:23.920 --> 00:50:31.940
+AJ-1. So it stores AJ in a temporary variable, writes AJ-1 on top of AJ, and
+
+00:50:31.940 --> 00:50:39.600
+writes temp in AJ-1. So here we could simply, instead of this line, we could
+
+00:50:39.599 --> 00:50:45.599
+say SUAP AJ and AJ minus 1. Because this is pseudo code. So you could just say
+
+00:50:45.599 --> 00:50:52.440
+SUAP the two. So in general in a pseudo code, as long as we know an operation
+
+00:50:52.440 --> 00:50:58.179
+costs a constant amount of time, then you can just write that. So give it a name
+
+00:50:58.179 --> 00:51:05.679
+and you can write it as long as it's kind of trivial how to expand it. So you could
+
+00:51:05.679 --> 00:51:25.719
+say here SWF H and HG minus R. Okay now now what is this one's this
+
+00:51:25.719 --> 00:51:34.459
+algorithms things so let me go back to the original array we had just a second
+
+00:51:34.459 --> 00:51:39.579
+I go back to this very example
+
+00:51:55.719 --> 00:52:10.139
+Okay, now it says that you notice that the outside loop it has a variable I, but I
+
+00:52:10.139 --> 00:52:16.480
+doesn't appear here in the inside loop. So it basically says that repeated this
+
+00:52:16.480 --> 00:52:26.679
+inner loop n times. Now what is this inner loop so it starts from the second
+
+00:52:26.679 --> 00:52:32.699
+one and whenever you see this one and previous one is not in order swap them
+
+00:52:32.699 --> 00:52:37.360
+and then go to the next one if not in order swap them then go to the next one
+
+00:52:37.360 --> 00:52:44.679
+if not in order swap them and you continue like this until the end. So it
+
+00:52:44.679 --> 00:52:51.879
+says that at each step compare aj and aj minus 1 this condition means that if
+
+00:52:51.879 --> 00:52:58.379
+they are not in order. If they are not in order swap them then go to the next j.
+
+00:52:59.460 --> 00:53:07.399
+So now let's apply this inner loop to this array.
+
+00:53:07.400 --> 00:53:28.099
+So I write the result here so we start from take on to the J is here now let me
+
+00:53:28.099 --> 00:53:31.920
+copy that actually it's better
+
+00:53:37.400 --> 00:53:52.720
+J starts from 2 so this is 2. Now it says look at J and J minus 1. So if a J is less than a J minus 1, swap them.
+
+00:53:52.720 --> 00:54:00.400
+So that's just simply says that if these two are not in order. Now here so I swap these two. So then I have
+
+00:54:00.400 --> 00:54:11.139
+2 and 5, and now j goes to the next index.
+
+00:54:11.139 --> 00:54:25.340
+We go to the next j, and now 6 and 5. So 6 is greater than 5. So this condition is not satisfied.
+
+00:54:25.340 --> 00:54:34.780
+goes to the next j. Now a j is less than a j minus 1, so it swaps then.
+
+00:54:35.600 --> 00:54:47.620
+One, six. The next iteration, j goes to the next index. Now again, a j is less than a j minus 1,
+
+00:54:47.620 --> 00:54:55.140
+swaps them. So three comes here, six goes there.
+
+00:54:55.340 --> 00:55:05.660
+then J goes to the next index. Now again, 4 is less than 6, so it swaps them.
+
+00:55:05.660 --> 00:55:23.320
+So, 6, sorry, 4 comes here, 6 goes there. And J goes to the next. 8 is greater than
+
+00:55:23.320 --> 00:55:32.360
+six so the condition is not satisfied it just goes to the next J7 is less than
+
+00:55:32.360 --> 00:55:41.360
+eight so it's two absent seven comes here and that's it so that's now we did
+
+00:55:41.360 --> 00:55:57.440
+one, we did the inner loop once. Now the algorithm, the way it's written says that
+
+00:55:57.440 --> 00:56:07.620
+now if you do this inner loop, N times the array is sorted. So now we did it once
+
+00:56:07.619 --> 00:56:12.059
+and that's the result. So now if you repeat this process n times, so again you
+
+00:56:12.059 --> 00:56:17.759
+come here and you compare these two and if this one is small you swap them and
+
+00:56:17.759 --> 00:56:25.920
+you go to the next one and so on. Now the claim is that if you do this in a loop
+
+00:56:25.920 --> 00:56:33.339
+n times, the array is sorted. So now to convince ourselves that this is correct,
+
+00:56:33.340 --> 00:56:41.760
+so we have to make some kind of improvement when we do this one, this
+
+00:56:41.760 --> 00:56:49.860
+inner loop once. So now can anyone say what is the improvement we've made when
+
+00:56:49.860 --> 00:56:57.100
+we went over the inner loop once? So this is now in the previous algorithm
+
+00:56:57.100 --> 00:57:01.720
+was different but this algorithm when you do the inner loop once there's
+
+00:57:01.719 --> 00:57:11.959
+actually some concrete thing that we can say happens. That makes us more near
+
+00:57:11.959 --> 00:57:18.819
+a sorted array. Is it that the biggest number will be the last element? Yes, so
+
+00:57:18.819 --> 00:57:26.799
+that's correct. So if you, if anywhere you encounter the maximum element of your
+
+00:57:26.800 --> 00:57:32.880
+array so you go from left to right so if you see the maximum element somewhere so
+
+00:57:32.880 --> 00:57:37.480
+by the way the code works it will be swapped all the way to the end of the
+
+00:57:37.480 --> 00:57:44.180
+array because it's larger than anything else so it's always so you will always
+
+00:57:44.180 --> 00:57:47.780
+have this one and it goes to the next one and then again it's larger it's so
+
+00:57:47.780 --> 00:57:55.640
+up to the next and so on and it will end up as the last element in your array so
+
+00:57:55.639 --> 00:58:03.299
+now here you see that 8 is the max of the array. So it's at the end. So after you
+
+00:58:03.299 --> 00:58:12.359
+do the inner loop once it is guaranteed that the last element is the maximum.
+
+00:58:15.400 --> 00:58:22.259
+And so, again we don't formally prove this but it's very easy to see right. So
+
+00:58:22.260 --> 00:58:26.000
+So if you just imagine that the max app here so it's,
+
+00:58:26.960 --> 00:58:30.360
+the next one is smaller so it will be swapped with the next one.
+
+00:58:30.360 --> 00:58:33.140
+Then again the next one is smaller, it will be swapped with the next one
+
+00:58:33.140 --> 00:58:35.560
+as will go up until to the end.
+
+00:58:35.560 --> 00:58:37.040
+That's why it's called the bubble sort
+
+00:58:37.040 --> 00:58:40.780
+because the maximum will go up all the way to the end.
+
+00:58:40.780 --> 00:58:44.060
+It's like a bubble that goes up to the surface.
+
+00:58:45.400 --> 00:58:51.220
+So now if I do another time this inner loop,
+
+00:58:51.219 --> 00:58:57.500
+the second maximum will come at the 1 to the last place.
+
+00:58:57.500 --> 00:59:04.239
+Now if you do it another time, the third maximum will come to the 3 to the last place and so on.
+
+00:59:04.239 --> 00:59:07.659
+So if you continue doing that, each iteration that you do,
+
+00:59:07.659 --> 00:59:11.519
+you will play the next maximum in its correct place.
+
+00:59:11.519 --> 00:59:16.659
+And so after any iterations, it's guaranteed that you will source the error.
+
+00:59:16.659 --> 00:59:23.420
+Now it might be that this is the worst case that happens. So for instance here
+
+00:59:23.420 --> 00:59:29.859
+already the the next max two maxima they're already in the correct places.
+
+00:59:29.859 --> 00:59:37.539
+But that's a this specific instance right? So on other examples so you this
+
+00:59:37.539 --> 00:59:44.539
+might not happen but after you do the second iteration of this inner loop you
+
+00:59:44.539 --> 00:59:48.860
+do it a second time then it's guaranteed that the second maximum will be at the
+
+00:59:48.860 --> 00:59:54.800
+second to last place. To sort the whole array is enough to do repeat these 10
+
+00:59:54.800 --> 01:00:05.960
+times. So now if we want to compute the runtime of this, so if you want to count
+
+01:00:05.960 --> 01:00:13.320
+so usually the number of comparisons is counted here. If you count the number of
+
+01:00:13.320 --> 01:00:24.260
+comparisons then how many comparisons we have here? So, in terms of n, so we have
+
+01:00:24.260 --> 01:00:30.600
+n numbers. Now, how many times we do this comparison?
+
+01:00:30.599 --> 01:00:37.599
+I think I'm going to do n minus 1.
+
+01:00:37.759 --> 01:00:43.019
+n minus 1, that's for one iteration of the outer loop.
+
+01:00:43.880 --> 01:00:47.839
+For fixed i, we do n minus 1 because it goes from 2 to n.
+
+01:00:48.659 --> 01:00:52.219
+But we have n different i's.
+
+01:00:52.219 --> 01:00:53.980
+So n times n minus 1.
+
+01:00:54.860 --> 01:00:59.279
+So the number of times we do this line is n times n minus 1,
+
+01:00:59.480 --> 01:01:00.219
+this comparison.
+
+01:01:00.599 --> 01:01:10.659
+that is independent of the inputs. So if it's sorted or not, you do that much
+
+01:01:10.659 --> 01:01:18.519
+comparisons. But the swaps are dependent. If you count the swaps, they will be
+
+01:01:18.519 --> 01:01:28.279
+dependent on the inputs. Right, so, now, this is easier to see that this is a
+
+01:01:28.280 --> 01:01:35.600
+squared at most and this is roughly in a squared algorithm because it's two
+
+01:01:35.600 --> 01:01:42.960
+loops so it's n times n minus 1 so we don't need to so the previous one we
+
+01:01:42.960 --> 01:01:48.080
+had to argue that it stops but this is clearly that it stops but now we have to
+
+01:01:48.080 --> 01:01:53.000
+argue that at the end is sorted and we are good that it's sorted after this
+
+01:01:53.000 --> 01:02:08.400
+after n iterations. So, questions? So therefore, the running time of this, if
+
+01:02:08.400 --> 01:02:14.480
+you write as t of n is, so it depends. So if you want to count the number of
+
+01:02:14.480 --> 01:02:19.000
+comparisons, so usually we count the number of comparisons, so I know I said
+
+01:02:19.000 --> 01:02:24.019
+we count a number of swaps in the previous one, but in the sorting
+
+01:02:24.019 --> 01:02:31.780
+algorithms we usually count the comparison so it's n times n minus 1
+
+01:02:31.780 --> 01:02:42.059
+comparisons and this is this is quadratic.
+
+01:02:42.059 --> 01:03:03.559
+and you will see later better algorithms which are not quadratic question if no
+
+01:03:03.559 --> 01:03:15.440
+question I have some practice problems so as I said we usually do practice
+
+01:03:15.440 --> 01:03:27.500
+problems in class and these are also uploaded there for online so you can
+
+01:03:27.500 --> 01:03:29.900
+You can find these .
+
+01:03:57.500 --> 01:04:10.500
+Do you expect a function?
+
+01:04:10.500 --> 01:04:14.500
+C of L is the number of components.
+
+01:04:14.500 --> 01:04:27.940
+No, it's just because there's like an outside table, sometimes it goes on times and for
+
+01:04:27.940 --> 01:04:40.079
+each time that the outside table turns, we do the inner table.
+
+01:04:40.079 --> 01:04:48.340
+So, we have some more similar to this computation
+
+01:04:48.340 --> 01:04:50.539
+to have next session .
+
+01:04:50.539 --> 01:04:57.719
+So, here we have, this is basically understanding pseudocode.
+
+01:04:57.719 --> 01:05:07.940
+So it's, there are two algorithms, one of them is for computing just a maximum number
+
+01:05:07.940 --> 01:05:19.139
+the list and the second one is checking if a given number is prime. Now the
+
+01:05:19.139 --> 01:05:25.099
+problem asks to just write the runtimes in terms of the input so for
+
+01:05:25.099 --> 01:05:30.740
+the algorithm 1 the input is just a number of elements in your list if you
+
+01:05:30.739 --> 01:05:38.419
+want n. For the second algorithm the input size is just a given number. I say
+
+01:05:38.420 --> 01:05:39.880
+a given number itself.
+
+01:06:08.420 --> 01:06:38.400
+Thank you.
+
+01:06:38.420 --> 01:07:08.400
+Thank you.
+
+01:07:08.420 --> 01:07:38.400
+I can't wait.
+
+01:07:38.420 --> 01:08:08.400
+Thank you.
+
+01:08:08.420 --> 01:08:38.399
+I'm going to try it out.
+
+01:08:38.420 --> 01:08:39.420
+Okay.
+
+01:09:08.420 --> 01:09:38.399
+Thank you.
+
+01:09:38.420 --> 01:09:48.420
+so
+
+01:10:08.420 --> 01:10:38.399
+Thank you.
+
+01:10:38.420 --> 01:11:08.399
+I can do it with the next step.
+
+01:11:08.420 --> 01:11:38.399
+Thank you.
+
+01:11:38.420 --> 01:12:08.399
+Thank you.
+
+01:12:08.420 --> 01:12:11.119
+you
+
+01:12:38.420 --> 01:13:08.399
+Thank you.
+
+01:13:08.420 --> 01:13:38.399
+So, I'm going to use the same way that I'm ready to use.
+
+01:13:38.420 --> 01:14:08.399
+All right.
+
+01:14:08.420 --> 01:14:38.399
+Thank you.
+
+01:14:38.420 --> 01:14:54.520
+Okay, so the way these algorithms are presented as kind of a standard form, so input, output,
+
+01:14:54.520 --> 01:15:04.319
+and so input, output already tells you the problem, so input is a list of numbers, the
+
+01:15:04.319 --> 01:15:08.220
+output is the maximum number in the list, so the output tells you what you want to
+
+01:15:08.220 --> 01:15:18.659
+And this is a trivial thing, right, so you put the first element, so then the zero, for
+
+01:15:18.659 --> 01:15:20.380
+instance, into the max.
+
+01:15:20.380 --> 01:15:29.579
+And you know, for each number in your list, you check if that number is greater than max.
+
+01:15:29.579 --> 01:15:35.739
+If so, then you update your max and that's it and then you return the max.
+
+01:15:35.739 --> 01:15:53.819
+And I mean if the input number has input list has N elements so the input size is N.
+
+01:15:53.819 --> 01:15:59.479
+So if we and says we want to count for the maximum algorithm
+
+01:15:59.479 --> 01:16:04.059
+comes to the worst case number of comparisons.
+
+01:16:04.059 --> 01:16:07.500
+So the worst case is actually always the same.
+
+01:16:07.500 --> 01:16:09.519
+So it's always the same number.
+
+01:16:09.519 --> 01:16:13.759
+So t of n here is just n, right?
+
+01:16:13.759 --> 01:16:21.259
+Because for each number in the list, you do one comparison.
+
+01:16:21.259 --> 01:16:22.340
+It's always the same.
+
+01:16:22.340 --> 01:16:35.760
+it's the best case and worst case all equal. And here, the input is an integer
+
+01:16:35.760 --> 01:16:42.060
+number and then output is just true or false. So we want to know if the number
+
+01:16:42.060 --> 01:16:50.619
+is prime or not. So the input size here is the given number itself.
+
+01:16:52.340 --> 01:16:58.539
+basically what it does is it first checks if the number is at most one. So
+
+01:16:58.539 --> 01:17:04.159
+it's checking if it's 0 or 1, so if it's 0 or 1, it's not prime, returns false.
+
+01:17:04.159 --> 01:17:11.000
+Otherwise it tries to find a divisor of the number. So if you remember the number
+
+01:17:11.000 --> 01:17:16.159
+is prime if it has a divisor, if not prime, if it has a divisor other than
+
+01:17:16.159 --> 01:17:24.599
+itself and 1. So it starts from 2, and it goes up to the square root of the number
+
+01:17:24.599 --> 01:17:32.059
+and checks if the reminder of dividing the number by i is 0. If that's the case
+
+01:17:32.059 --> 01:17:39.019
+then that's a divisor which is not 1 and the number itself so it returns false.
+
+01:17:39.019 --> 01:17:44.180
+So if you don't return here then at the end it returns true. So that's the
+
+01:17:44.180 --> 01:17:49.579
+number is prime. Now really for computing the runtime you actually don't need to
+
+01:17:49.579 --> 01:17:54.680
+know what the code is doing, right? So you can just count based on the bounds of
+
+01:17:54.680 --> 01:18:12.119
+these loops. So if the original number is n, so the input size is n, then this
+
+01:18:12.119 --> 01:18:16.279
+This is goes from 2 to the square root of the n.
+
+01:18:16.279 --> 01:18:25.479
+So t of n is the square root of n minus 1 at most.
+
+01:18:25.479 --> 01:18:34.359
+So because you want to count the number of times that we take the reminder, which is
+
+01:18:34.359 --> 01:18:39.659
+this line, so we want to count how many times we execute line 5.
+
+01:18:39.659 --> 01:18:48.159
+And so now line 5 is in this loop, so it goes from 2 to the square root of n, so the square
+
+01:18:48.159 --> 01:18:52.039
+root of n minus 1 times.
+
+01:18:52.039 --> 01:19:00.099
+Now these are really easy for runtime computation, but the purpose is for you to see some examples
+
+01:19:00.099 --> 01:19:01.399
+of pseudo code.
+
+01:19:01.399 --> 01:19:09.199
+Now can anyone say, why is it enough to actually go to the square root of the number and not,
+
+01:19:09.199 --> 01:19:10.859
+let's say the number minus 1.
+
+01:19:25.000 --> 01:19:29.399
+So if a number is not prime, right,
+
+01:19:29.399 --> 01:19:36.199
+so you can write it as A times B, right?
+
+01:19:36.199 --> 01:19:49.699
+and a and b both are greater than 1 and less than n.
+
+01:19:49.699 --> 01:19:58.439
+So it cannot be that both of them are greater than square root
+
+01:19:58.439 --> 01:20:01.359
+of n because if both of them are greater than square root
+
+01:20:01.359 --> 01:20:05.159
+of n, the product will be greater than n.
+
+01:20:05.159 --> 01:20:08.840
+So there's at least one divisor, which is less than square root of n.
+
+01:20:09.399 --> 01:20:10.699
+If your number is not prime.
+
+01:20:10.699 --> 01:20:12.939
+So that's why it's go up the square root of n.
+
+01:20:14.380 --> 01:20:20.139
+So this is not part of the course, but it's just to know why this is actually correct algorithm.
+
+01:20:21.579 --> 01:20:21.899
+Yes?
+
+01:20:22.359 --> 01:20:25.340
+How would you read out line four and algorithm two?
+
+01:20:28.079 --> 01:20:35.139
+It just go from, it's a for loop that goes from, I goes from two to square root,
+
+01:20:35.140 --> 01:20:37.079
+There is a square root of your number.
+
+01:20:37.079 --> 01:20:39.140
+Number is the input, right?
+
+01:20:44.440 --> 01:20:48.720
+So in Python, for instance, you write what?
+
+01:20:48.720 --> 01:20:55.660
+So you write range.
+
+01:20:55.659 --> 01:20:56.180
+Range?
+
+01:20:57.180 --> 01:20:58.439
+Rewrite something like this.
+
+01:20:58.500 --> 01:21:05.899
+So, for i in, right?
+
+01:21:06.599 --> 01:21:06.920
+Yes.
+
+01:21:07.199 --> 01:21:08.880
+In a range of.
+
+01:21:10.300 --> 01:21:16.960
+So, here you say, two is qrt of like that n, that number.
+
+01:21:20.920 --> 01:21:24.760
+But this is, so the Python does it in a different way,
+
+01:21:24.760 --> 01:21:29.260
+But this is like a classic way on all the other programming languages.
+
+01:21:29.260 --> 01:21:31.400
+So even this you can write in Python like this.
+
+01:21:38.619 --> 01:21:47.000
+For instance, in C++, or C, you write for int.
+
+01:21:47.000 --> 01:21:49.680
+I'm not wrong.
+
+01:21:49.680 --> 01:22:03.619
+I equals 2 I less than square T of N I plus plus.
+
+01:22:03.619 --> 01:22:07.940
+And then you write it.
+
+01:22:07.940 --> 01:22:12.400
+It could be less than or equal to, or just less than?
+
+01:22:12.400 --> 01:22:14.940
+Is it equal?
+
+01:22:14.940 --> 01:22:17.680
+Basically.
+
+01:22:17.680 --> 01:22:19.560
+Yeah, it has to be equal.
+
+01:22:19.560 --> 01:22:23.720
+Then the present one you have to plus 1.
+
+01:22:23.720 --> 01:22:25.000
+Here?
+
+01:22:25.000 --> 01:22:29.520
+Yeah, for the present code.
+
+01:22:29.520 --> 01:22:30.020
+Here?
+
+01:22:30.020 --> 01:22:31.200
+Yes, you're right, yeah.
+
+01:22:36.180 --> 01:22:41.520
+So this is, right, it's not inclusive, right?
+
+01:22:41.520 --> 01:22:49.520
+Yeah, but this is not really code for any language.
+
+01:22:49.520 --> 01:22:51.640
+This is the same thing you understand.
+
+01:22:51.640 --> 01:22:55.000
+So it's just a for loop it goes from I equals two to I
+
+01:22:55.000 --> 01:22:56.800
+equals the square root of number.
+
+01:23:01.280 --> 01:23:08.400
+All right, so that's it for the first session.
+
+01:23:08.399 --> 01:23:15.559
+So I just want to check the people who are attending now.
+
+01:23:15.559 --> 01:23:18.939
+I already marked everyone which is online.
+
+01:23:38.399 --> 01:23:48.399
+so
+
+01:24:08.399 --> 01:24:38.379
+Thank you.
+
+01:24:38.399 --> 01:24:46.399
+Okay, so can you tell your names, starting from here?
+
+01:24:46.399 --> 01:24:47.460
+Miguel.
+
+01:24:47.460 --> 01:24:48.460
+Tamahtra.
+
+01:24:48.460 --> 01:24:49.259
+Aakash Lalarmani.
+
+01:24:49.260 --> 01:24:52.280
+Yes, me.
+
+01:24:52.440 --> 01:24:53.780
+Akash Lalarmani.
+
+01:24:54.300 --> 01:24:54.780
+Valarmani.
+
+01:25:19.260 --> 01:25:23.860
+So what is your family name?
+
+01:25:23.860 --> 01:25:25.400
+Lilla Rahmani.
+
+01:25:25.400 --> 01:25:26.119
+L-I-L-A.
+
+01:25:26.119 --> 01:25:32.119
+It's not on there.
+
+01:25:32.119 --> 01:25:40.260
+So sometimes the ordering is a little bit strange.
+
+01:25:40.260 --> 01:25:43.020
+Yeah, let's type right there.
+
+01:25:43.020 --> 01:25:44.020
+You, I know you?
+
+01:25:44.020 --> 01:25:45.079
+Yuhi Wang.
+
+01:25:45.079 --> 01:25:49.020
+Yuhi Wang.
+
+01:25:49.020 --> 01:25:52.700
+So if we do this once, then the next time I can just check myself.
+
+01:25:52.700 --> 01:25:57.320
+So it's easier.
+
+01:26:19.020 --> 01:26:22.020
+This is strange.
+
+01:26:25.980 --> 01:26:27.300
+All right.
+
+01:26:49.020 --> 01:26:50.360
+Your full name?
+
+01:26:50.360 --> 01:26:51.360
+B-A-T.
+
+01:26:51.360 --> 01:26:52.360
+Oh.
+
+01:26:52.360 --> 01:27:03.860
+You're also not here, strange, so … you?
+
+01:27:03.860 --> 01:27:06.800
+Min Min Pen.
+
+01:27:06.800 --> 01:27:12.600
+Yeah, check.
+
+01:27:12.600 --> 01:27:13.600
+Okay.
+
+01:27:13.600 --> 01:27:14.600
+You?
+
+01:27:14.600 --> 01:27:18.600
+Julian Fargas.
+
+01:27:18.600 --> 01:27:26.640
+so it's all about a hit
+
+01:27:48.660 --> 01:27:54.960
+Okay, so...
+
+01:27:57.300 --> 01:27:59.039
+Blake Jafari?
+
+01:27:59.520 --> 01:28:02.720
+Yeah, I think I already caught you.
+
+01:28:04.560 --> 01:28:06.060
+So yeah.
+
+01:28:08.539 --> 01:28:10.539
+Destiny Wilds.
+
+01:28:18.600 --> 01:28:25.600
+So you, KSIG.
+
+01:28:48.600 --> 01:28:53.600
+Some of you I don't find here for some reason.
+
+01:29:18.600 --> 01:29:48.579
+Thank you.
+
+01:29:48.600 --> 01:29:50.680
+Thank you, Matthew.
+
+01:30:00.640 --> 01:30:05.940
+Mike, that's so much more of the very interesting literature.
+
+01:30:10.079 --> 01:30:13.360
+My child's all right.
+
+01:30:13.360 --> 01:30:14.320
+Ooh, child's all right.
+
+01:30:18.600 --> 01:30:48.579
+Thank you.
+
+01:30:48.600 --> 01:30:56.039
+I think it might not be the latest .
+
+01:30:56.039 --> 01:31:02.420
+Just writing your original name, what I'm writing.
+
+01:31:02.420 --> 01:31:03.420
+Yeah.
+
+01:31:10.420 --> 01:31:13.200
+For some reason this doesn't get updated.
+
+01:31:13.199 --> 01:31:16.019
+and all the new students, and somehow
+
+01:31:16.019 --> 01:31:18.699
+not the original people's cycle.
+
+01:31:23.840 --> 01:31:26.559
+It is just .
+
+01:31:36.619 --> 01:31:37.779
+So you can see.
+
+01:31:43.199 --> 01:32:13.179
+Thank you.
+
+01:32:13.199 --> 01:32:16.199
+Thank you.
+
+01:32:43.199 --> 01:32:46.039
+All right, just like this.
+
+01:33:04.079 --> 01:33:05.479
+Let's do it on my desk.
+
+01:33:13.199 --> 01:33:15.199
+so
+
+01:33:43.199 --> 01:34:09.880
+So, actually I got this list just now, before I came here, but for some reason
+
+01:34:09.880 --> 01:34:10.880
+So, thank you.
+
+01:34:10.880 --> 01:34:11.880
+Okay.
+
+01:34:11.880 --> 01:34:37.859
+So, let's have a break for about 15 minutes, and then we start again at 35.
+
+01:34:37.859 --> 01:34:50.259
+Excuse me Professor.
+
+01:34:50.259 --> 01:35:00.539
+Yes I just wanted to confirm them that I'm actually on the list of Zoom attendees.
+
+01:35:00.539 --> 01:35:04.619
+I came in a couple minutes later due to some networking issues.
+
+01:35:04.619 --> 01:35:10.500
+Yeah, I think I already entered. I checked your name here.
+
+01:35:10.500 --> 01:35:15.199
+Alright, excellent. Yeah, this is Anthony Caranoza. I just wanted to check to make sure.
+
+01:35:34.619 --> 01:35:35.260
+Okay.
+
+01:36:04.619 --> 01:36:08.359
+I'm a real agent, for the first time.
+
+01:36:08.359 --> 01:36:09.340
+I understand.
+
+01:36:09.340 --> 01:36:11.260
+How do I know I saw it?
+
+01:36:11.260 --> 01:36:11.880
+It's cool.
+
+01:36:11.880 --> 01:36:15.279
+Yeah, but I'm real agent, I developed it.
+
+01:36:15.279 --> 01:36:17.699
+AI algorithm or not.
+
+01:36:17.699 --> 01:36:19.699
+You were?
+
+01:36:19.699 --> 01:36:24.279
+I'm being my kids' models and other things.
+
+01:36:24.279 --> 01:36:26.180
+I just build AI agents.
+
+01:36:26.180 --> 01:36:26.859
+Oh, really?
+
+01:36:26.859 --> 01:36:28.439
+Yeah.
+
+01:36:28.439 --> 01:36:32.539
+So this is kind of my ambition, you know.
+
+01:36:32.539 --> 01:36:38.439
+we will have an chat box inside the recording page.
+
+01:36:38.439 --> 01:36:43.739
+And we will get an answer.
+
+01:36:43.739 --> 01:36:46.640
+So I'm doing a little test.
+
+01:36:46.640 --> 01:36:48.140
+That's pretty cool.
+
+01:36:48.140 --> 01:36:49.140
+Thank you.
+
+01:36:49.140 --> 01:36:51.539
+Have you found anything else so far?
+
+01:36:51.539 --> 01:36:54.640
+I don't know.
+
+01:36:54.640 --> 01:37:00.140
+I'll try to try and sort it.
+
+01:37:00.140 --> 01:37:06.820
+of the slide into the database, semantic database,
+
+01:37:06.820 --> 01:37:15.180
+in context, and then just give this information
+
+01:37:15.180 --> 01:37:17.280
+to the user.
+
+01:37:17.280 --> 01:37:18.579
+That's pretty good.
+
+01:37:18.579 --> 01:37:19.079
+Yeah.
+
+01:37:19.079 --> 01:37:22.780
+We will deploy it later to the center.
+
+01:37:22.780 --> 01:37:25.579
+Oh, that's cool.
+
+01:37:30.140 --> 01:37:40.980
+We'll do even more things because we can be models.
+
+01:38:00.140 --> 01:38:10.860
+do you need to get into a new screen?
+
+01:38:10.859 --> 01:38:40.839
+Thank you.
+
+01:38:40.859 --> 01:38:44.859
+I think it's definitely a big answer.
+
+01:38:44.859 --> 01:38:48.859
+I think it's actually a big answer.
+
+01:38:48.859 --> 01:38:52.859
+I think it's actually a little bit.
+
+01:38:52.859 --> 01:38:56.859
+I think it's really a big answer.
+
+01:38:56.859 --> 01:39:00.859
+I think it's really important to me,
+
+01:39:00.859 --> 01:39:04.859
+it's a big answer, it's really a big answer.
+
+01:39:04.859 --> 01:39:08.859
+It's really a big answer.
+
+01:39:08.859 --> 01:39:10.859
+I'm sorry.
+
+01:39:10.859 --> 01:39:12.859
+I'm sorry.
+
+01:39:12.859 --> 01:39:14.859
+I'm sorry.
+
+01:39:14.859 --> 01:39:16.859
+I'm sorry.
+
+01:39:16.859 --> 01:39:18.859
+I'm sorry.
+
+01:39:18.859 --> 01:39:20.859
+I'm sorry.
+
+01:39:20.859 --> 01:39:22.859
+I'm sorry.
+
+01:39:22.859 --> 01:39:24.859
+You're a teacher.
+
+01:39:24.859 --> 01:39:26.859
+I'm a school.
+
+01:39:26.859 --> 01:39:28.859
+I'm a student.
+
+01:39:28.859 --> 01:39:30.859
+Thank you.
+
+01:39:30.859 --> 01:39:32.859
+I'm a teacher.
+
+01:39:32.859 --> 01:39:34.859
+I'm a student.
+
+01:39:34.859 --> 01:39:36.859
+I'm a student.
+
+01:39:36.859 --> 01:39:39.619
+and then it's doing some fun.
+
+01:39:39.619 --> 01:39:40.579
+Got some.
+
+01:39:41.119 --> 01:39:41.699
+Yeah.
+
+01:39:52.399 --> 01:39:54.199
+That's like a big issue.
+
+01:39:54.199 --> 01:39:55.500
+Here.
+
+01:39:55.500 --> 01:39:56.859
+I have an intuition.
+
+01:39:58.539 --> 01:39:59.539
+No, I have an intuition.
+
+01:40:02.639 --> 01:40:03.259
+Yeah.
+
+01:40:06.859 --> 01:40:07.859
+In Portugal.
+
+01:40:07.859 --> 01:40:12.339
+We have always been a good person on the interview.
+
+01:40:12.339 --> 01:40:16.619
+I'm sorry you have to leave.
+
+01:40:16.619 --> 01:40:19.219
+I was so Ugh.
+
+01:40:19.219 --> 01:40:25.619
+I think I was so close to the meeting.
+
+01:40:25.619 --> 01:40:28.279
+I don't know the name of Japan.
+
+01:40:28.279 --> 01:40:29.279
+I'm sorry.
+
+01:40:29.279 --> 01:40:30.279
+I'm sorry.
+
+01:40:30.279 --> 01:40:33.659
+I was there last night that was a good one.
+
+01:40:33.659 --> 01:40:35.899
+I mean, like this nation soon.
+
+01:40:35.899 --> 01:40:37.659
+Yeah, and I don't know what this is.
+
+01:40:37.659 --> 01:40:38.359
+Nice to work out.
+
+01:40:38.359 --> 01:40:40.500
+This is not a good class here, actually.
+
+01:40:40.500 --> 01:40:44.059
+Oh, and especially now, all of us.
+
+01:40:44.059 --> 01:40:47.979
+How about the site of what you think, the boundary?
+
+01:40:47.979 --> 01:40:49.539
+That's cool.
+
+01:40:49.539 --> 01:40:53.319
+And you feel like the snowels, or like on the sand,
+
+01:40:53.319 --> 01:40:54.199
+the buildings.
+
+01:40:54.199 --> 01:40:58.579
+I think so you're not bad, but you think you want this?
+
+01:40:58.579 --> 01:40:59.939
+Oh, that's cool.
+
+01:40:59.939 --> 01:41:00.559
+Yeah.
+
+01:41:00.559 --> 01:41:01.559
+You're not just a little.
+
+01:41:01.560 --> 01:41:03.980
+I'm going to go to first.
+
+01:41:03.980 --> 01:41:04.480
+No.
+
+01:41:04.480 --> 01:41:07.860
+I'll be to .
+
+01:41:07.860 --> 01:41:12.100
+I don't remember where it was before about two hours.
+
+01:41:12.100 --> 01:41:14.400
+.
+
+01:41:14.400 --> 01:41:16.360
+Yeah.
+
+01:41:16.360 --> 01:41:20.420
+I'll tell people about the mountains in .
+
+01:41:20.420 --> 01:41:22.940
+Oh, I didn't know they have .
+
+01:41:22.940 --> 01:41:23.360
+Yeah.
+
+01:41:23.360 --> 01:41:24.900
+They have .
+
+01:41:24.900 --> 01:41:26.980
+Club burgers.
+
+01:41:26.980 --> 01:41:28.740
+It's like .
+
+01:41:28.739 --> 01:41:38.179
+i got there and it's like very
+
+01:41:38.180 --> 01:41:42.640
+I think we're, yeah.
+
+01:41:42.640 --> 01:41:47.280
+I think it's a little bit.
+
+01:41:47.280 --> 01:41:49.680
+It smells terrible.
+
+01:41:49.680 --> 01:41:52.740
+It's like a meme.
+
+01:41:52.740 --> 01:41:53.740
+It's real.
+
+01:41:53.740 --> 01:41:54.740
+Yes.
+
+01:41:54.740 --> 01:41:56.740
+Yes.
+
+01:41:56.740 --> 01:42:00.460
+It's such a dramatic city.
+
+01:42:00.460 --> 01:42:03.840
+It's like a bunch of cards and like .
+
+01:42:03.840 --> 01:42:07.840
+Yeah, it's three half-tabers, like the rest are huge.
+
+01:42:07.840 --> 01:42:11.840
+New York guys, they have another fire clock.
+
+01:42:11.840 --> 01:42:15.840
+They actually have a lot of the different types of but they have a lot of the things.
+
+01:42:19.840 --> 01:42:21.840
+That's how nice to do.
+
+01:42:21.840 --> 01:42:23.840
+Oh, you're not, I'm sorry.
+
+01:42:23.840 --> 01:42:25.840
+It's not like you.
+
+01:42:27.840 --> 01:42:29.840
+I tried.
+
+01:42:29.840 --> 01:42:32.480
+Yeah, it was pretty good in the Yankees,
+
+01:42:32.480 --> 01:42:33.500
+different in the Shakira.
+
+01:42:33.500 --> 01:42:34.279
+Oh, yeah.
+
+01:42:34.279 --> 01:42:34.779
+Yeah.
+
+01:42:34.779 --> 01:42:35.279
+Yeah.
+
+01:42:38.220 --> 01:42:39.840
+So you came in from Congo?
+
+01:42:39.840 --> 01:42:40.340
+Yeah.
+
+01:42:40.340 --> 01:42:41.220
+Like Groff?
+
+01:42:41.220 --> 01:42:42.020
+Yeah.
+
+01:42:42.020 --> 01:42:43.060
+Yeah, yeah.
+
+01:42:43.060 --> 01:42:43.680
+You two, actually.
+
+01:42:43.680 --> 01:42:44.500
+Two years.
+
+01:42:44.500 --> 01:42:45.300
+Oh, shit.
+
+01:42:45.300 --> 01:42:46.539
+Yeah, yeah, yeah, yeah.
+
+01:42:46.539 --> 01:42:48.840
+.
+
+01:42:48.840 --> 01:42:50.119
+No, Mexican.
+
+01:42:50.119 --> 01:42:52.699
+Yeah, yeah, yeah.
+
+01:42:52.699 --> 01:42:56.180
+A bunch of some .
+
+01:42:56.180 --> 01:42:57.779
+How do you watch it?
+
+01:42:57.779 --> 01:43:00.779
+It was like a pretty good school.
+
+01:43:00.779 --> 01:43:02.779
+It was like a pretty good school.
+
+01:43:02.779 --> 01:43:04.779
+And I was like, oh, nice.
+
+01:43:04.779 --> 01:43:05.779
+Where did you get away from?
+
+01:43:05.779 --> 01:43:06.779
+I don't know.
+
+01:43:06.779 --> 01:43:08.779
+I was from here.
+
+01:43:08.779 --> 01:43:09.779
+I was from here.
+
+01:43:09.779 --> 01:43:11.779
+We were from here.
+
+01:43:11.779 --> 01:43:15.779
+University of California, California, California.
+
+01:43:15.779 --> 01:43:16.779
+You could do that one.
+
+01:43:16.779 --> 01:43:18.779
+It was like five since it was coming to me.
+
+01:43:18.779 --> 01:43:19.779
+It's like two months ago.
+
+01:43:19.779 --> 01:43:22.779
+And then there was other schools.
+
+01:43:22.779 --> 01:43:23.779
+It was about other colleges.
+
+01:43:23.779 --> 01:43:25.779
+Everybody lives in downtown and I'm like,
+
+01:43:25.779 --> 01:43:55.759
+a very far away.
+
+01:43:55.779 --> 01:43:57.259
+to teach Russia.
+
+01:43:57.259 --> 01:43:58.059
+Russia.
+
+01:43:58.059 --> 01:43:59.059
+Russia.
+
+01:43:59.059 --> 01:44:00.059
+Russia.
+
+01:44:00.059 --> 01:44:02.019
+Not in jail in Pennsylvania.
+
+01:44:02.019 --> 01:44:02.340
+Yeah.
+
+01:44:02.340 --> 01:44:04.800
+It's from the Pennsylvania part of that.
+
+01:44:04.800 --> 01:44:05.859
+It's nice.
+
+01:44:05.859 --> 01:44:06.639
+I like to like it.
+
+01:44:06.639 --> 01:44:07.819
+You want to work up?
+
+01:44:07.819 --> 01:44:08.319
+Yeah.
+
+01:44:08.319 --> 01:44:10.559
+Yeah, it is.
+
+01:44:10.559 --> 01:44:12.699
+I thought we were .
+
+01:44:12.699 --> 01:44:14.559
+Yeah.
+
+01:44:14.559 --> 01:44:15.059
+Yeah.
+
+01:44:15.059 --> 01:44:18.099
+We're going to work for.
+
+01:44:18.099 --> 01:44:19.699
+I would go out Iran.
+
+01:44:19.699 --> 01:44:20.539
+Huh?
+
+01:44:20.539 --> 01:44:22.259
+Iran.
+
+01:44:22.259 --> 01:44:25.479
+Just like after like ..
+
+01:44:25.479 --> 01:44:29.919
+I can go into a clean for the air.
+
+01:44:29.919 --> 01:44:31.059
+.
+
+01:44:31.059 --> 01:44:35.399
+.
+
+01:44:35.399 --> 01:44:37.399
+.
+
+01:44:37.399 --> 01:44:41.319
+.
+
+01:44:41.319 --> 01:44:42.399
+.
+
+01:44:42.399 --> 01:44:43.399
+Yeah.
+
+01:44:43.399 --> 01:44:44.899
+.
+
+01:44:44.899 --> 01:44:46.339
+.
+
+01:44:46.339 --> 01:44:47.399
+.
+
+01:44:47.399 --> 01:44:49.339
+.
+
+01:44:49.339 --> 01:44:50.079
+.
+
+01:44:50.079 --> 01:44:50.779
+.
+
+01:44:50.779 --> 01:44:52.579
+.
+
+01:44:52.579 --> 01:44:53.939
+.
+
+01:44:53.939 --> 01:44:54.500
+.
+
+01:44:54.500 --> 01:44:58.500
+It's because it seems that we already spike up the...
+
+01:44:58.500 --> 01:45:02.500
+The next one has an entire Q4.
+
+01:45:02.500 --> 01:45:04.500
+Two marks, mhm.
+
+01:45:04.500 --> 01:45:06.500
+And it's like,
+
+01:45:06.500 --> 01:45:10.500
+And you can do an op,
+
+01:45:10.500 --> 01:45:14.500
+It's because you can follow the players...
+
+01:45:14.500 --> 01:45:16.500
+Here we are.
+
+01:45:16.500 --> 01:45:18.500
+I don't know.
+
+01:45:18.500 --> 01:45:20.500
+I don't know.
+
+01:45:20.500 --> 01:45:22.500
+I don't know what's wrong.
+
+01:45:22.500 --> 01:45:26.100
+what's wrong?
+
+01:45:26.100 --> 01:45:30.260
+yeah they lost him
+
+01:45:30.260 --> 01:45:37.619
+yeah they beat piano and they lost
+
+01:45:40.659 --> 01:45:44.739
+this one is egyptian
+
+01:45:44.739 --> 01:45:52.960
+so it's not the most easy.
+
+01:45:52.960 --> 01:45:53.960
+yeah.
+
+01:45:53.960 --> 01:45:54.899
+yeah, yeah.
+
+01:45:54.899 --> 01:45:59.960
+yeah.
+
+01:45:59.960 --> 01:46:03.899
+yeah, it's kind of good, so I had it.
+
+01:46:03.899 --> 01:46:09.539
+D'you want to put that on top of the table?
+
+01:46:09.539 --> 01:46:10.539
+Oh, no.
+
+01:46:10.539 --> 01:46:11.539
+Yeah.
+
+01:46:11.539 --> 01:46:12.339
+Yeah.
+
+01:46:12.339 --> 01:46:15.399
+Yeah, the top.
+
+01:46:15.399 --> 01:46:16.399
+Yeah.
+
+01:46:16.399 --> 01:46:20.899
+Yeah.
+
+01:46:20.899 --> 01:46:22.779
+And I see it.
+
+01:46:22.779 --> 01:46:25.059
+Yeah.
+
+01:46:25.059 --> 01:46:27.479
+Yeah.
+
+01:46:27.479 --> 01:46:29.319
+Yeah.
+
+01:46:29.319 --> 01:46:29.819
+Yeah.
+
+01:46:29.819 --> 01:46:31.239
+Yeah.
+
+01:46:31.239 --> 01:46:41.239
+he lost
+
+01:47:01.239 --> 01:47:06.059
+Even then, here, if you want to get a new one.
+
+01:47:06.059 --> 01:47:08.679
+Yeah, probably, yeah.
+
+01:47:08.679 --> 01:47:14.219
+Probably, probably, probably, just one day.
+
+01:47:14.219 --> 01:47:16.179
+Here, there's this.
+
+01:47:16.179 --> 01:47:18.119
+Here, there's this.
+
+01:47:18.119 --> 01:47:20.639
+I'm going to be seeing.
+
+01:47:20.639 --> 01:47:21.800
+I'm going to be seeing.
+
+01:47:21.800 --> 01:47:23.380
+And the face is going to be a new one.
+
+01:47:23.380 --> 01:47:24.219
+Same here, yeah.
+
+01:47:24.220 --> 01:47:54.199
+Thank you.
+
+01:47:54.220 --> 01:47:59.400
+Yeah, must be nice, wasn't it?
+
+01:48:05.619 --> 01:48:06.539
+Did we get through, right?
+
+01:48:24.220 --> 01:48:54.199
+Thank you.
+
+01:48:54.220 --> 01:49:24.199
+Thank you.
+
+01:49:24.220 --> 01:49:54.199
+Thank you.
+
+01:49:54.220 --> 01:50:00.220
+the , and .
+
+01:50:00.220 --> 01:50:06.220
+.
+
+01:50:06.220 --> 01:50:12.220
+.
+
+01:50:12.220 --> 01:50:13.940
+I'm trying to get some new increase right now.
+
+01:50:13.940 --> 01:50:16.300
+So tomorrow and then, yeah.
+
+01:50:42.220 --> 01:51:10.720
+All right.
+
+01:51:10.720 --> 01:51:16.280
+We're going to learn some background material.
+
+01:51:16.280 --> 01:51:18.980
+So first, there's some math.
+
+01:51:18.980 --> 01:51:22.159
+And after that, some runtime computations.
+
+01:51:22.159 --> 01:51:26.400
+But first, we have to have some background in math,
+
+01:51:26.400 --> 01:51:29.340
+and especially the logarithms.
+
+01:51:29.340 --> 01:51:33.940
+So what's the logarithm?
+
+01:51:33.939 --> 01:51:46.339
+So, assume that a and b are just numbers greater than 1 and x, y is positive.
+
+01:51:46.339 --> 01:51:50.159
+So, this is the definition of the logarithm.
+
+01:51:50.159 --> 01:51:57.260
+So if you have a number a and a to the power z is x,
+
+01:51:57.260 --> 01:52:03.939
+then by definition log of x equals a is z, right?
+
+01:52:03.939 --> 01:52:13.539
+So this is equivalent to log of x equals a is z.
+
+01:52:13.539 --> 01:52:17.680
+So this is the definition, right?
+
+01:52:17.680 --> 01:52:28.220
+So log of x in base a is the number that if you raise a to that power becomes x.
+
+01:52:28.820 --> 01:52:30.039
+It gives x.
+
+01:52:31.780 --> 01:52:41.100
+Okay, so x a, sorry, a to what power becomes, is equal to x?
+
+01:52:41.460 --> 01:52:43.340
+That's log of x in base a.
+
+01:52:47.680 --> 01:52:52.920
+So, example.
+
+01:52:52.920 --> 01:53:00.140
+So, for instance, 2 to 5 is 32.
+
+01:53:00.140 --> 01:53:08.460
+Therefore, log of 32, it is 2, is 5.
+
+01:53:08.460 --> 01:53:37.819
+is 5. So 3, the 4th is 81, right? So 3 times 3 is 9. So 9 times 9 is 81. So
+
+01:53:37.819 --> 01:53:49.539
+So log of 81 base 3 is 4.
+
+01:53:49.539 --> 01:53:54.399
+So what is the power of 3?
+
+01:53:54.399 --> 01:53:58.979
+If I raise 3 to that power, this would be 81, that's 4.
+
+01:54:02.920 --> 01:54:06.659
+So what's the power of 2 that 2 to that power
+
+01:54:06.659 --> 01:54:18.739
+32 that's five. And this you can do basically for any number a now we
+
+01:54:18.739 --> 01:54:25.699
+consider only integers like 2,3,4. In general it's possible to do for arbitrary
+
+01:54:25.699 --> 01:54:34.059
+numbers. Yeah so that's the definition.
+
+01:54:34.060 --> 01:54:40.640
+And usually we work with base two. In computer science, the base two usually
+
+01:54:40.640 --> 01:54:46.900
+appears. So sometimes also other bases, but usually it's base two. And we write
+
+01:54:46.900 --> 01:54:58.980
+LNG for log in base two. Now properties of logarithms. So these properties are
+
+01:54:58.979 --> 01:55:10.359
+it's important and good sometimes useful in computations. So log of a in base a
+
+01:55:10.359 --> 01:55:20.119
+is always 1 right? Because a to the power 1 is 8. So log of a base a is 1.
+
+01:55:20.119 --> 01:55:28.920
+And log of one in any base a is zero because so you know by that a,
+
+01:55:29.159 --> 01:55:31.939
+so any number raised to the power of zero is one.
+
+01:55:33.019 --> 01:55:37.099
+So that's convention that a to the power of zero is one.
+
+01:55:37.640 --> 01:55:41.579
+And so therefore log of one in any base a is zero.
+
+01:55:41.579 --> 01:55:55.460
+So we're learning this logarithm function because it happens in the run times that we're going to see.
+
+01:55:55.460 --> 01:56:02.199
+and it's a things about logarithm are important for computer science and it just always happens.
+
+01:56:02.199 --> 01:56:05.819
+So we have to learn it.
+
+01:56:05.819 --> 01:56:19.659
+Now another property is that log of x to the power p is equal to p times log of x.
+
+01:56:19.659 --> 01:56:25.819
+So in other words, you can bring the p out of the logarithm, so you can bring the power
+
+01:56:25.819 --> 01:56:28.679
+out of the logarithm and it becomes multiplicative.
+
+01:56:28.679 --> 01:56:30.819
+So it's like this.
+
+01:56:30.819 --> 01:56:36.460
+Now, all of these properties we're going to see they follow from just the definition.
+
+01:56:37.539 --> 01:56:39.519
+Now I show some of them.
+
+01:56:39.519 --> 01:56:42.559
+So, for instance, this one is very simple.
+
+01:56:42.559 --> 01:56:49.599
+So, if you want to derive it from the definition and just,
+
+01:56:51.039 --> 01:56:55.039
+For instance let's write Z.
+
+01:57:00.819 --> 01:57:23.719
+so let me write log of x base a so I denoted by z then by definition I have a
+
+01:57:23.720 --> 01:57:35.020
+power z is x. Now I can raise the both sides of this equation to power P. All
+
+01:57:35.020 --> 01:57:44.100
+right so when you have two equal numbers the powers are equal. So therefore I get
+
+01:57:44.100 --> 01:57:55.100
+to the Z to the power of P is equal to X to the P. But you know that so when you
+
+01:57:55.100 --> 01:58:04.579
+have A to the Z to the power of P, so this is actually equal to A to the power
+
+01:58:04.579 --> 01:58:17.000
+z times P, right? And then again, applying this definition, this we get that log of
+
+01:58:17.000 --> 01:58:30.559
+X to the P base A is P times Z. Now Z was this log, so it's P times log of X
+
+01:58:30.560 --> 01:58:41.300
+This is the proof, if you want, of this equation.
+
+01:58:41.300 --> 01:58:46.700
+So I won't ask about these proofs, but I just want to show you
+
+01:58:46.700 --> 01:58:49.660
+that these are really not difficult to derive from.
+
+01:58:49.660 --> 01:58:51.440
+These are just follow from the definition.
+
+01:58:51.440 --> 01:58:54.600
+So they're not strange things.
+
+01:58:54.600 --> 01:59:04.600
+So, can anyone say what this symbol means here?
+
+01:59:04.600 --> 01:59:07.039
+So, this.
+
+01:59:07.039 --> 01:59:19.280
+So, what is this one?
+
+01:59:19.279 --> 01:59:27.599
+So for instance, if you have something like say, a and then b.
+
+01:59:27.599 --> 01:59:33.719
+So the equation, and then you have this and then b.
+
+01:59:33.719 --> 01:59:44.759
+So this is implies.
+
+01:59:44.760 --> 01:59:49.659
+Right so this is written as read as implies so a implies B
+
+01:59:51.220 --> 01:59:53.220
+so these things you
+
+01:59:53.220 --> 01:59:58.840
+Supposedly you should let in the discrete mass core so if a is true then B is true
+
+02:00:00.020 --> 02:00:06.320
+That's this what it means now. This is a post ways implication so
+
+02:00:09.140 --> 02:00:11.199
+This means that these two are equivalent
+
+02:00:11.199 --> 02:00:17.559
+equivalent so whenever a through is true whenever these two a so now if you have
+
+02:00:17.559 --> 02:00:22.420
+this is the first line here because this is the definition right so we have
+
+02:00:22.420 --> 02:00:28.079
+equivalence and the second one is so again there's equivalence because you
+
+02:00:28.079 --> 02:00:35.260
+can erase the two sides to the power or you can just remove the power they have
+
+02:00:35.260 --> 02:00:41.280
+to be quoted from each other. So this is also two ways and here again is the
+
+02:00:41.280 --> 02:00:45.920
+definition. So you go two ways. So sometimes, most often we use this one
+
+02:00:45.920 --> 02:00:50.659
+which is an implication. So we from something we derive something else. But
+
+02:00:50.659 --> 02:00:55.140
+if you also can go backwards then you have this.
+
+02:00:55.140 --> 02:01:02.320
+Alright, so now this is an important property.
+
+02:01:02.320 --> 02:01:07.220
+So power comes out of the logarithm.
+
+02:01:07.220 --> 02:01:11.680
+So examples, so for instance 64 is 2 to the 6.
+
+02:01:11.680 --> 02:01:18.500
+So we already know by definition that this is the log in base 2.
+
+02:01:18.500 --> 02:01:20.780
+So it's already 6.
+
+02:01:20.780 --> 02:01:21.780
+The answer is 6.
+
+02:01:21.779 --> 02:01:25.559
+you can also see that by bringing this six outside.
+
+02:01:25.559 --> 02:01:27.960
+So this becomes a six times log of two,
+
+02:01:27.960 --> 02:01:30.139
+and log of two is one, so we get six.
+
+02:01:33.340 --> 02:01:37.899
+Now there is a more general formula, which is this.
+
+02:01:37.899 --> 02:01:41.880
+So if you have multiplication, x times y,
+
+02:01:41.880 --> 02:01:47.239
+and you take the log, log turns this multiplication
+
+02:01:47.239 --> 02:01:55.119
+addition. So log of X times Y is equal to log of X plus log of Y in any base. So I
+
+02:01:55.119 --> 02:02:00.059
+don't say the base because it's just fixed so any base that you have. So log
+
+02:02:00.059 --> 02:02:07.300
+of X times Y is log of X plus log of Y. Now this is very useful and is sometimes
+
+02:02:07.300 --> 02:02:14.139
+used in for simplifying equations. So you might have a very large product you
+
+02:02:14.140 --> 02:02:18.460
+have a product of many terms and you don't know what to do with it so but the
+
+02:02:18.460 --> 02:02:24.660
+log I can turn the product into a addition and then you might be able to
+
+02:02:24.660 --> 02:02:31.460
+do something you can you might be able to simplify or upper bound those I did
+
+02:02:31.460 --> 02:02:38.020
+terms that you have and then you can again go back here remove the log so
+
+02:02:38.020 --> 02:02:45.100
+going back and also to return the log so the inverse of the log is the
+
+02:02:45.100 --> 02:02:49.840
+exponentiation function so raising to the exponent. So we discussed that also so
+
+02:02:49.840 --> 02:02:57.520
+by raising the exponent then you can go back so therefore log can turn a
+
+02:02:57.520 --> 02:03:05.860
+multiplication into addition. Now let's also show this, this is also very simple.
+
+02:03:05.859 --> 02:03:22.659
+So let's have z1, for instance. This is log of x in base A. Let's try to see 2
+
+02:03:22.659 --> 02:03:41.899
+For log of y in base a, then we have by definition that is a to base c1 is x and
+
+02:03:41.899 --> 02:03:57.779
+to the zero is y. Now x times y is a times Z1 times a times Z2. And you know that
+
+02:03:57.779 --> 02:04:03.000
+when you have multiplication of the powers and you have the same base there
+
+02:04:03.000 --> 02:04:13.619
+there and the powers are added. So this is a to the z1 plus z2. Now from here
+
+02:04:13.619 --> 02:04:26.460
+again if you apply the definition we have, so we get that log of x times y in base
+
+02:04:26.460 --> 02:04:50.340
+A is Z1 versus Z2. So you can easily. So as you see basically because log is looks
+
+02:04:50.340 --> 02:04:59.460
+the exponents so when you multiply two things the exponents add up all right
+
+02:04:59.460 --> 02:05:08.340
+now this equation allows us to compute a little more logarithms so for instance
+
+02:05:08.340 --> 02:05:19.779
+log of 24 you can write it as log of 23 times 3 so that's 8 times 3 and then 2
+
+02:05:19.779 --> 02:05:24.739
+to the three is three times log of two plus log of three. Using this formula and
+
+02:05:24.739 --> 02:05:31.579
+this term becomes three and this term is log of three. So now we cannot compute
+
+02:05:31.579 --> 02:05:36.099
+log of three exactly. This is an irrational number so we can
+
+02:05:36.099 --> 02:05:42.039
+approximate it but we as list we have computed log of twenty four in terms of
+
+02:05:42.039 --> 02:05:49.239
+log of three. So it's something.
+
+02:05:49.239 --> 02:06:02.319
+so using this formula and there's also a formula for the division so the x divided
+
+02:06:02.319 --> 02:06:09.460
+by y so log of x divided by y is equal log of x minus log of y so this is also
+
+02:06:09.460 --> 02:06:18.179
+can be taken to be a special case of this formula with negative powers.
+
+02:06:18.180 --> 02:06:24.619
+yeah but it's also good to know that this also division is turned into
+
+02:06:24.619 --> 02:06:36.900
+subtraction by the log. Again an example so for instance 1 over 1024 so log of
+
+02:06:36.900 --> 02:06:45.140
+this is log of the top or 0 minus log of the bottom so 1024 is 2 to the 10 so
+
+02:06:45.140 --> 02:06:51.480
+this becomes a negative 10. So log can become negative as you see here and for
+
+02:06:51.480 --> 02:06:58.640
+numbers which are less than 1, log is negative. For 1, it's 0. For numbers which
+
+02:06:58.640 --> 02:07:05.539
+are less than 1, it's negative. So any questions?
+
+02:07:15.140 --> 02:07:18.900
+No question?
+
+02:07:18.900 --> 02:07:24.079
+Okay. So, let's draw the graph of this function log of x.
+
+02:07:24.079 --> 02:07:37.960
+So, let's say this is the x-axis, and this is log of x in base 2.
+
+02:07:37.960 --> 02:08:04.199
+Now when x is 1, what is the log of x?
+
+02:08:04.199 --> 02:08:06.140
+0.
+
+02:08:06.140 --> 02:08:08.100
+So we get a point there.
+
+02:08:12.020 --> 02:08:13.160
+So there's a point here.
+
+02:08:18.840 --> 02:08:22.119
+So when x is 2, what is log of x?
+
+02:08:28.539 --> 02:08:29.920
+So you have a point here.
+
+02:08:29.920 --> 02:08:37.220
+And so when x is 4, what is log of x base 2?
+
+02:08:37.220 --> 02:08:38.220
+2.
+
+02:08:38.220 --> 02:08:38.720
+OK.
+
+02:08:38.720 --> 02:08:40.520
+So we have here.
+
+02:08:42.920 --> 02:08:47.380
+And then the next time you go up 1 is when you double this.
+
+02:08:47.380 --> 02:08:48.720
+So 4, 5, 6.
+
+02:08:48.720 --> 02:08:52.380
+This is 7, 8.
+
+02:08:52.380 --> 02:08:54.060
+Log of 8 is 3, right?
+
+02:08:54.060 --> 02:08:55.380
+2, 3.
+
+02:08:55.380 --> 02:08:57.720
+2, 3.
+
+02:08:57.720 --> 02:09:02.199
+any other point
+
+02:09:02.600 --> 02:09:08.960
+it's so alright now you see if you want to go one more higher you have to double
+
+02:09:08.960 --> 02:09:18.480
+the x so the next time you get four if you multiply it by 2 which is 16 so you
+
+02:09:18.480 --> 02:09:26.940
+get one higher then again 64 and you see that as x becomes larger and larger
+
+02:09:26.939 --> 02:09:34.439
+this function grows but it grows very slowly. So and as X becomes larger and
+
+02:09:34.439 --> 02:09:45.539
+larger actually grows more slowly. And here actually it goes like this. The next
+
+02:09:45.539 --> 02:09:54.659
+So here becomes negative.
+
+02:09:54.659 --> 02:10:02.899
+Okay, now I talk more about this, but let's see some other important properties.
+
+02:10:02.899 --> 02:10:09.279
+So, this is the formula that relates the different bases to each other.
+
+02:10:09.279 --> 02:10:18.239
+So log of x in base b is equal to log of x in base a divided by log of b in base a.
+
+02:10:19.079 --> 02:10:23.119
+Now, this side is a function of x.
+
+02:10:23.340 --> 02:10:30.119
+Now, the top here is a function of x, but the bottom here is a constant number, right?
+
+02:10:30.219 --> 02:10:33.880
+So log of b in base a is just one number.
+
+02:10:34.019 --> 02:10:35.380
+It's not a function of x.
+
+02:10:35.599 --> 02:10:36.380
+It's constant.
+
+02:10:36.380 --> 02:10:45.739
+And because of that, so we see that for two numbers a and b, log of x in base b
+
+02:10:45.739 --> 02:10:52.159
+and log of x in base a are within a multiplicative constant factor from each
+
+02:10:52.159 --> 02:10:58.100
+other. So which means that one of them is just a constant times the other. So for
+
+02:10:58.100 --> 02:11:06.220
+instance if we want to write log of x in base 3
+
+02:11:06.220 --> 02:11:14.900
+that's log of X base 2 divided by log of 2 in base 3 right? So this is this formula.
+
+02:11:14.900 --> 02:11:31.840
+Um, the other way around so this is log of 3 in base. So, b yes. So therefore if I
+
+02:11:31.840 --> 02:11:39.940
+want to obtain the graph of log of X in base 3, I have to multiply this graph by
+
+02:11:39.940 --> 02:11:53.440
+actually 1 over this, by the constant which is so 1 over log of 3 over 2. If you
+
+02:11:53.439 --> 02:12:01.859
+multiply the graph by a constant just it doesn't change the shape of it much
+
+02:12:01.859 --> 02:12:06.639
+right so it moves it a little bit but it doesn't change that for instance how it
+
+02:12:06.639 --> 02:12:16.639
+grows it grows as before because it's a constant value now we see later that in
+
+02:12:16.640 --> 02:12:24.640
+terms of the runtimes, we are interested in the growth of the function, so we are
+
+02:12:24.640 --> 02:12:30.740
+not interested in the constant factors and because of that different bases for
+
+02:12:30.740 --> 02:12:36.020
+us that they don't matter. So if we have, so we, if you have, we can compute the
+
+02:12:36.020 --> 02:12:42.960
+runtime of a algorithm as log of, log of N in base 2, or log of N in base 3, it
+
+02:12:42.960 --> 02:12:46.520
+doesn't matter for us, we say that it's a logarithm.
+
+02:12:46.520 --> 02:12:52.980
+The base is not important because different bases are just a constant different from each other.
+
+02:12:53.100 --> 02:12:56.460
+So, and constant factor is, we don't care about the constant factors.
+
+02:12:58.320 --> 02:13:05.000
+Now, this is good, but it's much more important properties of logarithm.
+
+02:13:06.220 --> 02:13:11.520
+So, first of all, it's increasing and it's unbounded.
+
+02:13:12.240 --> 02:13:16.500
+So, increasing means that it's always increasing, right?
+
+02:13:16.520 --> 02:13:19.140
+So it doesn't have any flat area.
+
+02:13:20.600 --> 02:13:25.020
+So if increasing means that if X1 is less than X2,
+
+02:13:25.020 --> 02:13:31.420
+then log of X1 with any base is less than log of X2.
+
+02:13:33.540 --> 02:13:35.400
+This always increases.
+
+02:13:41.120 --> 02:13:43.700
+So it's never equal to anything before.
+
+02:13:43.700 --> 02:13:46.080
+So there is no flat areas.
+
+02:13:46.079 --> 02:13:52.079
+here is always going higher and it's also unbounded so what does unbounded
+
+02:13:52.079 --> 02:14:03.100
+mean can anyone say what's unbound doesn't have a bound so what does that
+
+02:14:03.100 --> 02:14:15.539
+mean like there's no end yeah but that's again yeah it goes to infinity
+
+02:14:15.539 --> 02:14:22.960
+infinity, basically. Right, so as X goes to infinity, the discussion log of X goes to
+
+02:14:22.960 --> 02:14:32.220
+infinity. But now you, you might have seen some other functions which look like
+
+02:14:32.220 --> 02:14:37.479
+this, but they don't go to infinity. Right, so they might actually, there are other
+
+02:14:37.479 --> 02:14:43.199
+functions that they might become tangent to some line here, and they have limits.
+
+02:14:43.199 --> 02:14:48.840
+but log of X doesn't have it actually it crosses every line that you draw
+
+02:14:48.840 --> 02:14:55.300
+horizontal and goes higher would absolute value have a limit
+
+02:14:55.300 --> 02:15:10.519
+absolutely no but you can easily build function something like one where X
+
+02:15:10.520 --> 02:15:24.440
+squared or something like that. So, now it goes to infinity so it, it becomes
+
+02:15:24.440 --> 02:15:29.640
+arbitrarily large. Now, the very important property of log is that it
+
+02:15:29.640 --> 02:15:36.420
+grows very slowly. And what does it mean that it grows very slowly? So, basically
+
+02:15:36.420 --> 02:15:43.420
+Basically, as X becomes larger and larger, lock of X, it also becomes larger, but it
+
+02:15:43.420 --> 02:15:45.060
+doesn't become much larger.
+
+02:15:45.060 --> 02:15:47.920
+It grows a little bit.
+
+02:15:47.920 --> 02:15:51.779
+So in terms of runtime, would X be the input size?
+
+02:15:51.779 --> 02:15:54.560
+We have N at the end.
+
+02:15:54.560 --> 02:16:00.220
+And then the runtime would increase very slowly in terms of the input size.
+
+02:16:00.220 --> 02:16:07.360
+So to see why it's good, I mean how it's very slow-growing.
+
+02:16:08.000 --> 02:16:16.820
+So let's say we multiply x, so we send x to 2x, right?
+
+02:16:16.820 --> 02:16:24.800
+So then if you have log of x, it goes to log of 2x.
+
+02:16:27.280 --> 02:16:28.560
+But this is what?
+
+02:16:28.560 --> 02:16:41.040
+log of 2x is log of x plus 1, right? So if you want to increase the value of log
+
+02:16:41.040 --> 02:16:47.880
+just by 1, you have to double your equation. For instance, if you have
+
+02:16:47.879 --> 02:16:59.339
+another function let's say x squared then if you replace x by 2x you get 4
+
+02:16:59.339 --> 02:17:07.779
+times x squared. So actually it becomes much larger and you see that the
+
+02:17:07.779 --> 02:17:13.039
+effect of it is much bigger as x becomes larger and larger and larger. So as
+
+02:17:13.040 --> 02:17:26.740
+concrete examples let's say take for x to be let's say ten to the sixth right so
+
+02:17:26.739 --> 02:17:36.319
+So if you send 10 to the sex into two times,
+
+02:17:38.379 --> 02:17:56.199
+10 to the sex, the log of X is six times log of 10 goes into six times log of 10 plus one.
+
+02:17:56.739 --> 02:18:04.639
+But if you have x squared, it's 10 to the power 12.
+
+02:18:04.639 --> 02:18:11.020
+It goes to 4 times 10 to the power 12.
+
+02:18:11.020 --> 02:18:19.059
+Right? Right.
+
+02:18:19.059 --> 02:18:23.760
+So this I have to see my .
+
+02:18:23.760 --> 02:18:26.360
+So if you have an algorithm whose runtime
+
+02:18:26.360 --> 02:18:31.819
+is x squared, then an input of size a million.
+
+02:18:32.739 --> 02:18:40.620
+So it takes some time, which is .
+
+02:18:41.960 --> 02:18:43.700
+Right, so let me, okay.
+
+02:18:43.700 --> 02:18:47.600
+So maybe I make this example a little better.
+
+02:18:47.600 --> 02:18:52.640
+So let's not do this, because we don't have .
+
+02:18:52.640 --> 02:18:56.280
+So let me write it.
+
+02:18:56.360 --> 02:19:04.720
+Maybe. So let's have three functions.
+
+02:19:05.060 --> 02:19:10.120
+So log of x.
+
+02:19:15.079 --> 02:19:17.060
+So let's have two functions.
+
+02:19:17.060 --> 02:19:18.520
+Log of x and x squared.
+
+02:19:19.420 --> 02:19:26.020
+And imagine this is the runtime of a function of an algorithm.
+
+02:19:26.020 --> 02:19:33.899
+then, and the input size let's say is 10 to the 6 is 1 million.
+
+02:19:33.899 --> 02:19:36.760
+So for instance, we have 1 million numbers you want to sort
+
+02:19:36.760 --> 02:19:39.440
+or some problem which you have size.
+
+02:19:39.440 --> 02:19:43.579
+1 million is not very big.
+
+02:19:43.579 --> 02:19:48.239
+So for instance, people that live in Chicago
+
+02:19:48.239 --> 02:19:49.380
+are 1 more than 1 million.
+
+02:19:49.380 --> 02:19:52.940
+So any algorithm you write, it has to work
+
+02:19:52.940 --> 02:19:54.520
+on like billions of things.
+
+02:19:54.520 --> 02:19:56.760
+So one million is not big.
+
+02:19:56.760 --> 02:20:05.380
+But if an algorithm is quadratic, then it takes how much time?
+
+02:20:05.380 --> 02:20:13.880
+So 10 to the 6th squared which is 10 to the 12th.
+
+02:20:13.880 --> 02:20:17.940
+So it does that much operation.
+
+02:20:17.940 --> 02:20:21.280
+But log of x is how much?
+
+02:20:21.280 --> 02:20:32.520
+So log of 10 to the 6 is 6 times log of 10.
+
+02:20:32.520 --> 02:20:39.440
+Log of 10 in base 2 is, so 2 to the 3 is 8.
+
+02:20:39.440 --> 02:20:42.819
+So this is like 3.5 or something like that.
+
+02:20:42.819 --> 02:20:45.500
+So 6 times 3 is 18.
+
+02:20:45.500 --> 02:20:47.220
+So this is roughly speaking 20.
+
+02:20:47.940 --> 02:21:00.300
+So around 20. So if you have an algorithm which is logarithmic in run time, on a million
+
+02:21:00.300 --> 02:21:10.420
+input it just does 20 operations. So a quadratic algorithm does 10 times 12, even if it's a
+
+02:21:10.420 --> 02:21:12.700
+linear algorithm which is just has the
+
+02:21:12.700 --> 02:21:15.540
+running time as x itself, it still takes
+
+02:21:15.540 --> 02:21:21.440
+10 to the 6th. So a logarithmic runtime
+
+02:21:21.440 --> 02:21:26.319
+is very good. It's almost like an ideal
+
+02:21:26.319 --> 02:21:29.120
+situation. So if you have an algorithm
+
+02:21:29.120 --> 02:21:32.200
+which is logarithmic runtime, basically
+
+02:21:32.200 --> 02:21:35.460
+you can do any number of input that you
+
+02:21:35.460 --> 02:21:39.739
+want in very short time, seconds. Doesn't
+
+02:21:39.739 --> 02:21:46.600
+matter how large the increase. And there's not many algorithms which are log of X.
+
+02:21:46.600 --> 02:21:51.199
+So what you have seen for instance in the data structure course that you can
+
+02:21:51.199 --> 02:21:58.739
+maintain a dictionary with log of X search time. So that means that basically
+
+02:21:58.739 --> 02:22:05.299
+that's why you can do things in a computer so fast because for instance in
+
+02:22:05.299 --> 02:22:12.299
+windows most of the things you do at the end is some search in a dictionary and
+
+02:22:12.299 --> 02:22:18.619
+it does log of x operations. For instance when you do a click so log of x is so
+
+02:22:18.619 --> 02:22:24.679
+you do some dictionary search but it takes log of x time but it's so small
+
+02:22:24.679 --> 02:22:30.500
+that you don't notice it becomes real time but if it was a linear so if you
+
+02:22:30.500 --> 02:22:35.579
+needed to do a linear search in a dictionary in linear time it wouldn't be
+
+02:22:35.579 --> 02:22:46.100
+useful so you would see lags but log is almost nothing so it's no one notices
+
+02:22:46.100 --> 02:22:51.479
+some something which is log so because of that dictionary operations are so fast
+
+02:22:51.479 --> 02:22:59.719
+and they're actually not bound by this so it's more like memory access and
+
+02:22:59.719 --> 02:23:09.379
+those things cost more than this factor log of x. Now for other algorithms so
+
+02:23:09.379 --> 02:23:13.019
+for instance sort and this is not possible to do log of x let's say for
+
+02:23:13.019 --> 02:23:23.179
+sort and these are there are reasons for that but for instance sorting we will
+
+02:23:23.180 --> 02:23:32.800
+see later that we can do in N times log N times. Now because log of N is a very
+
+02:23:32.800 --> 02:23:38.040
+slow growing function and it's almost a constant for all the practical purposes
+
+02:23:38.040 --> 02:23:43.139
+so if I mean if you have for instance all the atoms in the world and take the
+
+02:23:43.139 --> 02:23:48.300
+log of that it becomes something like a 1000 less than that so it's still some
+
+02:23:48.299 --> 02:23:52.319
+constant. So this is against something like a linear. So if you have an
+
+02:23:52.319 --> 02:23:58.439
+algorithm which is n times log of n, a run time is very good. It's something like
+
+02:23:58.439 --> 02:24:05.399
+a linear runtime, in practice it's linear. Okay, so therefore the important
+
+02:24:05.399 --> 02:24:11.639
+property of log is that it's a very slow-growing function and it's very good to have
+
+02:24:11.639 --> 02:24:20.779
+algorithms with runtime log of x. Now, another property which I pointed to
+
+02:24:20.779 --> 02:24:26.959
+earlier, so it's that the inverse of log is the exponentiation function, so log of
+
+02:24:26.959 --> 02:24:36.840
+x in base A and A to the x are inverses of each other. Now, this is the graph of
+
+02:24:36.840 --> 02:24:47.200
+log of X and so this means what? So any point here is the coordinator of it is X
+
+02:24:47.200 --> 02:25:02.040
+log of X. Now the inverse function if there is, if you have a, for instance a
+
+02:25:02.040 --> 02:25:07.620
+monotone function like this you can inverse it. So the inverse function would
+
+02:25:07.620 --> 02:25:17.560
+if you give it a log of X it gives you X. Can anyone say how we can obtain the
+
+02:25:17.560 --> 02:25:22.380
+graph of the inverse function from this graph?
+
+02:25:22.379 --> 02:25:24.619
+Yeah.
+
+02:25:24.619 --> 02:25:28.920
+Switching x and y.
+
+02:25:28.920 --> 02:25:29.920
+Yeah.
+
+02:25:29.920 --> 02:25:33.699
+And what does that correspond to in the graph?
+
+02:25:33.699 --> 02:25:35.119
+Yes.
+
+02:25:35.119 --> 02:25:38.019
+Yeah, switching x and y.
+
+02:25:38.019 --> 02:25:48.920
+It corresponds to doing the reflection along the x equal y diagonal here.
+
+02:25:48.920 --> 02:26:01.139
+you can take this diagonal and now you flip the graph along this diagonal so you get something
+
+02:26:01.139 --> 02:26:02.139
+like this.
+
+02:26:02.139 --> 02:26:08.819
+So this one goes again here.
+
+02:26:08.819 --> 02:26:14.260
+So precisely what you do is that you become orthogonal to this and then you continue this
+
+02:26:14.260 --> 02:26:17.059
+same amount.
+
+02:26:17.059 --> 02:26:18.239
+And why is that?
+
+02:26:18.239 --> 02:26:25.760
+flipping X and so if you do this then you have flipped X and Y and then this
+
+02:26:25.760 --> 02:26:34.579
+graph now whatever you had X like X now this is like XX now this is the graph of
+
+02:26:34.579 --> 02:26:47.579
+to the x, this is A to the x. So the inverse of logarithm is the A to the x
+
+02:26:47.579 --> 02:26:53.479
+exponentiation function and you know that this exponential function grows
+
+02:26:53.479 --> 02:27:00.039
+very fast. And so the same way that this grows very fast the log grows very
+
+02:27:00.040 --> 02:27:13.300
+slowly. Now let's see this. Let me show you what this means that these are
+
+02:27:13.299 --> 02:27:30.399
+inversed of each other. So if you have two functions f, so you have f of x and g of x,
+
+02:27:33.719 --> 02:27:42.519
+then the inversing, they being inversed of each other means that, so when you compose them with each other,
+
+02:27:42.520 --> 02:27:56.200
+you get the x back. So f of g of x, you want to be x, and g of f of x plus x. So if
+
+02:27:56.200 --> 02:28:09.460
+you have these two, then f and g are inverse functions. Now, not all the
+
+02:28:09.459 --> 02:28:15.279
+functions have inverses, right? So but if your function is monotone, like this
+
+02:28:15.279 --> 02:28:20.500
+there is an inverse, so sometimes inverse is not a function. But now how to show
+
+02:28:20.500 --> 02:28:32.339
+this? So the claim is that log and a to the x are inverses. So let's say F is log
+
+02:28:32.340 --> 02:28:41.100
+of x in base a and g is a to the x so if I form f of g of x so it means that I
+
+02:28:41.100 --> 02:28:58.500
+have to place g of x in place of x in f. So f of g of x becomes log of a in base a of a
+
+02:28:58.500 --> 02:29:07.799
+to the X. But this I mean by definition of log this is the power of a which if I
+
+02:29:07.799 --> 02:29:14.180
+raise a to that power I get a to the X, so that is X, right?
+
+02:29:14.180 --> 02:29:28.920
+g of X is I have to put f of x in place of x in G so that's a to the power log
+
+02:29:28.920 --> 02:29:40.260
+of X in base a so now log of X in base a by definition is the power of a that if
+
+02:29:40.260 --> 02:29:47.739
+If you raise a to that power you get x so now we're raising a to that power so we get x.
+
+02:29:47.739 --> 02:29:52.700
+So the combination of these two becomes the identity function or x.
+
+02:29:52.700 --> 02:29:56.840
+So it shows that these are inverses of each other.
+
+02:29:56.840 --> 02:30:19.880
+then so indeed so if you flip this you get the a to the x questions
+
+02:30:19.879 --> 02:30:28.739
+All right, so these are very important facts about the log.
+
+02:30:29.219 --> 02:30:36.859
+And so we need to learn two more things for the math background.
+
+02:30:37.059 --> 02:30:39.839
+And that's one of them is arithmetic sequence
+
+02:30:39.839 --> 02:30:41.779
+and after this the geometric sequence.
+
+02:30:42.299 --> 02:30:47.179
+So in order to compute the runtimes, so sometimes, I mean,
+
+02:30:47.179 --> 02:30:48.699
+most often you have a four loop.
+
+02:30:48.700 --> 02:30:55.240
+And when you have a for loop, to compute the runtime you have to add the different iterations
+
+02:30:55.240 --> 02:31:00.540
+of the for loop, and it's like adding the terms in a sequence.
+
+02:31:00.540 --> 02:31:04.260
+And those sequences are usually arithmetic or geometric sequences.
+
+02:31:04.260 --> 02:31:09.800
+And because of that we actually have to learn about the summations of these sequences.
+
+02:31:09.800 --> 02:31:12.100
+Now, what's an arithmetic sequence?
+
+02:31:12.100 --> 02:31:13.200
+It's very simple.
+
+02:31:13.200 --> 02:31:15.460
+So it's you have a first term.
+
+02:31:15.459 --> 02:31:21.339
+So the arithmetic sequence is built out of, you have a first term, and then you have a
+
+02:31:21.339 --> 02:31:28.759
+difference d, and each time you add that difference to the previous term, you obtain the next
+
+02:31:28.759 --> 02:31:29.759
+term.
+
+02:31:29.759 --> 02:31:38.959
+So the next term is a0 plus d, and then you have a0 plus 2d, and so on.
+
+02:31:38.959 --> 02:31:48.459
+So each two terms in arithmetic sequence, they differ by constant D, each two consecutive
+
+02:31:48.459 --> 02:31:50.459
+terms.
+
+02:31:50.459 --> 02:31:53.239
+And that's called an arithmetic sequence.
+
+02:31:53.239 --> 02:31:54.899
+So there are many examples.
+
+02:31:54.899 --> 02:32:03.959
+So for instance, the national numbers, like 1, 2, 3, so these are, they differ all, each
+
+02:32:03.959 --> 02:32:13.739
+the consequent one difference by one or other numbers, even numbers. Alright, so
+
+02:32:13.739 --> 02:32:22.979
+now if we have an arithmetic sequence, so we can add n terms of the sequence
+
+02:32:22.979 --> 02:32:29.539
+together, so a1 through an, these are n terms of an arithmetic sequence. So if you
+
+02:32:29.540 --> 02:32:34.060
+add them together there is a formula for the addition which is this so a one
+
+02:32:34.060 --> 02:32:40.940
+plus a n times n over two. So to obtain the result of this addition so it's
+
+02:32:40.940 --> 02:32:46.580
+enough to add the first term and the last term times n over two and is the
+
+02:32:46.579 --> 02:33:02.959
+number of these these term set now this is actually not hard to see so can anyone
+
+02:33:02.959 --> 02:33:07.639
+I suggest a way to prove this.
+
+02:33:15.599 --> 02:33:21.599
+So, this actually moves a lot.
+
+02:33:21.600 --> 02:33:34.340
+So let's say that S is this summation that we want to compute.
+
+02:33:34.340 --> 02:33:45.399
+Now I can write this summation again starting from a n and going to a 1.
+
+02:33:51.600 --> 02:33:58.600
+Okay, and then I add these together.
+
+02:33:58.600 --> 02:34:06.200
+So, on the left-hand side, I get 2s.
+
+02:34:06.200 --> 02:34:14.120
+Now, on the right-hand side, so the first two I add together, I get a1 plus an.
+
+02:34:14.120 --> 02:34:19.120
+Now, the next two terms which are on top of each other are what?
+
+02:34:19.120 --> 02:34:24.480
+So this here is a2 and this here is aN minus 1.
+
+02:34:26.640 --> 02:34:27.360
+Right?
+
+02:34:28.460 --> 02:34:34.180
+Now, I claim that if you add a2 plus aN minus 1,
+
+02:34:34.300 --> 02:34:37.420
+again you get a1 plus aN.
+
+02:34:40.840 --> 02:34:42.200
+Now, why is that?
+
+02:34:42.200 --> 02:34:51.920
+because intuitively a2 is a1 plus d and a n minus 1 is a n minus d. So when you
+
+02:34:51.920 --> 02:34:56.900
+add together the d's cancel out and you get the same a1 plus a n. So I write it
+
+02:34:56.900 --> 02:35:09.800
+here, so a2 is a1 plus d. a n is a n minus 1 plus d. So therefore a n minus 1
+
+02:35:09.799 --> 02:35:24.259
+is an minus d. Right? So if you add a2 and an minus 1, so you have added
+
+02:35:24.259 --> 02:35:32.000
+d and subtracted d so you get the same a1 plus an. And this is true for any of
+
+02:35:32.000 --> 02:35:36.959
+the other two terms which are on top of each other, and at the end you also have
+
+02:35:36.959 --> 02:35:50.039
+a1 plus an so so you get n times a1 plus a1 so therefore s which was the
+
+02:35:50.039 --> 02:36:01.659
+summation is equal to a1 plus an times n number two so that's the proof of this
+
+02:36:01.659 --> 02:36:09.819
+equation. I won't ask about these proofs but again I want to see that these are
+
+02:36:09.819 --> 02:36:19.420
+really not strange things and very easy to show. Alright so examples. So for
+
+02:36:19.420 --> 02:36:29.059
+instance if you add numbers from 1 to 100 so the result is this. So a1 is 1, a n
+
+02:36:29.059 --> 02:36:36.459
+is 100 times n over 2. So you got 100 of these numbers so you get this. And you
+
+02:36:36.459 --> 02:36:42.100
+also notice this is a special case of this formula so if you want to add the
+
+02:36:42.100 --> 02:36:47.879
+numbers from 1 to n. So you have this formula n times n plus 1 divided by 2. So
+
+02:36:47.879 --> 02:36:58.859
+that's a special case of this. So another example. So if you add the odd
+
+02:36:58.860 --> 02:37:05.620
+numbers from 1, let's say to 201. Now again you want to compute this
+
+02:37:05.620 --> 02:37:11.159
+summation so again you add the first term plus the last term times the number
+
+02:37:11.159 --> 02:37:16.239
+divided by 2. Now in this kind of situations you have to be careful to
+
+02:37:16.239 --> 02:37:23.140
+count all of these correctly, right? So these are the odd numbers between 1 to
+
+02:37:23.139 --> 02:37:30.639
+201. Now there is a systematic way of actually computing the number and that
+
+02:37:30.639 --> 02:37:44.079
+is using the formula. So we had that. So the nth term is what? So it's a zero plus
+
+02:37:44.079 --> 02:37:49.920
+n minus 1 times d. So that's the end term of your sequence. Now here you have a
+
+02:37:49.920 --> 02:37:59.600
+A zero is one and B is two because you're considering the odd number.
+
+02:37:59.600 --> 02:38:10.559
+So you differ by two and then you want to know which n is the 201.
+
+02:38:10.559 --> 02:38:18.120
+And you solve this for n and you find the number of terms that you have.
+
+02:38:18.120 --> 02:38:23.660
+of numbers. And then you can use it here.
+
+02:38:27.500 --> 02:38:41.000
+Alright, so this here, so 2 times n minus 1 is 200. n minus 1 would be 100, n would be 101.
+
+02:38:41.000 --> 02:38:50.459
+So the 201 is the 101st term of this.
+
+02:38:50.459 --> 02:38:53.399
+So you have 101 many numbers here.
+
+02:38:53.399 --> 02:39:04.559
+So you put it here and you can compute the sum.
+
+02:39:04.559 --> 02:39:05.100
+All right.
+
+02:39:05.100 --> 02:39:06.319
+So any questions?
+
+02:39:11.000 --> 02:39:17.340
+So we have one slides about the geometric sequence. Now the geometric sequence is
+
+02:39:17.340 --> 02:39:23.860
+similar but now this time you multiply a constant each time to obtain the next
+
+02:39:23.860 --> 02:39:32.520
+term. So here we have so again you have the first term let's say a zero then
+
+02:39:32.520 --> 02:39:40.360
+there's a ratio r so the next term is r times a zero. The next term is r squared
+
+02:39:40.360 --> 02:39:45.380
+times a zero and so on, you continue like that so each term is obtained by
+
+02:39:45.380 --> 02:39:51.420
+multiplying the previous one by r. So the ratio of two consecutive numbers is
+
+02:39:51.420 --> 02:39:57.880
+fixed, is r. This is called a geometric sequence and this is actually also very
+
+02:39:57.880 --> 02:40:04.860
+useful and as you see it's actually more important than the arithmetic. Now the
+
+02:40:04.860 --> 02:40:11.940
+summation of N terms in a geometric sequence again as a formula which you
+
+02:40:11.940 --> 02:40:21.520
+see here. So A1 times 1 minus R to the N divided by 1 minus R. And this is if
+
+02:40:21.520 --> 02:40:31.300
+your R is not 1. Because if R is 1 they below their, in the fraction here it's
+
+02:40:31.299 --> 02:40:37.939
+It's not meaningful because it becomes a zero.
+
+02:40:37.939 --> 02:40:48.039
+So now what is the summation if R is one?
+
+02:40:48.039 --> 02:40:54.179
+We divide it by zero?
+
+02:40:54.179 --> 02:40:55.519
+Yes.
+
+02:40:55.519 --> 02:40:59.979
+This thing is not meaningful but what is the summation if R is one?
+
+02:40:59.979 --> 02:41:07.659
+So this formula doesn't apply anymore if r is 1.
+
+02:41:09.479 --> 02:41:10.799
+But what is the summation?
+
+02:41:14.039 --> 02:41:16.239
+Yeah, it's n times a.
+
+02:41:16.239 --> 02:41:21.579
+Yes, it's n times a because if r is 1, you have your same term
+
+02:41:21.579 --> 02:41:24.859
+because you are multiplying by 1, so you have a, a, a, a, a,
+
+02:41:24.859 --> 02:41:27.939
+so n times, so you have n times a.
+
+02:41:29.979 --> 02:41:36.000
+Now there is a very important special case which is if the absolute value of
+
+02:41:36.000 --> 02:41:42.520
+your r, your ratio is less than 1, then you add all of the numbers of your
+
+02:41:42.520 --> 02:41:46.799
+sequence so you infinitely many numbers if you can add all of them together and
+
+02:41:46.799 --> 02:41:52.760
+they become finite and it's the value of that is a1 over 1 minus r. And that's
+
+02:41:52.760 --> 02:41:58.659
+basically you can get from this formula if the absolute value of r is less than
+
+02:41:58.659 --> 02:42:05.700
+than 1, r to the n goes to 0. So as n goes to infinity, r to the n becomes 0 and
+
+02:42:05.700 --> 02:42:13.420
+so this becomes a 1 over minus r. This is very important formula so
+
+02:42:13.420 --> 02:42:18.440
+conceptually is also important. So you have infinitely many numbers but they
+
+02:42:18.440 --> 02:42:24.579
+become smaller and smaller and they actually become smaller in a fast way.
+
+02:42:24.579 --> 02:42:29.559
+So, and then if you add all of them together you still get the finite number.
+
+02:42:29.700 --> 02:42:34.200
+So you add infinitely many non-zero numbers you get a finite number.
+
+02:42:37.840 --> 02:42:38.860
+And examples.
+
+02:42:38.920 --> 02:42:46.280
+So this is the example of the first is r, is not 1, is not less than 1.
+
+02:42:46.280 --> 02:42:48.280
+So what is r here in this example?
+
+02:42:54.579 --> 02:43:00.879
+is 2, right? So we start from 1 and the
+
+02:43:00.879 --> 02:43:05.200
+next term is 2, the next term is 4 and so
+
+02:43:05.200 --> 02:43:07.659
+on. So that in general you can form, this
+
+02:43:07.659 --> 02:43:12.100
+is the summation of powers of 2. So 1 plus 2
+
+02:43:12.100 --> 02:43:16.700
+plus the square plus 2 to the third. Now
+
+02:43:16.700 --> 02:43:19.239
+that one goes all the way to the 2 to the
+
+02:43:19.239 --> 02:43:26.860
+10. But in general, you can go up to the n. Okay, anyone say what is this
+
+02:43:26.860 --> 02:43:40.360
+summation? So if you add the powers of 2 up to the nth power, what do we get? So
+
+02:43:40.360 --> 02:43:46.500
+So you can use that formula, but this is actually more renowned.
+
+02:43:46.500 --> 02:43:48.420
+You get the net.
+
+02:43:48.420 --> 02:43:50.319
+You get almost the next power.
+
+02:43:50.319 --> 02:43:52.720
+So two to the n plus one minus one.
+
+02:43:56.440 --> 02:44:00.260
+And you can get it from this formula.
+
+02:44:00.260 --> 02:44:03.920
+And this is the behavior of the exponent exponential function.
+
+02:44:03.920 --> 02:44:10.220
+So the next term is almost a summation of all previous terms.
+
+02:44:10.219 --> 02:44:15.859
+So any function which is like this,
+
+02:44:15.859 --> 02:44:19.879
+it behaves like an exponential function.
+
+02:44:19.879 --> 02:44:22.179
+This is sometimes called the flat packing.
+
+02:44:22.179 --> 02:44:29.659
+So you can pack all the powers of n, all the powers of 2
+
+02:44:29.659 --> 02:44:33.459
+up to the nth power into the next power.
+
+02:44:33.459 --> 02:44:38.199
+And you will get one room left in the next power.
+
+02:44:38.200 --> 02:44:46.420
+have only one rule left. And here is, this is one all the way to, this is 2 to the
+
+02:44:46.420 --> 02:44:56.960
+10 and this is 2 to the 11th, so minus 1. 2 to the 11 is 2014. Now this is again a
+
+02:44:56.960 --> 02:45:04.020
+famous summation, which is the geometric sequence with the absolute value of r
+
+02:45:04.020 --> 02:45:10.739
+less than 1. Here r is half so you have 1 plus half plus 1 over 4. The next term
+
+02:45:10.739 --> 02:45:17.340
+is 1 over eighth and so on. Now if you add all of these together you get 1 over 1
+
+02:45:17.340 --> 02:45:24.120
+minus half. And if you simplify that you get 2. So the summation of all these
+
+02:45:24.120 --> 02:45:32.659
+numbers is 2. Now we use that in usually in the runtime computations in this form.
+
+02:45:32.659 --> 02:45:38.579
+So we have a number n, and so instead of starting from 1,
+
+02:45:38.579 --> 02:45:40.340
+you can start from n.
+
+02:45:40.340 --> 02:45:43.600
+Then you will subdivide it by 2.
+
+02:45:43.600 --> 02:45:46.719
+The next time, you divide it by 4, the next time
+
+02:45:46.719 --> 02:45:47.940
+by 8, and so on.
+
+02:45:53.399 --> 02:46:02.639
+Now, if you have n plus n over 2 plus n over 4,
+
+02:46:02.659 --> 02:46:15.119
+plus n over h. So typical term is n over 2 to the i. If you continue like this to
+
+02:46:15.119 --> 02:46:24.879
+infinity, you get what? So you get 2 times n, right? Because this is- so you can
+
+02:46:24.879 --> 02:46:33.159
+factor out these ends so this this thing is equal to n times 1 plus a plus 1 over
+
+02:46:33.159 --> 02:46:40.479
+4 and and this is 2 as we saw so this summation is 2 so that's 10 times 2 so
+
+02:46:40.479 --> 02:46:50.920
+2 to n now here we a stop we stopped this summation we don't go to infinity
+
+02:46:50.920 --> 02:46:53.180
+But we stop around 1.
+
+02:46:53.180 --> 02:46:56.680
+So when this number becomes 1, we stop.
+
+02:46:56.680 --> 02:46:59.520
+And that's why we have less than equal to 2n.
+
+02:46:59.520 --> 02:47:03.180
+But there are still some terms which, if you go to infinity,
+
+02:47:03.180 --> 02:47:05.219
+it becomes exactly equal to n.
+
+02:47:05.219 --> 02:47:07.879
+But if you stop earlier, for instance, when you stop,
+
+02:47:07.879 --> 02:47:12.920
+when you are just below 1, then you get less than equal to 2n.
+
+02:47:17.379 --> 02:47:17.879
+OK.
+
+02:47:20.920 --> 02:47:34.239
+and this we actually use this relation in communications so that's actually all
+
+02:47:34.239 --> 02:47:42.500
+we wanted to learn about the math background questions so if no questions
+
+02:47:42.500 --> 02:47:45.440
+Let's do a practice problem again.
+
+02:48:12.500 --> 02:48:42.479
+All right.
+
+02:48:42.500 --> 02:48:53.139
+So this is just, I mean, stand-up practice problems about the logarithms and the properties we saw.
+
+02:48:53.139 --> 02:49:00.319
+And then also some problems about the arithmetic and geometric sequences.
+
+02:49:00.319 --> 02:49:08.200
+So most of them are just applying the equations but there's a couple of them which is a little bit more than that.
+
+02:49:08.200 --> 02:49:16.440
+This is also online.
+
+02:49:16.440 --> 02:49:22.440
+And it will.
+
+02:49:22.440 --> 02:49:52.420
+Thank you.
+
+02:49:52.440 --> 02:50:22.420
+Thank you.
+
+02:50:22.440 --> 02:50:24.440
+you
+
+02:50:52.440 --> 02:51:22.420
+Thank you.
+
+02:51:22.440 --> 02:51:52.420
+That's it.
+
+02:51:52.440 --> 02:51:57.319
+so
+
+02:52:22.440 --> 02:52:52.420
+Thank you.
+
+02:52:52.440 --> 02:53:22.420
+I'm going to open the door.
+
+02:53:22.440 --> 02:53:52.420
+Thank you.
+
+02:53:52.440 --> 02:54:08.440
+um
+
+02:54:22.440 --> 02:54:24.440
+You
+
+02:54:52.440 --> 02:55:22.420
+And we're going to get a little bit of salt and salt.
+
+02:55:22.440 --> 02:55:52.420
+Thank you.
+
+02:55:52.440 --> 02:56:22.420
+Thank you.
+
+02:56:22.440 --> 02:56:26.100
+.
+
+02:56:52.440 --> 02:57:21.940
+Thank you.
+
+02:57:22.440 --> 02:57:52.420
+Thank you.
+
+02:57:52.440 --> 02:58:22.420
+Thank you.
+
+02:58:22.440 --> 02:58:52.420
+Let's do it.
+
+02:58:52.440 --> 02:59:22.420
+Thank you.
+
+02:59:22.440 --> 02:59:52.420
+Thank you.
+
+02:59:52.440 --> 03:00:18.000
+So, I saw some of these questions.
+
+03:00:18.000 --> 03:00:22.300
+So, the first one is just applying the definition, it's just nothing serious.
+
+03:00:22.299 --> 03:00:28.739
+So, let's do, for instance, this one, log of 2a, of 8 times 32.
+
+03:00:28.739 --> 03:00:33.159
+This we can write as log of 8.
+
+03:00:33.159 --> 03:00:34.000
+Okay.
+
+03:00:34.000 --> 03:00:38.599
+1 times 22.
+
+03:00:38.599 --> 03:00:44.479
+3 times 5a.
+
+03:00:44.479 --> 03:00:50.099
+Now, this one, number 3.
+
+03:00:50.100 --> 03:00:57.920
+we have to kind of, again use the same relation but instead you want to turn now summation
+
+03:00:57.920 --> 03:01:09.780
+into multiplication. So the log plus log is log of 100 times 0.01. Now this is one, right?
+
+03:01:09.780 --> 03:01:22.620
+log of 1 V 0. Now this is true for any base. So exercise 3 asks to solve this
+
+03:01:22.620 --> 03:01:29.280
+question. This equation is also simple. Let's do one of them. So for instance this
+
+03:01:29.280 --> 03:01:37.640
+last one again we use just a definition, four with the sum power
+
+03:01:37.639 --> 03:01:49.639
+4 to the power half is x. Now 4 to the power of half is just the square root of 4. So x
+
+03:01:49.639 --> 03:02:03.139
+should be 2. Questions?
+
+03:02:03.139 --> 03:02:14.099
+Now this problems are also mostly applying the formula.
+
+03:02:14.099 --> 03:02:22.039
+So this is just computing the summation. This one says that determine the 15th term
+
+03:02:22.039 --> 03:02:29.659
+of the arithmetic sequence, but you just determined the D by subtracting two of them.
+
+03:02:29.659 --> 03:02:32.780
+So it's 5, right? So 22 minus 17 is 5.
+
+03:02:34.020 --> 03:02:38.420
+And then you can obtain any number any time that you want.
+
+03:02:40.819 --> 03:02:45.860
+Now question 3 is a little bit tricky.
+
+03:02:46.039 --> 03:02:54.299
+So it says that the sum of the first n terms of an arithmetic sequence is given by S of n.
+
+03:02:54.299 --> 03:03:00.199
+So we know that sum of the n terms is S of n.
+
+03:03:00.259 --> 03:03:03.000
+So it's 3n plus 5 divided by 2.
+
+03:03:04.279 --> 03:03:05.579
+Right here.
+
+03:03:08.299 --> 03:03:11.099
+n times 3n plus 5.
+
+03:03:15.739 --> 03:03:18.920
+And it says find the common difference d.
+
+03:03:18.920 --> 03:03:27.319
+now we have another formula for the
+
+03:03:27.319 --> 03:03:30.460
+summation right so we can also say that
+
+03:03:30.460 --> 03:03:37.520
+this summation is N is equal to a1 plus
+
+03:03:37.520 --> 03:03:46.760
+a n times n over 2 but here we don't
+
+03:03:46.760 --> 03:03:57.479
+have a1 and an, but we know that we can write an in terms of a1. So we can say
+
+03:03:57.479 --> 03:04:16.020
+that an is just a1 plus n minus 1b, and then times n over 2.
+
+03:04:16.020 --> 03:04:25.920
+Now we have two different ways of two different expressions for Sn. So the
+
+03:04:25.920 --> 03:04:32.280
+problem says that Sn is this, Sn over 2 times 3n plus 5 and you also have the
+
+03:04:32.280 --> 03:04:42.560
+formula. But in our formula we also have a1. So we have a1 and d. So how can we
+
+03:04:42.559 --> 03:04:55.799
+obtain a d here. How to solve for d. So at first it seems that we actually have
+
+03:04:55.799 --> 03:05:05.559
+two variables that we don't know. It's a1 and d, right? Now let's simplify the
+
+03:05:05.559 --> 03:05:12.260
+right hand side in terms of the coefficients of n and n squared so I
+
+03:05:12.260 --> 03:05:21.159
+have some term which is coefficient of n plus something times n squared right.
+
+03:05:21.159 --> 03:05:34.500
+So coefficient of n is here 2A1 from here, and we have a 2 so we get, what is it we can just put half here,
+
+03:05:34.500 --> 03:05:49.579
+have 2A1 minus d, right? So I get a minus d here, 2A1 here, so that becomes a
+
+03:05:49.579 --> 03:05:54.420
+coefficient of n. The coefficient of n is squared, again I have a half from here,
+
+03:05:54.420 --> 03:06:02.479
+and then from here I have d. It's just a d here, right? So this d times n times and
+
+03:06:02.479 --> 03:06:14.680
+over 2 is this too. Now the problem says that this is equal to, now this left-hand
+
+03:06:14.680 --> 03:06:20.979
+side, this guy, given by the problem, we can also write it in terms of the
+
+03:06:20.979 --> 03:06:32.180
+coefficients of n and n squared. So we get 3 over 2 n squared plus 4 over 2
+
+03:06:32.180 --> 03:06:41.399
+n which is fine so I just rewrote this
+
+03:06:45.760 --> 03:07:00.100
+what is d is 3 right so now the point is that this has to be true for every n so
+
+03:07:00.100 --> 03:07:06.200
+So if this has to be true for every n, so these two functions on the left and right,
+
+03:07:06.200 --> 03:07:10.440
+they have to be the same polynomial function of n.
+
+03:07:10.440 --> 03:07:16.600
+So to be the same polynomial function of n, then the coefficient of n has to be equal
+
+03:07:16.600 --> 03:07:21.559
+to the coefficient of n here and coefficient of n squared, which is d over 2, has to be
+
+03:07:21.559 --> 03:07:28.079
+equal to the coefficient of n squared, which is d over 2.
+
+03:07:28.079 --> 03:07:32.819
+this the fact that s of n is this it doesn't give you for one number it gives
+
+03:07:32.819 --> 03:07:37.379
+you that this summation is this function. Now you can make it equal to the other
+
+03:07:37.379 --> 03:07:42.459
+function which we get using the other formula we have and it implies that D
+
+03:07:42.459 --> 03:07:50.680
+has to be three. So there might be also other ways of solving this. This is one way to...
+
+03:07:50.680 --> 03:08:01.220
+Because the two sides have to be the same polynomial function of N.
+
+03:08:01.220 --> 03:08:11.120
+Okay, so here we have some again applications of the formulas for
+
+03:08:11.120 --> 03:08:17.200
+geometric sequence and here there are two problems. So I solve this one, the
+
+03:08:17.200 --> 03:08:25.140
+first one. It says that the ball is dropped from a height of a 100. So meters, it
+
+03:08:25.140 --> 03:08:29.920
+doesn't matter what meters or what. So the ball you drop it back in, uh, from a
+
+03:08:29.920 --> 03:08:40.560
+height of 100. And then it bounces back to three quarters of its height after
+
+03:08:40.560 --> 03:08:46.180
+each bounce. So the next time it goes high, it bounces. So the ball goes
+
+03:08:46.180 --> 03:08:58.000
+up and down. So this distance, this height is three quarters of 100. And the next
+
+03:08:58.000 --> 03:09:04.979
+time it just be a little smaller and so on. It just continues like this. And
+
+03:09:04.979 --> 03:09:13.420
+continues. So here, calculate the total distance traveled by the ball
+
+03:09:13.420 --> 03:09:15.219
+before it comes to rest.
+
+03:09:15.219 --> 03:09:17.260
+Well, it never comes to rest, right?
+
+03:09:17.260 --> 03:09:19.120
+Because it goes up to infinity.
+
+03:09:19.120 --> 03:09:25.600
+So, but the question was to add all of these distances
+
+03:09:25.600 --> 03:09:29.399
+traveled by the ball.
+
+03:09:29.399 --> 03:09:36.000
+So now, this is a geometric sequence.
+
+03:09:36.000 --> 03:09:42.780
+But it's easier to actually add this distance also
+
+03:09:42.780 --> 03:09:51.980
+to it so that it becomes all twice of this distance going off.
+
+03:09:51.980 --> 03:09:58.060
+So I write it here so the summation that we want, let's say it's S,
+
+03:09:58.060 --> 03:10:05.739
+100 plus S now is equal to, so the first distance is 200,
+
+03:10:05.739 --> 03:10:10.940
+so going to this thing I added plus 100 going down.
+
+03:10:10.940 --> 03:10:19.760
+The next distance is 3 over 4 times 200, right?
+
+03:10:20.579 --> 03:10:25.620
+Because it goes, each one of these things is a 2 quarter, 100.
+
+03:10:25.640 --> 03:10:28.280
+So overall, you get 3 over 4, 200.
+
+03:10:29.280 --> 03:10:35.360
+And then the next one is 3 over 4 squared, 200.
+
+03:10:35.360 --> 03:10:39.980
+Because the next bounce is 3 quarters of the previous bounce.
+
+03:10:40.940 --> 03:10:44.880
+So in each time you multiply 3 over 4 to the previous term.
+
+03:10:44.880 --> 03:10:49.899
+And so now we have one to add all these together.
+
+03:10:49.899 --> 03:10:56.640
+Now we can factor the 200 out and then we have,
+
+03:10:56.640 --> 03:11:04.960
+now the rest becomes 1 plus 3 over 4 plus 3 over 4 squared,
+
+03:11:04.960 --> 03:11:05.720
+and so on.
+
+03:11:05.719 --> 03:11:13.920
+Now this thing here is a geometric sequence, it's a summation of a geometric sequence.
+
+03:11:13.920 --> 03:11:21.059
+The r is 3 over 4 is less than 1, right? So therefore, just using the formula you get
+
+03:11:21.059 --> 03:11:37.819
+this summation is 200 plus 1 over 1 minus 2 over 4 times. And this becomes 4.
+
+03:11:37.819 --> 03:11:45.860
+So this is 1 over 1 over 4 is 4.
+
+03:11:45.860 --> 03:11:49.079
+So 4 times 200 is 800.
+
+03:11:49.079 --> 03:11:56.739
+So this was S plus 100, so S becomes 700.
+
+03:11:56.739 --> 03:12:02.079
+So therefore, the distance is travelled by the pole is 700 meters.
+
+03:12:02.079 --> 03:12:04.079
+meters.
+
+03:12:08.200 --> 03:12:16.780
+So if you could start from the second one, but if you add this first one hundred it comes a little bit nicer.
+
+03:12:19.319 --> 03:12:21.319
+Two questions?
+
+03:12:25.959 --> 03:12:27.959
+If no questions, I stop.
+
+03:12:32.079 --> 03:13:02.059
+Let's go.
+
+03:13:02.079 --> 03:13:02.680
+So,
+
+03:13:32.079 --> 03:13:36.039
+Is there any homework?
+
+03:13:36.039 --> 03:13:41.539
+I will submit later in the week.
+
+03:14:02.079 --> 03:14:08.879
+I have two questions.
+
+03:14:08.879 --> 03:14:14.319
+My first question is, is there ever going to be any in-class activities where we're
+
+03:14:14.319 --> 03:14:17.620
+going to have our computer with us?
+
+03:14:17.620 --> 03:14:18.620
+No.
+
+03:14:18.620 --> 03:14:19.620
+OK.
+
+03:14:19.620 --> 03:14:20.620
+So my question is, are you Persian?
+
+03:14:20.620 --> 03:14:21.620
+I am too.
+
+03:14:21.620 --> 03:14:22.620
+Yeah.
+
+03:14:22.620 --> 03:14:24.239
+Yeah, I saw your name.
+
+03:14:24.239 --> 03:14:30.299
+Yeah, I was like, I think that sounds Persian, but I couldn't tell, I wanted to ask.
+
+03:14:30.299 --> 03:14:30.859
+You take care.
+
+03:14:30.959 --> 03:14:31.639
+Thank you so much.
+
+03:15:00.299 --> 03:15:01.299
+So,
+
+03:15:30.299 --> 03:16:00.279
+Thank you.
+
+03:16:00.299 --> 03:16:30.279
+Thank you.
+
+03:16:30.299 --> 03:17:00.279
+Thank you.
+
+03:17:00.299 --> 03:17:30.279
+Thank you.
+
+03:17:30.299 --> 03:18:00.279
+Thank you.
+
+03:18:00.299 --> 03:18:30.279
+Thank you.
+
+03:18:30.299 --> 03:19:00.279
+Thank you.
+
+03:19:00.299 --> 03:19:30.279
+Thank you.
+
+03:19:30.299 --> 03:19:34.299
+.
+
+03:20:00.299 --> 03:20:30.279
+Thank you.
+
+03:20:30.299 --> 03:21:00.279
+Thank you.
+
+03:21:00.299 --> 03:21:30.279
+Thank you.
+
+03:21:30.299 --> 03:22:00.279
+Thank you.
+
+03:22:00.299 --> 03:22:02.299
+.
+
+03:22:30.299 --> 03:22:33.299
+.
+
+03:23:00.299 --> 03:23:30.279
+Thank you.
+
+03:23:30.299 --> 03:23:33.299
+.
+
+03:24:00.299 --> 03:24:30.279
+Thank you.
+
+03:24:30.299 --> 03:24:32.299
+.
+
+03:25:00.299 --> 03:25:30.279
+Thank you.
+
+03:25:30.299 --> 03:26:00.279
+Thank you.
+
+03:26:00.299 --> 03:26:30.279
+Thank you.
+
+03:26:30.299 --> 03:27:00.279
+Thank you.
+
+03:27:00.299 --> 03:27:30.279
+Thank you.
+
+03:27:30.299 --> 03:28:00.279
+Thank you.
+
+03:28:00.299 --> 03:28:30.279
+Thank you.
+
+03:28:30.299 --> 03:29:00.279
+Thank you.
+
+03:29:00.299 --> 03:29:02.299
+You
+
+03:29:30.299 --> 03:30:00.279
+Thank you.
+

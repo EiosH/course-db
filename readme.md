@@ -1,7 +1,11 @@
 # 启动
-docker compose up -d
-cd backend && pip install -r requirements.txt
-cd app && python main.py
+docker compose up -d --build
+docker compose exec ingest python main.py --ingest   # 解析讲座 + embed + 写入 Qdrant
+docker compose exec llm python main.py --eval        # 跑 dialogs.yaml 问答评估
+
+# 本地（不经 Docker 跑 Python）
+# cd ingest && pip install -r requirements.txt && cd app && python main.py --ingest
+# cd llm && pip install -r requirements.txt && cd app && python main.py --eval
 
 # 存储
 ## Qdrant 向量库存储 + MongoDB 原始文本存储
@@ -32,13 +36,15 @@ Qdrant
  将数据库部署服务 提供接口  /insert /delete /search
  docker 一键启动服务
 
-Docker Compose
-├── nginx
-├── fastapi
-├── qdrant
-├── mongodb
-├── ollama
-└── redis（可选）
+Docker Compose（当前）
+├── qdrant   # 向量库（独立容器）
+├── mysql    # conversation 等业务表
+├── ingest   # 文档解析 + 入库（常驻 idle，exec 触发）
+└── llm      # 检索 / 问答 / eval（常驻 idle，exec 触发）
+
+后续
+├── nginx / api
+└── …
 
 
 <!-- screen_shot 识别方案 -->
@@ -94,14 +100,17 @@ BM25 词袋会把 `Question` 与 `9` 拆开，易与侧边栏 `[9]`、其它 `Qu
 维护命令：
 
 ```bash
-cd backend/app
-python main.py --backfill-bm25-phrases   # 旧库只补 BM25 短语 token
-python main.py --inspect-phrase "Question 9"  # 对比词袋 BM25 vs 短语 token
+# ingest 服务
+cd ingest/app
 python main.py --ingest                  # 只入库新增的 lecture（库里已有的跳过）
 python main.py --rebuild                 # 删库全量重建（含短语 token）
-python main.py                           # 跑 data/dialogs.yaml 问答（结果看控制台 + Langfuse）
-python main.py --dialogs path/to/q.txt   # 旧格式：每行一个单轮问题
-python main.py --excel --txt             # 额外写 data/out/ 下的 Excel / txt
+python main.py --backfill-bm25-phrases   # 旧库只补 BM25 短语 token
+
+# llm 服务
+cd llm/app
+python main.py --eval                    # 跑 data/dialogs.yaml 问答（结果看控制台 + Langfuse）
+python main.py --eval --dialogs path/to/dialogs.yaml
+python main.py --eval --excel --txt      # 额外写 data/out/ 下的 Excel / txt
 ```
 
 `dialogs.yaml` 格式（文件头注释有完整说明）：

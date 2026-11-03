@@ -6,3 +6,59 @@ services:
       - "6333:6333"
     volumes:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/data/qdrant:/qdrant/storage
+
+  mysql:
+    container_name: mysql
+    image: mysql:8.4
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-course_db}
+      MYSQL_USER: ${MYSQL_USER:-course}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-course}
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/data/mysql:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  ingest:
+    container_name: ingest
+    build: ./ingest
+    depends_on:
+      - qdrant
+    env_file:
+      - .env
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      LECTURES_DIR: /data/lectures
+      EMBED_DEVICE: ${EMBED_DEVICE:-cpu}
+    volumes:
+      - ./data/lectures:/data/lectures
+
+  llm:
+    container_name: llm
+    build: ./llm
+    depends_on:
+      qdrant:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      LECTURES_DIR: /data/lectures
+      EMBED_DEVICE: ${EMBED_DEVICE:-cpu}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-course_db}
+      MYSQL_USER: ${MYSQL_USER:-course}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-course}
+    volumes:
+      - ./data/lectures:/data/lectures
+      - ./llm/app/data:/app/data
