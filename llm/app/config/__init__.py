@@ -55,6 +55,9 @@ CHARS_PER_TOKEN = 4
 CTX_SAFETY_RATIO = 0.15  # 估算误差 + 格式标签
 ANSWER_RESERVE_TOKENS = 1000  # 留给回答输出
 SNIPPET_MAX_CHARS = 2000  # 拼进 prompt 的每条课程片段上限（覆盖约 99% 的截图 OCR）
+# Outline skip path: leave headroom so ANSWER_MAX_TOKENS still fits in
+# LLM_CONTEXT_WINDOW (vLLM clamps generation when input+max_tokens > max-model-len).
+OUTLINE_MAX_CHARS = 12000
 QUESTION_RESERVE_CHARS = 2000  # 本轮问题 + 路由说明 + 片段标签
 # 窗口原文的字符预算 = 上下文窗口扣掉其它各块后的剩余
 HISTORY_BUDGET_CHARS = int(

@@ -13,6 +13,7 @@ from config import (
     HISTORY_MAX_TURNS,
     NO_HIT_NOW_REPLY,
     NO_HIT_REPLY,
+    OUTLINE_MAX_CHARS,
     PREPROBE_MIN_CONFIDENCE,
     REFLECT_SYSTEM,
     RESOLVE_EXTRACT_SYSTEM,
@@ -409,9 +410,20 @@ def build_prompt(
 ):
     parts = [f"Student question: {question}"]
     if outline:
+        body = outline.strip()
+        clipped = _clip(body, OUTLINE_MAX_CHARS)
+        if len(clipped) < len(body):
+            print(
+                f"outline: clipped prompt {len(body)} → {len(clipped)} chars "
+                f"(OUTLINE_MAX_CHARS={OUTLINE_MAX_CHARS})"
+            )
         parts.append(
             "Answer from the course outline below. Do not invent topics "
-            f"that are not in it.\n\nCourse outline:\n{outline.strip()}"
+            "that are not in it.\n"
+            "Keep the reply compact: a short sectioned recap, then a small "
+            "set of practice questions (about 3–5) with brief answers. "
+            "Do not restate the outline verbatim.\n\n"
+            f"Course outline:\n{clipped}"
         )
         return "\n\n".join(parts)
     if course_ctx:
@@ -456,6 +468,9 @@ def answer(prompt: str, window: list[dict] | None = None, summary: str = "") -> 
         if summary
         else []
     )
+    # think=False: Qwen3+vLLM thinking shares max_tokens with the visible
+    # answer, so long recap/quiz replies get cut mid-sentence. Plan/JSON
+    # steps can still use think where useful.
     raw = ollama_chat(
         [
             {"role": "system", "content": ANSWER_SYSTEM},
@@ -464,7 +479,7 @@ def answer(prompt: str, window: list[dict] | None = None, summary: str = "") -> 
             {"role": "user", "content": prompt},
         ],
         temperature=ANSWER_TEMPERATURE,
-        think=True,
+        think=False,
         name="llm.answer",
         max_tokens=ANSWER_MAX_TOKENS,
     )
@@ -483,6 +498,7 @@ def answer(prompt: str, window: list[dict] | None = None, summary: str = "") -> 
     text = candidate
     if STIFF_REFUSAL_RE.match(text):
         return STIFF_REFUSAL_REPLY
+    print(f"answer: chars={len(text)} max_tokens={ANSWER_MAX_TOKENS}")
     return text
 
 

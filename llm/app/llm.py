@@ -59,6 +59,13 @@ def get_embedder():
     return _embedder
 
 
+def warmup_retrieval_models() -> None:
+    """Load embed + rerank once up front (avoids mid-dialog cold start)."""
+    get_embedder()
+    get_reranker()
+    print("retrieval models ready (embed + rerank)")
+
+
 def embed(texts, *, retries: int = 5, is_query: bool = False):
     """Embed texts locally with Qwen3-Embedding-4B. `retries` unused; kept for callers.
 

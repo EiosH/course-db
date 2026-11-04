@@ -10,6 +10,7 @@ from conversation_store import (
     ensure_schema,
     mock_session_id,
 )
+from llm import warmup_retrieval_models
 from loaders import SESSION_KEYS, Dialog, load_dialogs
 from tracing import flush as langfuse_flush
 from tracing import observation, trace_attributes
@@ -125,6 +126,9 @@ def run_batch(
     reporters = reporters if reporters is not None else default_reporters()
 
     ensure_schema()
+    # Turn 1 is often outline-skip (no embed). Warm here so turn 2 recall
+    # does not pay the CUDA load in the middle of the dialog.
+    warmup_retrieval_models()
 
     for r in reporters:
         r.start()
