@@ -13,6 +13,6 @@ COPY app/ .
 
 ENV LECTURES_DIR=/data/lectures
 ENV QDRANT_URL=http://qdrant:6333
-ENV EMBED_URL=http://embed:8080
+ENV EMBEDDING_URL=http://embedding:8080
 
 CMD ["python", "main.py"]

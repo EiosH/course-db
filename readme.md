@@ -39,9 +39,9 @@ Qdrant
 Docker Compose（当前）
 ├── qdrant    # 向量库
 ├── mysql     # conversation 等业务表
-├── embed     # dense embed + rerank（GPU，HTTP :8080）
-├── ingest    # 文档解析 + 入库（调 embed，常驻 idle）
-└── llm       # 检索 / 问答 / eval（调 embed + 宿主机 vLLM）
+├── embedding # dense embed + rerank（GPU，HTTP :8080）
+├── ingest    # 文档解析 + 入库（调 embedding，常驻 idle）
+└── llm       # 检索 / 问答 / eval（调 embedding + 宿主机 vLLM）
 
 后续
 ├── nginx / api

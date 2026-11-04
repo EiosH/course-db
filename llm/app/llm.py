@@ -1,4 +1,4 @@
-"""Chat (Ollama or vLLM) + HTTP client for the embed service (embed / rerank)."""
+"""Chat (Ollama or vLLM) + HTTP client for the embedding service (embed / rerank)."""
 
 import re
 import time
@@ -8,7 +8,7 @@ import requests
 from config import (
     CHAT_MODEL,
     CONTEXT_WARN_RATIO,
-    EMBED_URL,
+    EMBEDDING_URL,
     LLM_BACKEND,
     LLM_CONTEXT_WINDOW,
     LLM_MAX_TOKENS,
@@ -23,31 +23,31 @@ from tracing import observation
 
 
 def warmup_retrieval_models() -> None:
-    """Wait until the embed service is healthy (models load there on startup)."""
-    url = f"{EMBED_URL}/health"
+    """Wait until the embedding service is healthy (models load there on startup)."""
+    url = f"{EMBEDDING_URL}/health"
     last_err = None
     for attempt in range(1, 31):
         try:
             r = requests.get(url, timeout=5)
             r.raise_for_status()
-            print(f"embed service ready at {EMBED_URL}")
+            print(f"embedding service ready at {EMBEDDING_URL}")
             return
         except (requests.exceptions.RequestException, ValueError) as e:
             last_err = e
-            print(f"waiting for embed service ({attempt}/30): {e}")
+            print(f"waiting for embedding service ({attempt}/30): {e}")
             time.sleep(2)
-    raise RuntimeError(f"embed service not ready at {url}: {last_err}")
+    raise RuntimeError(f"embedding service not ready at {url}: {last_err}")
 
 
 def embed(texts, *, retries: int = 5, is_query: bool = False):
-    """Embed via embed service. Queries should pass is_query=True."""
+    """Embed via embedding service. Queries should pass is_query=True."""
     if not texts:
         return []
     last_err = None
     for attempt in range(1, retries + 1):
         try:
             r = requests.post(
-                f"{EMBED_URL}/embed",
+                f"{EMBEDDING_URL}/embed",
                 json={"texts": texts, "is_query": is_query},
                 timeout=600,
             )
@@ -63,14 +63,14 @@ def embed(texts, *, retries: int = 5, is_query: bool = False):
 
 
 def rerank(query: str, documents: list[str], *, retries: int = 5) -> list[float]:
-    """Score (query, document) pairs via embed service."""
+    """Score (query, document) pairs via embedding service."""
     if not documents:
         return []
     last_err = None
     for attempt in range(1, retries + 1):
         try:
             r = requests.post(
-                f"{EMBED_URL}/rerank",
+                f"{EMBEDDING_URL}/rerank",
                 json={"query": query, "documents": documents},
                 timeout=120,
             )

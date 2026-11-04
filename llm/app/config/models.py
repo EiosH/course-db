@@ -16,8 +16,8 @@ LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "2048"))
 # answer() needs more room (outline recap + quizzes); thinking also eats this budget.
 ANSWER_MAX_TOKENS = int(os.getenv("ANSWER_MAX_TOKENS", "8192"))
 
-# Dense / rerank live in the embed service (see docker compose service: embed).
-EMBED_URL = os.getenv("EMBED_URL", "http://127.0.0.1:8080").rstrip("/")
+# Dense / rerank live in the embedding service (see docker compose service: embedding).
+EMBEDDING_URL = os.getenv("EMBEDDING_URL", "http://127.0.0.1:8080").rstrip("/")
 BM25_MODEL = "Qdrant/bm25"
 OLLAMA_CHAT_TIMEOUT = 600
 OLLAMA_CHAT_RETRIES = 3

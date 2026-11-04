@@ -26,11 +26,11 @@ services:
       timeout: 5s
       retries: 20
 
-  embed:
-    container_name: embed
-    build: ./embed
+  embedding:
+    container_name: embedding
+    build: ./embedding
     ports:
-      - "${EMBED_PORT:-8080}:8080"
+      - "${EMBEDDING_PORT:-8080}:8080"
     env_file:
       - .env
     gpus: all
@@ -41,7 +41,7 @@ services:
       TRANSFORMERS_CACHE: /cache/huggingface
       HUGGINGFACE_HUB_CACHE: /cache/huggingface
     volumes:
-      - ./embed/app:/app
+      - ./embedding/app:/app
       - ${DOCKER_VOLUME_DIRECTORY:-.}/data/hf-cache:/cache/huggingface
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
@@ -56,13 +56,13 @@ services:
     depends_on:
       qdrant:
         condition: service_started
-      embed:
+      embedding:
         condition: service_healthy
     env_file:
       - .env
     environment:
       QDRANT_URL: http://qdrant:6333
-      EMBED_URL: http://embed:8080
+      EMBEDDING_URL: http://embedding:8080
       LECTURES_DIR: /data/lectures
     volumes:
       - ./data/lectures:/data/lectures
@@ -76,7 +76,7 @@ services:
         condition: service_started
       mysql:
         condition: service_healthy
-      embed:
+      embedding:
         condition: service_healthy
     env_file:
       - .env
@@ -85,7 +85,7 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       QDRANT_URL: http://qdrant:6333
-      EMBED_URL: http://embed:8080
+      EMBEDDING_URL: http://embedding:8080
       LECTURES_DIR: /data/lectures
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306

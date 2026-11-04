@@ -1,4 +1,4 @@
-"""Embed service settings (dense embed + rerank)."""
+"""Embedding service settings (dense embed + rerank)."""
 
 import os
 from pathlib import Path
@@ -14,5 +14,5 @@ EMBED_DEVICE = os.getenv("EMBED_DEVICE", "cuda").strip()
 EMBED_BATCH = int(os.getenv("EMBED_BATCH", "32"))
 RERANK_MODEL = os.getenv("RERANK_MODEL", "Qwen/Qwen3-Reranker-0.6B")
 RERANK_DEVICE = os.getenv("RERANK_DEVICE", "cuda").strip()
-HOST = os.getenv("EMBED_HOST", "0.0.0.0")
-PORT = int(os.getenv("EMBED_PORT", "8080"))
+HOST = os.getenv("EMBEDDING_HOST", "0.0.0.0")
+PORT = int(os.getenv("EMBEDDING_PORT", "8080"))

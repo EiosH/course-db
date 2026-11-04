@@ -1,7 +1,7 @@
 """
 App config package.
 
-- config.models   — chat backend / embed URL / Qdrant / Langfuse / MySQL
+- config.models   — chat backend / embedding URL / Qdrant / Langfuse / MySQL
 - config.prompts  — LLM system prompts
 - this module     — paths, retrieval limits, regex helpers
 

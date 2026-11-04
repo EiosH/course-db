@@ -44,7 +44,7 @@ def get_reranker():
 def warmup() -> None:
     get_embedder()
     get_reranker()
-    print("embed service ready (dense + rerank)")
+    print("embedding service ready (dense + rerank)")
 
 
 def embed_texts(texts: list[str], *, is_query: bool = False) -> list[list[float]]:
