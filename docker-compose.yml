@@ -44,11 +44,18 @@ services:
       - ./embedding/app:/app
       - ${DOCKER_VOLUME_DIRECTORY:-.}/data/hf-cache:/cache/huggingface
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
+      # /ready waits for model download+load; first pull of Qwen3-Embedding-4B can be slow.
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/ready')",
+        ]
       interval: 10s
       timeout: 5s
-      retries: 60
-      start_period: 120s
+      retries: 180
+      start_period: 300s
 
   ingest:
     container_name: ingest

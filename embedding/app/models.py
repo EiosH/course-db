@@ -1,5 +1,9 @@
 """Lazy-loaded embed + rerank models."""
 
+from __future__ import annotations
+
+import threading
+
 from config import (
     EMBED_BATCH,
     EMBED_DEVICE,
@@ -11,6 +15,17 @@ from config import (
 
 _embedder = None
 _reranker = None
+_ready = False
+_load_error: str | None = None
+_lock = threading.Lock()
+
+
+def is_ready() -> bool:
+    return _ready
+
+
+def load_error() -> str | None:
+    return _load_error
 
 
 def get_embedder():
@@ -42,9 +57,22 @@ def get_reranker():
 
 
 def warmup() -> None:
-    get_embedder()
-    get_reranker()
-    print("embedding service ready (dense + rerank)")
+    """Load both models; safe to call from a background thread."""
+    global _ready, _load_error
+    with _lock:
+        if _ready:
+            return
+        try:
+            get_embedder()
+            get_reranker()
+            _ready = True
+            _load_error = None
+            print("embedding service ready (dense + rerank)")
+        except Exception as e:
+            _ready = False
+            _load_error = str(e)
+            print(f"embedding warmup failed: {e}")
+            raise
 
 
 def embed_texts(texts: list[str], *, is_query: bool = False) -> list[list[float]]:

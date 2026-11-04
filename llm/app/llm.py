@@ -23,10 +23,10 @@ from tracing import observation
 
 
 def warmup_retrieval_models() -> None:
-    """Wait until the embedding service is healthy (models load there on startup)."""
-    url = f"{EMBEDDING_URL}/health"
+    """Wait until the embedding service reports /ready (models loaded)."""
+    url = f"{EMBEDDING_URL}/ready"
     last_err = None
-    for attempt in range(1, 31):
+    for attempt in range(1, 181):
         try:
             r = requests.get(url, timeout=5)
             r.raise_for_status()
@@ -34,7 +34,8 @@ def warmup_retrieval_models() -> None:
             return
         except (requests.exceptions.RequestException, ValueError) as e:
             last_err = e
-            print(f"waiting for embedding service ({attempt}/30): {e}")
+            if attempt == 1 or attempt % 15 == 0:
+                print(f"waiting for embedding /ready ({attempt}/180): {e}")
             time.sleep(2)
     raise RuntimeError(f"embedding service not ready at {url}: {last_err}")
 
