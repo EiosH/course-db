@@ -26,34 +26,47 @@ services:
       timeout: 5s
       retries: 20
 
-  ingest:
-    container_name: ingest
-    build: ./ingest
-    depends_on:
-      - qdrant
+  embed:
+    container_name: embed
+    build: ./embed
+    ports:
+      - "${EMBED_PORT:-8080}:8080"
     env_file:
       - .env
     gpus: all
-    extra_hosts:
-      # Linux: reach host vLLM / Ollama from inside the container
-      - "host.docker.internal:host-gateway"
     environment:
-      QDRANT_URL: http://qdrant:6333
-      LECTURES_DIR: /data/lectures
-      EMBED_DEVICE: ${EMBED_DEVICE:-cpu}
-      RERANK_DEVICE: ${RERANK_DEVICE:-cpu}
-      # Override .env 127.0.0.1 — that only works when Python runs on the host
-      VLLM_BASE_URL: http://host.docker.internal:8000/v1
-      OLLAMA_URL: http://host.docker.internal:11434
+      EMBED_DEVICE: ${EMBED_DEVICE:-cuda}
+      RERANK_DEVICE: ${RERANK_DEVICE:-cuda}
       HF_HOME: /cache/huggingface
       TRANSFORMERS_CACHE: /cache/huggingface
       HUGGINGFACE_HUB_CACHE: /cache/huggingface
     volumes:
-      - ./data/lectures:/data/lectures
-      # Live code: git pull / edit without rebuild
-      - ./ingest/app:/app
-      # Persist model weights across container recreate
+      - ./embed/app:/app
       - ${DOCKER_VOLUME_DIRECTORY:-.}/data/hf-cache:/cache/huggingface
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 120s
+
+  ingest:
+    container_name: ingest
+    build: ./ingest
+    depends_on:
+      qdrant:
+        condition: service_started
+      embed:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      EMBED_URL: http://embed:8080
+      LECTURES_DIR: /data/lectures
+    volumes:
+      - ./data/lectures:/data/lectures
+      - ./ingest/app:/app
 
   llm:
     container_name: llm
@@ -63,17 +76,17 @@ services:
         condition: service_started
       mysql:
         condition: service_healthy
+      embed:
+        condition: service_healthy
     env_file:
       - .env
-    gpus: all
     extra_hosts:
       # Linux: reach host vLLM / Ollama (vLLM must listen on 0.0.0.0, not 127.0.0.1)
       - "host.docker.internal:host-gateway"
     environment:
       QDRANT_URL: http://qdrant:6333
+      EMBED_URL: http://embed:8080
       LECTURES_DIR: /data/lectures
-      EMBED_DEVICE: ${EMBED_DEVICE:-cpu}
-      RERANK_DEVICE: ${RERANK_DEVICE:-cpu}
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_DATABASE: ${MYSQL_DATABASE:-course_db}
@@ -81,11 +94,6 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-course}
       VLLM_BASE_URL: http://host.docker.internal:8000/v1
       OLLAMA_URL: http://host.docker.internal:11434
-      HF_HOME: /cache/huggingface
-      TRANSFORMERS_CACHE: /cache/huggingface
-      HUGGINGFACE_HUB_CACHE: /cache/huggingface
     volumes:
       - ./data/lectures:/data/lectures
-      # Live code: git pull / edit without rebuild (covers data/ too)
       - ./llm/app:/app
-      - ${DOCKER_VOLUME_DIRECTORY:-.}/data/hf-cache:/cache/huggingface

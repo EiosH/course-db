@@ -1,4 +1,4 @@
-"""Embed, chat (Ollama or vLLM), and local reranker helpers."""
+"""Chat (Ollama or vLLM) + HTTP client for the embed service (embed / rerank)."""
 
 import re
 import time
@@ -6,13 +6,9 @@ import time
 import requests
 
 from config import (
-    ANSWER_MAX_TOKENS,
     CHAT_MODEL,
     CONTEXT_WARN_RATIO,
-    EMBED_BATCH,
-    EMBED_DEVICE,
-    EMBED_DIM,
-    EMBED_MODEL,
+    EMBED_URL,
     LLM_BACKEND,
     LLM_CONTEXT_WINDOW,
     LLM_MAX_TOKENS,
@@ -21,76 +17,72 @@ from config import (
     OLLAMA_SEED,
     OLLAMA_TEMPERATURE,
     OLLAMA_URL,
-    RERANK_DEVICE,
-    RERANK_MODEL,
     VLLM_BASE_URL,
 )
 from tracing import observation
 
-_reranker = None
-_embedder = None
-
-
-def get_reranker():
-    global _reranker
-    if _reranker is None:
-        from sentence_transformers import CrossEncoder
-
-        where = RERANK_DEVICE or "auto"
-        print(f"loading rerank model {RERANK_MODEL} on {where}...")
-        kwargs = {"trust_remote_code": True}
-        if RERANK_DEVICE:
-            kwargs["device"] = RERANK_DEVICE
-        _reranker = CrossEncoder(RERANK_MODEL, **kwargs)
-    return _reranker
-
-
-def get_embedder():
-    global _embedder
-    if _embedder is None:
-        from sentence_transformers import SentenceTransformer
-
-        where = EMBED_DEVICE or "cpu"
-        print(f"loading embed model {EMBED_MODEL} on {where}...")
-        kwargs = {"processor_kwargs": {"padding_side": "left"}}
-        if EMBED_DEVICE:
-            kwargs["device"] = EMBED_DEVICE
-        _embedder = SentenceTransformer(EMBED_MODEL, **kwargs)
-    return _embedder
-
 
 def warmup_retrieval_models() -> None:
-    """Load embed + rerank once up front (avoids mid-dialog cold start)."""
-    get_embedder()
-    get_reranker()
-    print("retrieval models ready (embed + rerank)")
+    """Wait until the embed service is healthy (models load there on startup)."""
+    url = f"{EMBED_URL}/health"
+    last_err = None
+    for attempt in range(1, 31):
+        try:
+            r = requests.get(url, timeout=5)
+            r.raise_for_status()
+            print(f"embed service ready at {EMBED_URL}")
+            return
+        except (requests.exceptions.RequestException, ValueError) as e:
+            last_err = e
+            print(f"waiting for embed service ({attempt}/30): {e}")
+            time.sleep(2)
+    raise RuntimeError(f"embed service not ready at {url}: {last_err}")
 
 
 def embed(texts, *, retries: int = 5, is_query: bool = False):
-    """Embed texts locally with Qwen3-Embedding-4B. `retries` unused; kept for callers.
-
-    Queries should pass is_query=True so the model's query instruction prompt is applied.
-    """
-    del retries
+    """Embed via embed service. Queries should pass is_query=True."""
     if not texts:
         return []
-    model = get_embedder()
-    out = []
-    total = len(texts)
-    encode_kwargs = {
-        "normalize_embeddings": True,
-        "show_progress_bar": False,
-        "truncate_dim": EMBED_DIM,
-    }
-    if is_query:
-        encode_kwargs["prompt_name"] = "query"
-    for i in range(0, total, EMBED_BATCH):
-        batch = texts[i : i + EMBED_BATCH]
-        vecs = model.encode(batch, **encode_kwargs)
-        out.extend(vecs.tolist())
-        done = min(i + EMBED_BATCH, total)
-        print(f"embed {done}/{total}")
-    return out
+    last_err = None
+    for attempt in range(1, retries + 1):
+        try:
+            r = requests.post(
+                f"{EMBED_URL}/embed",
+                json={"texts": texts, "is_query": is_query},
+                timeout=600,
+            )
+            r.raise_for_status()
+            return r.json()["vectors"]
+        except (requests.exceptions.RequestException, KeyError, TypeError) as e:
+            last_err = e
+            if attempt < retries:
+                wait = 2 * attempt
+                print(f"embed error (attempt {attempt}/{retries}), retry in {wait}s...")
+                time.sleep(wait)
+    raise last_err
+
+
+def rerank(query: str, documents: list[str], *, retries: int = 5) -> list[float]:
+    """Score (query, document) pairs via embed service."""
+    if not documents:
+        return []
+    last_err = None
+    for attempt in range(1, retries + 1):
+        try:
+            r = requests.post(
+                f"{EMBED_URL}/rerank",
+                json={"query": query, "documents": documents},
+                timeout=120,
+            )
+            r.raise_for_status()
+            return [float(s) for s in r.json()["scores"]]
+        except (requests.exceptions.RequestException, KeyError, TypeError) as e:
+            last_err = e
+            if attempt < retries:
+                wait = 2 * attempt
+                print(f"rerank error (attempt {attempt}/{retries}), retry in {wait}s...")
+                time.sleep(wait)
+    raise last_err
 
 
 def _usage(data: dict, name: str) -> dict:

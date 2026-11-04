@@ -33,7 +33,7 @@ from config import (
     TIME_NEAR_TOP_K,
     TIME_WINDOW_SEC,
 )
-from llm import embed, get_reranker
+from llm import embed, rerank
 from time_utils import time_distance, timestamp_constraint_value, ts_to_sec
 
 
@@ -314,11 +314,7 @@ def pick_by_type_quota(hits, top_k=RERANK_TOP_K):
 def rerank_and_filter(query: str, hits, top_k=RERANK_TOP_K, min_score=RERANK_MIN_SCORE):
     if not hits:
         return []
-    reranker = get_reranker()
-    pairs = [(query, h.payload["text"]) for h in hits]
-    scores = reranker.predict(pairs)
-    if isinstance(scores, (int, float)):
-        scores = [scores]
+    scores = rerank(query, [h.payload["text"] for h in hits])
     ranked = sorted(zip(hits, scores), key=lambda x: x[1], reverse=True)
     scored = []
     for h, s in ranked:

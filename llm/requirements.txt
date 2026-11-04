@@ -1,7 +1,6 @@
 qdrant-client[fastembed]
 requests
 openpyxl
-sentence-transformers
 langchain-core
 langfuse
 python-dotenv

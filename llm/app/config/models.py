@@ -16,15 +16,9 @@ LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "2048"))
 # answer() needs more room (outline recap + quizzes); thinking also eats this budget.
 ANSWER_MAX_TOKENS = int(os.getenv("ANSWER_MAX_TOKENS", "8192"))
 
-# Qdrant dense vectors are 1024-d (Qwen3-Embedding-4B Matryoshka truncate).
-# Full model output is 2560-d; truncate to match the existing collection.
-EMBED_MODEL = os.getenv("EMBED_MODEL", "Qwen/Qwen3-Embedding-4B")
-EMBED_DIM = int(os.getenv("EMBED_DIM", "1024"))
-EMBED_DEVICE = os.getenv("EMBED_DEVICE", "cuda").strip()
+# Dense / rerank live in the embed service (see docker compose service: embed).
+EMBED_URL = os.getenv("EMBED_URL", "http://127.0.0.1:8080").rstrip("/")
 BM25_MODEL = "Qdrant/bm25"
-RERANK_MODEL = "Qwen/Qwen3-Reranker-0.6B"
-# Same GPU as embed; keep vLLM --gpu-memory-utilization low enough to share.
-RERANK_DEVICE = os.getenv("RERANK_DEVICE", "cuda").strip()
 OLLAMA_CHAT_TIMEOUT = 600
 OLLAMA_CHAT_RETRIES = 3
 # Plan / resolve-extract / rewrite stay greedy for stable JSON and retrieval.
@@ -36,7 +30,6 @@ OLLAMA_SEED = 42
 # 超出部分会从消息开头被静默截掉（system prompt 最先丢）。
 LLM_CONTEXT_WINDOW = 16384
 CONTEXT_WARN_RATIO = 0.9  # 输入+输出超过上下文窗口的这个比例就打印警告
-EMBED_BATCH = 32
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333").rstrip("/")
 COLLECTION_NAME = "docs"
 UPSERT_BATCH = 64

@@ -37,10 +37,11 @@ Qdrant
  docker 一键启动服务
 
 Docker Compose（当前）
-├── qdrant   # 向量库（独立容器）
-├── mysql    # conversation 等业务表
-├── ingest   # 文档解析 + 入库（常驻 idle，exec 触发）
-└── llm      # 检索 / 问答 / eval（常驻 idle，exec 触发）
+├── qdrant    # 向量库
+├── mysql     # conversation 等业务表
+├── embed     # dense embed + rerank（GPU，HTTP :8080）
+├── ingest    # 文档解析 + 入库（调 embed，常驻 idle）
+└── llm       # 检索 / 问答 / eval（调 embed + 宿主机 vLLM）
 
 后续
 ├── nginx / api

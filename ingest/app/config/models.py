@@ -1,11 +1,8 @@
-"""Ingest infra settings (embed, Qdrant)."""
+"""Ingest infra settings (embed service, Qdrant)."""
 
 import os
 
-EMBED_MODEL = os.getenv("EMBED_MODEL", "Qwen/Qwen3-Embedding-4B")
-EMBED_DIM = int(os.getenv("EMBED_DIM", "1024"))
-EMBED_DEVICE = os.getenv("EMBED_DEVICE", "cuda").strip()
-EMBED_BATCH = 32
+EMBED_URL = os.getenv("EMBED_URL", "http://127.0.0.1:8080").rstrip("/")
 BM25_MODEL = "Qdrant/bm25"
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333").rstrip("/")
 COLLECTION_NAME = "docs"
