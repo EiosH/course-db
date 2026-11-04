@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 
 from config import COURSE_ROUTE_MODEL, DEFAULT_LECTURE_MAX_TS, LECTURES_DIR
-from config.prompts import COURSE_ROUTE_SYSTEM
+from config.prompts import get_course_route_system
 from llm import ollama_chat
 
 
@@ -128,7 +128,7 @@ def route_course(query: str, session: dict) -> dict:
     }
     raw = ollama_chat(
         [
-            {"role": "system", "content": COURSE_ROUTE_SYSTEM},
+            {"role": "system", "content": get_course_route_system()},
             {
                 "role": "user",
                 "content": (

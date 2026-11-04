@@ -7,6 +7,8 @@ docker compose exec llm python main.py --eval        # 跑 dialogs.yaml 问答�
 # cd ingest && pip install -r requirements.txt && cd app && python main.py --ingest
 # cd llm && pip install -r requirements.txt && cd app && python main.py --eval
 
+# Langfuse prompts：LANGFUSE_ENABLED=true 时按名拉取 label=production；拉不到回退本地 prompts.py
+
 # 存储
 ## Qdrant 向量库存储 + MongoDB 原始文本存储
 MongoDB

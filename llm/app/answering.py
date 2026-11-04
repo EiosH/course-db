@@ -5,9 +5,7 @@ import re
 
 from config import (
     ANSWER_MAX_TOKENS,
-    ANSWER_SYSTEM,
     ANSWER_TEMPERATURE,
-    CONDENSE_SYSTEM,
     HISTORY_ANSWER_CHARS,
     HISTORY_BUDGET_CHARS,
     HISTORY_MAX_TURNS,
@@ -15,19 +13,20 @@ from config import (
     NO_HIT_REPLY,
     OUTLINE_MAX_CHARS,
     PREPROBE_MIN_CONFIDENCE,
-    REFLECT_SYSTEM,
-    RESOLVE_EXTRACT_SYSTEM,
     SNIPPET_MAX_CHARS,
     STIFF_REFUSAL_RE,
     STIFF_REFUSAL_REPLY,
     SUMMARY_MAX_CHARS,
-    SUMMARY_SYSTEM,
     answer_scope_note,
-    knowledge_plan_system,
-    query_plan_system,
-    resolve_plan_system,
-    rewrite_system,
-    time_plan_system,
+    get_answer_system,
+    get_condense_system,
+    get_knowledge_plan_system,
+    get_query_plan_system,
+    get_resolve_extract_system,
+    get_resolve_plan_system,
+    get_rewrite_system,
+    get_summary_system,
+    get_time_plan_system,
 )
 from llm import ollama_chat
 from time_utils import normalize_rewrite_timestamps
@@ -93,7 +92,7 @@ def summarize(summary: str, turns: list[dict]) -> str:
     block = _history_block(turns)
     raw = ollama_chat(
         [
-            {"role": "system", "content": SUMMARY_SYSTEM},
+            {"role": "system", "content": get_summary_system()},
             {
                 "role": "user",
                 "content": (
@@ -123,7 +122,7 @@ def condense(query: str, window: list[dict], summary: str = "") -> dict:
     parts.append(f"Follow-up question: {query}")
     raw = ollama_chat(
         [
-            {"role": "system", "content": CONDENSE_SYSTEM},
+            {"role": "system", "content": get_condense_system()},
             {"role": "user", "content": "\n\n".join(parts)},
         ],
         format="json",
@@ -151,7 +150,7 @@ def plan_time(query: str, course_ctx: dict) -> dict:
     """MAIN retrieval time_mode + timestamp hard_constraints."""
     raw = ollama_chat(
         [
-            {"role": "system", "content": time_plan_system(course_ctx)},
+            {"role": "system", "content": get_time_plan_system(course_ctx)},
             {"role": "user", "content": query},
         ],
         format="json",
@@ -176,7 +175,7 @@ def plan_resolve_part(query: str, course_ctx: dict) -> dict:
     """resolve phrase + probe_hard_constraints (independent of main time)."""
     raw = ollama_chat(
         [
-            {"role": "system", "content": resolve_plan_system(course_ctx)},
+            {"role": "system", "content": get_resolve_plan_system(course_ctx)},
             {"role": "user", "content": query},
         ],
         format="json",
@@ -206,7 +205,7 @@ def plan_knowledge(query: str, course_ctx: dict) -> dict:
     """course_general_knowledge + outline_question flags."""
     raw = ollama_chat(
         [
-            {"role": "system", "content": knowledge_plan_system(course_ctx)},
+            {"role": "system", "content": get_knowledge_plan_system(course_ctx)},
             {"role": "user", "content": query},
         ],
         format="json",
@@ -249,7 +248,7 @@ def plan_query(query: str, course_ctx: dict) -> dict:
     """Legacy monolithic plan (unused by parallel pipeline; kept for scripts)."""
     raw = ollama_chat(
         [
-            {"role": "system", "content": query_plan_system(course_ctx)},
+            {"role": "system", "content": get_query_plan_system(course_ctx)},
             {"role": "user", "content": query},
         ],
         format="json",
@@ -305,7 +304,7 @@ def extract_resolved_name(phrase: str, hits) -> dict:
         snippets.append(f"[{label}] ({p.get('timestamp', '')})\n{text}")
     raw = ollama_chat(
         [
-            {"role": "system", "content": RESOLVE_EXTRACT_SYSTEM},
+            {"role": "system", "content": get_resolve_extract_system()},
             {
                 "role": "user",
                 "content": (
@@ -379,7 +378,7 @@ def rewrite(
     """Build rewritten_query. Time / course_general_knowledge come from plan."""
     raw = ollama_chat(
         [
-            {"role": "system", "content": rewrite_system(course_ctx)},
+            {"role": "system", "content": get_rewrite_system(course_ctx)},
             {
                 "role": "user",
                 "content": _rewrite_user_message(
@@ -473,7 +472,7 @@ def answer(prompt: str, window: list[dict] | None = None, summary: str = "") -> 
     # steps can still use think where useful.
     raw = ollama_chat(
         [
-            {"role": "system", "content": ANSWER_SYSTEM},
+            {"role": "system", "content": get_answer_system()},
             *summary_msgs,
             *_history_messages(window),
             {"role": "user", "content": prompt},
@@ -488,7 +487,7 @@ def answer(prompt: str, window: list[dict] | None = None, summary: str = "") -> 
     # 固定一轮反思：对候选答案做一次独立校验修正后输出（不循环）
     # reflected = ollama_chat(
     #     [
-    #         {"role": "system", "content": REFLECT_SYSTEM},
+    #         {"role": "system", "content": get_reflect_system()},  # noqa: F821 — import when enabling
     #         {"role": "user", "content": f"{prompt}\n\nDraft answer:\n{candidate}"},
     #     ],
     #     temperature=ANSWER_TEMPERATURE,

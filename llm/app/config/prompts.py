@@ -1,6 +1,16 @@
-"""LLM system prompts (plan / rewrite / answer / course route / resolve)."""
+"""LLM system prompts (plan / rewrite / answer / course route / resolve).
+
+Local strings remain the fallback. Langfuse stores Mustache templates
+(see LANGFUSE_TEMPLATES); getters pull label=production when enabled.
+"""
 
 import re
+
+from prompt_store import get as _lf_get
+
+# ---------------------------------------------------------------------------
+# Local fallbacks (also used when LANGFUSE_ENABLED is off)
+# ---------------------------------------------------------------------------
 
 
 def query_plan_system(course_ctx: dict) -> str:
@@ -222,21 +232,28 @@ Rules:
 """
 
 
-def rewrite_system(course_ctx: dict) -> str:
-    course_id = course_ctx["course_id"]
+def rewrite_scope(course_ctx: dict) -> str:
+    """Human-readable lecture-scope sentence for the rewrite prompt."""
     lids = course_ctx.get("lecture_ids") or []
     if not lids:
-        scope = (
+        return (
             "Lecture scope is already handled by filters (whole current course). "
             "Do NOT put scope words into rewritten_query."
         )
-    elif len(lids) == 1:
-        scope = f"Lecture scope is already filtered to {lids[0]}. Do NOT put lecture deixis into rewritten_query."
-    else:
-        scope = (
-            f"Lecture scope is already filtered to {lids}. "
-            "Do NOT put lecture/course deixis into rewritten_query."
+    if len(lids) == 1:
+        return (
+            f"Lecture scope is already filtered to {lids[0]}. "
+            "Do NOT put lecture deixis into rewritten_query."
         )
+    return (
+        f"Lecture scope is already filtered to {lids}. "
+        "Do NOT put lecture/course deixis into rewritten_query."
+    )
+
+
+def rewrite_system(course_ctx: dict) -> str:
+    course_id = course_ctx["course_id"]
+    scope = rewrite_scope(course_ctx)
     return f"""You write a retrieval query string for lecture notes / transcript search ({course_id}).
 
 You receive:
@@ -373,3 +390,250 @@ Check the draft against the lecture content and question in the user message:
 - Keep the warm, brief, direct tone. Don't name internal sources.
 
 Output ONLY the corrected final answer — no commentary about the review. If the draft is already fine, return it unchanged."""
+
+
+# ---------------------------------------------------------------------------
+# Mustache templates pushed to Langfuse ({{var}} = variable; JSON uses single {})
+# ---------------------------------------------------------------------------
+
+_TIME_RULES_TMPL = """Timestamp rules (elapsed lecture time 0:00–{{lecture_max_ts}}, store HH:MM:SS):
+- Two parts (MM:SS) = minutes:seconds from start → 00:MM:SS ("05:00" → 00:05:00, never 05:00:00)
+- Three parts (HH:MM:SS) stay as elapsed HH:MM:SS
+- "2h24min" / "2h24" → 02:24:00
+- For a range, pick one point inside the span
+- Do NOT use "{{timestamp}}" unless the user means the current playback moment
+- Current playback "now" (mock): {{timestamp}}"""
+
+LANGFUSE_TEMPLATES: dict[str, str] = {
+    "lecture/condense": CONDENSE_SYSTEM,
+    "lecture/summary": SUMMARY_SYSTEM,
+    "lecture/resolve-extract": RESOLVE_EXTRACT_SYSTEM,
+    "lecture/course-route": COURSE_ROUTE_SYSTEM,
+    "lecture/answer": ANSWER_SYSTEM,
+    "lecture/reflect": REFLECT_SYSTEM,
+    "lecture/time-plan": f"""You decide MAIN retrieval time filters for a lecture Q&A system ({{{{course_id}}}}).
+
+Do NOT answer the student. Do NOT invent lecture facts. Ignore which lecture id to search — another step handles that.
+
+{_TIME_RULES_TMPL}
+
+Output JSON only:
+{{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "reason": "short"
+}}
+
+- time_mode: "now" | "anchor" | "none" (MAIN retrieval only)
+  * "now" — current playback, no clock in the question → hard_constraints MUST be
+    [{{"field":"timestamp","operator":"range","value":"{{{{timestamp}}}}"}}]
+  * "anchor" — a specific elapsed time in the lecture → exactly one timestamp constraint
+  * "none" — no time filter for main retrieval → hard_constraints=[]
+- Only put MAIN-retrieval time in hard_constraints. If time is only to locate a vague phrase
+  ("the example at 2h24"), use time_mode "none" and hard_constraints=[] — another step owns the probe time.
+- "What does this mean now?" → time_mode "now".
+""",
+    "lecture/resolve-plan": f"""You decide whether a vague phrase must be resolved before main retrieval ({{{{course_id}}}}).
+
+Do NOT answer the student. Do NOT invent lecture facts.
+
+{_TIME_RULES_TMPL}
+
+Output JSON only:
+{{
+  "resolve": null,
+  "probe_hard_constraints": [],
+  "reason": "short"
+}}
+
+- resolve: copy an underspecified CONTENT phrase from the question ("the example", "this concept", "it", "this"), or null.
+  Named terms already in the question (jargon, "Fold Left", "Question 9") → null.
+- Do NOT resolve lecture/session SCOPE deixis. These select which lecture to search; another step owns them.
+  Leave resolve null for: "this lesson", "this lecture", "this class", "this session",
+  "today's lecture", "the current lecture", "the whole lesson", "the class", etc.
+  Even if the question also asks to recap / review / quiz that lesson — still null.
+- probe_hard_constraints: time filters ONLY for the resolve probe (same timestamp JSON shape as
+  {{"field":"timestamp","operator":"range","value":"<HH:MM:SS>"}}).
+  * Timestamp solely to locate the vague phrase ("the example at 2h24") → put it here, not in main time.
+  * Empty [] when resolve is null, or when the probe should share main retrieval filters.
+- "What does this mean now?" with no other vague object → resolve null.
+""",
+    "lecture/knowledge-plan": """You decide if a student question for course {{course_id}} can use general course subject knowledge,
+and whether it is an outline / whole-lesson overview question.
+
+Do NOT answer the student. Do NOT invent lecture facts.
+
+Output JSON only:
+{
+  "course_general_knowledge": false,
+  "outline_question": false,
+  "reason": "short"
+}
+
+- course_general_knowledge true: answerable from this course's subject knowledge without this recording (definition, or a problem fully stated in the question).
+- course_general_knowledge false: depends on this lecture (what was said, this slide, a numbered item whose stem is not in the question, timestamps).
+- outline_question true when the student wants a WHOLE-lesson / course overview rather than one specific topic, slide, or moment. Includes:
+  * what topics / what was covered in this lesson / lecture / class
+  * recap, summary, review, overview of this lesson (or the course)
+  * practice tests / quiz questions / study questions for this lesson as a whole
+    (e.g. "give me a set of tests and help me recap this lesson")
+  Phrases like "this lesson" here are scope, not a reason to set outline_question false.
+- outline_question false for questions about a named concept, one slide, one timestamp, or a single homework/quiz item.
+""",
+    "lecture/rewrite": """You write a retrieval query string for lecture notes / transcript search ({{course_id}}).
+
+You receive:
+1) the original student question
+2) a query plan (time already decided — do NOT change it)
+3) an optional resolved name from a prior resolve search (a concrete name for a vague phrase)
+4) lecture routing already applied — {{scope}}
+
+Output JSON only:
+{
+  "rewritten_query": "..."
+}
+
+- rewritten_query: a grounded search string for slides and spoken content (not a tiny stub)
+- Focus on the TOPIC / concepts to find (e.g. "call by name", thunks, non-strict evaluation).
+- STRIP lecture/course deixis from the query. Do NOT include phrases like:
+  "previous course(s)", "prior courses", "other course(s)", "other lecture(s)",
+  "earlier lectures", "previous class(es)", "in this course", "last lecture",
+  "second-to-last", lecture ids (lec03), or similar scope wording.
+  Those only select which lectures to search; filters already did that.
+- Licensed only by the student question and the optional resolved name. Rephrase freely; do not invent assignment/homework/quiz labels the student did not say.
+- Keep concrete labels that already appear in the question (e.g. a numbered item), except the scope deixis above.
+- If a resolved name is provided, you MAY include that name. Do not dump lecture snippets.
+""",
+    "lecture/query-plan": """You analyze a student question for a lecture Q&A retrieval system ({{course_id}}).
+
+Produce a structured plan. Do NOT answer the student. Do NOT invent lecture facts, homework items, quiz numbers, or topic labels that are not in the question text.
+
+Current playback timestamp (mock "now" only): {{timestamp}}
+Lecture elapsed time is 0:00–{{lecture_max_ts}}, stored as HH:MM:SS.
+
+Output JSON only:
+{
+  "time_mode": "none",
+  "hard_constraints": [],
+  "probe_hard_constraints": [],
+  "course_general_knowledge": false,
+  "resolve": null,
+  "reason": "..."
+}
+
+Fields:
+- time_mode: applies to MAIN retrieval only (not the resolve probe)
+  * "now" — current playback moment, no clock time in the question
+  * "anchor" — a specific elapsed time / span in the lecture
+  * "none" — no usable time reference for main retrieval
+- hard_constraints: filters for MAIN retrieval. when time_mode is "now" or "anchor", exactly one
+  {"field":"timestamp","operator":"range","value":"<HH:MM:SS>"}
+  * "now" → value MUST be "{{timestamp}}"
+  * Lecture positions are elapsed time from video start (0:00–{{lecture_max_ts}})
+  * Two parts (MM:SS) = minutes:seconds from the start → 00:MM:SS
+    ("05:00" → 00:05:00, never 05:00:00)
+  * Three parts (HH:MM:SS) stay as elapsed HH:MM:SS
+  * "2h24min" / "2h24" → 02:24:00
+  * For a range, pick one point inside the span
+  * Do NOT use "{{timestamp}}" unless the user means the current playback moment
+  * Empty [] when main retrieval should not be time-filtered
+- probe_hard_constraints: filters ONLY for the optional resolve probe (when resolve is set). Same timestamp shape as hard_constraints.
+  * Put a timestamp here when the time is solely to locate the vague phrase (e.g. "the example at 2h24"), while main retrieval should search the rest of the lecture without that time filter → hard_constraints=[], time_mode="none", probe_hard_constraints=[timestamp].
+  * Empty [] when resolve is null, or when the probe should reuse the same filters as main (then the system falls back to hard_constraints for the probe).
+- resolve: copy the underspecified phrase from the question that must be identified first (e.g. "the example", "this", "it"), or null. Named terms already written in the question (jargon, "Fold Left", "Question 9") stay null — main retrieval handles them. Non-null ⇒ a small resolve search runs before rewrite.
+- course_general_knowledge: true when the question can be answered from this course's subject knowledge without this recording (a definition, or a problem fully stated in the question). false when the answer depends on this lecture (what was said, this slide, a numbered item whose stem is not in the question, timestamps).
+- reason: one short sentence
+
+Critical consistency:
+- resolve is for deixis / vague pointing, not for defining named terms.
+- A timestamp plus a vague phrase ("the example at 2h24") ⇒ set resolve to that phrase; put the timestamp in probe_hard_constraints (not hard_constraints) unless the whole answer must stay near that time.
+- "What does this mean now?" with no other vague object: time_mode "now", resolve null (the current window is the context).
+- If the question already states the full problem and does not refer to this lecture: resolve null, course_general_knowledge true.
+""",
+}
+
+
+# ---------------------------------------------------------------------------
+# Getters used by answering / course_route (Langfuse → local fallback)
+# ---------------------------------------------------------------------------
+
+
+def get_condense_system() -> str:
+    return _lf_get("lecture/condense", fallback=CONDENSE_SYSTEM)
+
+
+def get_summary_system() -> str:
+    return _lf_get("lecture/summary", fallback=SUMMARY_SYSTEM)
+
+
+def get_resolve_extract_system() -> str:
+    return _lf_get("lecture/resolve-extract", fallback=RESOLVE_EXTRACT_SYSTEM)
+
+
+def get_course_route_system() -> str:
+    return _lf_get("lecture/course-route", fallback=COURSE_ROUTE_SYSTEM)
+
+
+def get_answer_system() -> str:
+    return _lf_get("lecture/answer", fallback=ANSWER_SYSTEM)
+
+
+def get_reflect_system() -> str:
+    return _lf_get("lecture/reflect", fallback=REFLECT_SYSTEM)
+
+
+def get_time_plan_system(course_ctx: dict) -> str:
+    vars_ = {
+        "course_id": course_ctx["course_id"],
+        "timestamp": course_ctx["timestamp"],
+        "lecture_max_ts": course_ctx["lecture_max_ts"],
+    }
+    return _lf_get(
+        "lecture/time-plan",
+        fallback=time_plan_system(course_ctx),
+        **vars_,
+    )
+
+
+def get_resolve_plan_system(course_ctx: dict) -> str:
+    vars_ = {
+        "course_id": course_ctx["course_id"],
+        "timestamp": course_ctx["timestamp"],
+        "lecture_max_ts": course_ctx["lecture_max_ts"],
+    }
+    return _lf_get(
+        "lecture/resolve-plan",
+        fallback=resolve_plan_system(course_ctx),
+        **vars_,
+    )
+
+
+def get_knowledge_plan_system(course_ctx: dict) -> str:
+    return _lf_get(
+        "lecture/knowledge-plan",
+        fallback=knowledge_plan_system(course_ctx),
+        course_id=course_ctx["course_id"],
+    )
+
+
+def get_rewrite_system(course_ctx: dict) -> str:
+    scope = rewrite_scope(course_ctx)
+    return _lf_get(
+        "lecture/rewrite",
+        fallback=rewrite_system(course_ctx),
+        course_id=course_ctx["course_id"],
+        scope=scope,
+    )
+
+
+def get_query_plan_system(course_ctx: dict) -> str:
+    vars_ = {
+        "course_id": course_ctx["course_id"],
+        "timestamp": course_ctx["timestamp"],
+        "lecture_max_ts": course_ctx["lecture_max_ts"],
+    }
+    return _lf_get(
+        "lecture/query-plan",
+        fallback=query_plan_system(course_ctx),
+        **vars_,
+    )
